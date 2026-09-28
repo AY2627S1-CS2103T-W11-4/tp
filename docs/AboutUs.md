@@ -20,12 +20,12 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Documentation
 
-### Jane Doe
+### Lim Kai Hui Brendan
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/brendan-lim.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/brendan-lim)]
+[[portfolio](team/brendan-lim.md)]
 
 * Role: Team Lead
 * Responsibilities: UI
