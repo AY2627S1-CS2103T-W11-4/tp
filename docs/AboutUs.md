@@ -25,7 +25,6 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 <img src="images/brendan-lim.png" width="200px">
 
 [[github](http://github.com/brendan-lim)]
-[[portfolio](team/brendan-lim.md)]
 
 * Role: Team Lead
 * Responsibilities: UI
@@ -39,12 +38,11 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Data
 
-### Jean Doe
+### Sean Tan
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/sntan1214.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/sntan1214)]
 
 * Role: Developer
 * Responsibilities: Dev Ops + Threading
