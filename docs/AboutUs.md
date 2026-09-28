@@ -51,7 +51,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 <img src="images/legalunicorn.png" width="200px">
 
-[[github](http://github.com/legalunicorn)]
+[[github](https://github.com/legalunicorn)]
 
 * Role: Developer
 * Responsibilities: UI
