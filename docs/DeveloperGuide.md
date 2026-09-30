@@ -270,11 +270,11 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* is a property agent who manages multiple clients and property listings
+* needs to record, search, and update client preferences and property details efficiently
+* tracks property viewings, follow-ups, leads, and ongoing transactions
+* prefers fast CLI-based interactions for managing information
+* needs to filter clients by categories such as buyer, seller, tenant, or landlord
 
 **Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
 
@@ -335,6 +335,13 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Property agent**: A professional who manages property listings and assists clients with buying, selling, renting, or leasing properties
+* **Client**: A buyer, seller, tenant, or landlord whose information is managed by the property agent
+* **Property listing**: A record containing information about a property available for sale or rent
+* **Lead**: A potential client or transaction that the property agent is currently pursuing
+* **Follow-up**: A planned action to contact or assist a client at a later time
+* **Property viewing**: An appointment for a client to inspect a property
+* **Transaction**: The process of completing a property sale or rental
 
 --------------------------------------------------------------------------------------------------------------------
 
