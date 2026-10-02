@@ -283,16 +283,28 @@ _{Explain here how the data archiving feature will be implemented}_
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
-
-*{More to be added}*
+| Priority | As a …                              | I want to …                                                | So that I can …                                               |
+|----------|--------------------------------------|------------------------------------------------------------|----------------------------------------------------------------|
+| `* * *`  | property agent managing many clients | search for clients by name or other traits                 | retrieve their information quickly                            |
+| `* * *`  | property agent who types quickly     | perform client-management actions through a CLI            | complete routine tasks quickly                                |
+| `* * *`  | property agent                       | identify clients who are close to buying a property        | focus on clients who are more likely to close a deal          |
+| `* * *`  | property agent                       | add a new client                                           | keep track of the people I serve                              |
+| `* * *`  | property agent                       | delete a client                                            | remove client records that I no longer need                   |
+| `* * *`  | property agent                       | remove a property from a client's profile                  | keep the client's property information accurate              |
+| `* * *`  | property agent                       | update a client's information, such as interests or status | keep the client's record accurate                             |
+| `* * *`  | property agent                       | record a client's contact details                          | contact the client when needed                                |
+| `* * *`  | property agent                       | record a client's preferred property type and location     | recommend properties that match the client's preferences      |
+| `* * *`  | property agent                       | record a buyer's budget                                    | recommend properties within the buyer's budget                |
+| `* * *`  | property agent                       | record a buyer's preferred number of bedrooms              | exclude properties that do not meet the buyer's requirements |
+| `* * *`  | property agent                       | view upcoming and overdue follow-ups                       | avoid missing important follow-up actions                     |
+| `* * *`  | property agent                       | view property details in an organised manner               | provide accurate property information to clients              |
+| `* * *`  | property agent                       | view all the clients I am currently serving                | keep track of my active clients                               |
+| `* * *`  | property agent                       | view clients who are interested in a particular property   | identify potential leads for that property                    |
+| `* * *`  | property agent                       | assign priorities to clients                               | determine which clients to focus on                           |
+| `* * *`  | property agent                       | filter clients who have active property listings           | focus on active sellers                                       |
+| `* * *`  | property agent                       | view a client's property preferences, location, and budget | recommend suitable properties                                 |
+| `* * *`  | property agent                       | view a client's information history                        | understand their past preferences and make suitable recommendations |
+| `* * *`  | new property agent                   | view the available commands                                | learn how to use the application correctly                    |
 
 ### Use cases
 
