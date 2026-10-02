@@ -283,28 +283,35 @@ _{Explain here how the data archiving feature will be implemented}_
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
+The general user story for updating client information is an epic that is further refined by the more specific user stories below.
+
 | Priority | As a …                              | I want to …                                                | So that I can …                                               |
 |----------|--------------------------------------|------------------------------------------------------------|----------------------------------------------------------------|
-| `* * *`  | property agent managing many clients | search for clients by name or other traits                 | retrieve their information quickly                            |
 | `* * *`  | property agent who types quickly     | perform client-management actions through a CLI            | complete routine tasks quickly                                |
-| `* * *`  | property agent                       | identify clients who are close to buying a property        | focus on clients who are more likely to close a deal          |
 | `* * *`  | property agent                       | add a new client                                           | keep track of the people I serve                              |
-| `* * *`  | property agent                       | delete a client                                            | remove client records that I no longer need                   |
-| `* * *`  | property agent                       | remove a property from a client's profile                  | keep the client's property information accurate              |
+| `* * *`  | property agent                       | record whether a client is a buyer or seller               | manage the client according to their property needs           |
+| `* * *`  | property agent                       | view all the clients I am currently serving                | keep track of my active clients                               |
+| `* * *`  | property agent managing many clients | search for clients by name, phone number, or email         | retrieve their information quickly                            |
+| `* * *`  | property agent                       | filter clients by category, buying status, property requirements, or priority | focus on clients relevant to my current task       |
+| `* * *`  | property agent                       | view a client's profile                                    | review their contact details, requirements, status, priority, and property information |
 | `* * *`  | property agent                       | update a client's information, such as interests or status | keep the client's record accurate                             |
 | `* * *`  | property agent                       | record a client's contact details                          | contact the client when needed                                |
 | `* * *`  | property agent                       | record a client's preferred property type and location     | recommend properties that match the client's preferences      |
 | `* * *`  | property agent                       | record a buyer's budget                                    | recommend properties within the buyer's budget                |
 | `* * *`  | property agent                       | record a buyer's preferred number of bedrooms              | exclude properties that do not meet the buyer's requirements |
-| `* * *`  | property agent                       | view upcoming and overdue follow-ups                       | avoid missing important follow-up actions                     |
-| `* * *`  | property agent                       | view property details in an organised manner               | provide accurate property information to clients              |
-| `* * *`  | property agent                       | view all the clients I am currently serving                | keep track of my active clients                               |
-| `* * *`  | property agent                       | view clients who are interested in a particular property   | identify potential leads for that property                    |
+| `* * *`  | property agent                       | record property information under a client's profile       | keep track of the properties relevant to that client         |
+| `* * *`  | property agent                       | remove selected optional information from a client's profile | correct outdated information without deleting the client   |
 | `* * *`  | property agent                       | assign priorities to clients                               | determine which clients to focus on                           |
-| `* * *`  | property agent                       | filter clients who have active property listings           | focus on active sellers                                       |
-| `* * *`  | property agent                       | view a client's property preferences, location, and budget | recommend suitable properties                                 |
-| `* * *`  | property agent                       | view a client's information history                        | understand their past preferences and make suitable recommendations |
+| `* * *`  | property agent                       | set or update a client's next follow-up date               | know when I should contact the client again                   |
+| `* * *`  | property agent                       | view upcoming and overdue follow-ups                       | avoid missing important follow-up actions                     |
+| `* * *`  | property agent                       | view a client's recorded information history               | review how the client's information has changed over time     |
+| `* * *`  | property agent                       | delete a client                                            | remove client records that I no longer need                   |
+| `* * *`  | property agent                       | have my changes saved automatically                        | retain my client records between application sessions        |
 | `* * *`  | new property agent                   | view the available commands                                | learn how to use the application correctly                    |
+| `* *`    | property agent                       | schedule a property viewing for a client                   | keep track of the client's viewing appointment                |
+| `* *`    | property agent                       | attach an internal note to a client                        | retain useful details without displaying them in the client list |
+| `* *`    | property agent                       | view clients who are interested in a particular property   | identify potential leads for that property                    |
+| `* *`    | property agent                       | filter clients whose profiles contain active property listings | focus on active sellers                                    |
 
 ### Use cases
 
