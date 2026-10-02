@@ -333,8 +333,16 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Glossary
 
-* **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Budget**: The amount of money a buyer is prepared to spend on a property.
+* **Buyer**: A client who wants to purchase a property.
+* **Buying status**: How close a client is to agreeing on a property.
+* **Client**: A buyer or seller whose details a property agent stores in RESIDEX.
+* **Follow-up**: A planned next contact with a client. A follow-up may be upcoming or overdue.
+* **Mainstream OS**: Windows, Linux, Unix, or macOS.
+* **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
+* **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
+* **Seller**: A client who wants to sell a property.
+* **Viewing**: A scheduled visit to a property with a client.
 
 --------------------------------------------------------------------------------------------------------------------
 
