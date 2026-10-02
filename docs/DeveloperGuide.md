@@ -352,8 +352,21 @@ The general user story for updating client information is an epic that is furthe
 
 ### Glossary
 
-* **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Active property listing**: A property listing recorded under a seller's client profile that is currently available for sale.
+* **Buyer**: A client who is seeking to purchase a property.
+* **Buying status**: The recorded stage of a buyer's progress towards purchasing a property.
+* **Client**: A buyer or seller whose contact and property-related information is managed by a property agent in RESIDEX.
+* **Client category**: The classification of a client as either a buyer or a seller.
+* **Client profile**: The information recorded for a client, including their contact details, category, requirements, status, priority, and property information.
+* **Follow-up**: A planned future action involving a client, tracked using a follow-up date.
+* **Information history**: A chronological record of previous changes to a client's stored information.
+* **Internal note**: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
+* **Mainstream OS**: Windows, Linux, Unix, or macOS.
+* **Priority**: A level assigned by a property agent to indicate how urgently a client requires attention.
+* **Property information**: Information about properties relevant to a client that is stored within the client's profile rather than managed as a separate entity.
+* **Property requirements**: A buyer's preferences for a property, such as property type, location, budget, and number of bedrooms.
+* **Property viewing**: An appointment for a client to view a property at a specified date and time.
+* **Seller**: A client who is seeking to sell a property.
 
 --------------------------------------------------------------------------------------------------------------------
 
