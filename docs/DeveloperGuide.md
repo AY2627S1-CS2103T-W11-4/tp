@@ -283,16 +283,35 @@ _{Explain here how the data archiving feature will be implemented}_
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
+The general user story for updating client information is an epic that is further refined by the more specific user stories below.
 
-*{More to be added}*
+| Priority | As a …                              | I want to …                                                | So that I can …                                               |
+|----------|--------------------------------------|------------------------------------------------------------|----------------------------------------------------------------|
+| `* * *`  | property agent who types quickly     | perform client-management actions through a CLI            | complete routine tasks quickly                                |
+| `* * *`  | property agent                       | add a new client                                           | keep track of the people I serve                              |
+| `* * *`  | property agent                       | record whether a client is a buyer or seller               | manage the client according to their property needs           |
+| `* * *`  | property agent                       | view all the clients I am currently serving                | keep track of my active clients                               |
+| `* * *`  | property agent managing many clients | search for clients by name, phone number, or email         | retrieve their information quickly                            |
+| `* * *`  | property agent                       | filter clients by category, buying status, property requirements, or priority | focus on clients relevant to my current task       |
+| `* * *`  | property agent                       | view a client's profile                                    | review their contact details, requirements, status, priority, and property information |
+| `* * *`  | property agent                       | update a client's information, such as interests or status | keep the client's record accurate                             |
+| `* * *`  | property agent                       | record a client's contact details                          | contact the client when needed                                |
+| `* * *`  | property agent                       | record a client's preferred property type and location     | recommend properties that match the client's preferences      |
+| `* * *`  | property agent                       | record a buyer's budget                                    | recommend properties within the buyer's budget                |
+| `* * *`  | property agent                       | record a buyer's preferred number of bedrooms              | exclude properties that do not meet the buyer's requirements |
+| `* * *`  | property agent                       | record property information under a client's profile       | keep track of the properties relevant to that client         |
+| `* * *`  | property agent                       | remove selected optional information from a client's profile | correct outdated information without deleting the client   |
+| `* * *`  | property agent                       | assign priorities to clients                               | determine which clients to focus on                           |
+| `* * *`  | property agent                       | set or update a client's next follow-up date               | know when I should contact the client again                   |
+| `* * *`  | property agent                       | view upcoming and overdue follow-ups                       | avoid missing important follow-up actions                     |
+| `* * *`  | property agent                       | view a client's recorded information history               | review how the client's information has changed over time     |
+| `* * *`  | property agent                       | delete a client                                            | remove client records that I no longer need                   |
+| `* * *`  | property agent                       | have my changes saved automatically                        | retain my client records between application sessions        |
+| `* * *`  | new property agent                   | view the available commands                                | learn how to use the application correctly                    |
+| `* *`    | property agent                       | schedule a property viewing for a client                   | keep track of the client's viewing appointment                |
+| `* *`    | property agent                       | attach an internal note to a client                        | retain useful details without displaying them in the client list |
+| `* *`    | property agent                       | view clients who are interested in a particular property   | identify potential leads for that property                    |
+| `* *`    | property agent                       | filter clients whose profiles contain active property listings | focus on active sellers                                    |
 
 ### Use cases
 
@@ -635,25 +654,27 @@ They are documented for future reference, without committing to their implementa
 
 ### Glossary
 
+* **Active property listing**: A property listing recorded under a seller's client profile that is currently available for sale.
+* **Associated property**: A property linked to a client's profile, such as a property the client is interested in or is selling.
 * **Budget**: The amount of money a buyer is prepared to spend on a property.
 * **Buyer**: A client who wants to purchase a property.
 * **Buying status**: How close a client is to agreeing on a property.
 * **Client**: A buyer or seller whose details a property agent stores in RESIDEX.
+* **Client information history**: Previously recorded information or changes associated with a client, available for review.
+* **Client profile**: The stored information about a client, including contact details, requirements, buying status, priority and associated properties.
+* **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
 * **Follow-up**: A planned next contact with a client. A follow-up may be upcoming or overdue.
+* **Internal note**: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS.
+* **Minimum Viable Product (MVP)**: The initial version of RESIDEX containing the features selected to meet its core user needs.
+* **Priority**: An indication of a client's importance or urgency, assigned by the property agent to help decide whom to attend to first.
+* **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
 * **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
+* **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
 * **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
 * **Viewing**: A scheduled visit to a property with a client.
 
-* **Associated property**: A property linked to a client's profile, such as a property the client is interested in or is selling.
-* **Client information history**: Previously recorded information or changes associated with a client, available for review.
-* **Client profile**: The stored information about a client, including contact details, requirements, buying status, priority and associated properties.
-* **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
-* **Minimum Viable Product (MVP)**: The initial version of RESIDEX containing the features selected to meet its core user needs.
-* **Priority**: An indication of a client's importance or urgency, assigned by the property agent to help decide whom to attend to first.
-* **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
-* **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
 
 --------------------------------------------------------------------------------------------------------------------
 
