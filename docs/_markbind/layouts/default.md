@@ -4,7 +4,7 @@
 
 <header sticky>
   <navbar type="dark">
-    <a slot="brand" href="{{baseUrl}}/index.html" title="Home" class="navbar-brand">RESIDEX</a>
+    <a slot="brand" href="{{baseUrl}}/index.html" title="RESIDEX home" aria-label="RESIDEX home" class="navbar-brand">RESIDEX</a>
     <li><a href="{{baseUrl}}/index.html" class="nav-link">Home</a></li>
     <li><a href="{{baseUrl}}/UserGuide.html" class="nav-link">User Guide</a></li>
     <li><a href="{{baseUrl}}/DeveloperGuide.html" class="nav-link">Developer Guide</a></li>
@@ -12,6 +12,9 @@
     <li>
       <a href="https://github.com/AY2627S1-CS2103T-W11-4/tp"
          target="_blank"
+         rel="noopener"
+         title="RESIDEX GitHub repository (opens in a new tab)"
+         aria-label="RESIDEX GitHub repository (opens in a new tab)"
          class="nav-link">
         <md>:fab-github:</md>
       </a>
