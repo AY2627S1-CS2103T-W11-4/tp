@@ -296,18 +296,127 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+For all use cases below, the **System** is `RESIDEX` and the **Actor** is a `property agent`.
+`MSS` stands for Main Success Scenario. These use cases describe product requirements, including
+features planned for future iterations; they do not indicate that a feature is already implemented.
 
-**Use case: Delete a person**
+A client is a buyer or seller. Two clients are duplicates when both their normalised names and
+normalised phone numbers match, following the Add Client feature specification.
+A client selected for an operation must belong to the currently displayed list. For deletion,
+the client is identified by their index in that list, including when it contains search results.
+
+**Precondition for all use cases:** RESIDEX is running.
+
+**Guarantees:** Read-only use cases leave stored client information unchanged. For requests to add, update or
+delete information, invalid input is rejected without changing that information.
+
+#### MVP requirements
+
+**Use case: UC01 — Add a client**
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. Property agent requests to add a client with their name, phone number, email and purpose
+   (Buyer or Seller).
+2. RESIDEX adds the client and displays the updated client list.
 
-    Use case ends.
+   Use case ends.
+
+**Extensions**
+
+* 1a. A required detail is missing or invalid.
+
+  * 1a1. RESIDEX explains the input error.
+  * 1a2. Property agent supplies corrected client details.
+
+  Steps 1a1–1a2 are repeated until the details are valid.
+  Use case resumes at step 2.
+
+* 1b. Both the normalised name and normalised phone number match an existing client.
+
+  * 1b1. RESIDEX reports that the client already exists.
+
+  Use case ends.
+
+**Use case: UC02 — Find clients**
+
+**MSS**
+
+1. Property agent requests to find clients by name, phone number or email, supplying search keywords.
+2. RESIDEX displays the matching clients and the number of matches.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The search field or keywords are missing, the field is unsupported, or more than one field is supplied.
+
+  * 1a1. RESIDEX explains the input error.
+
+  Use case resumes at step 1.
+
+* 2a. No clients match.
+
+  * 2a1. RESIDEX reports that no clients match and displays an empty result list.
+
+  Use case ends.
+
+* 2b. Property agent wants to refine the search.
+
+  Use case resumes at step 1.
+
+* 2c. Property agent wants to return to the full client list.
+
+  * 2c1. Property agent requests to list all clients.
+  * 2c2. RESIDEX displays the full client list.
+
+  Use case ends.
+
+**Use case: UC03 — Filter clients for follow-up**
+
+**MSS**
+
+1. Property agent requests to filter clients by criteria such as buyer/seller category, buying
+   status, property requirements or priority.
+2. RESIDEX displays the clients satisfying the criteria.
+3. Property agent requests to view a listed client's profile.
+4. RESIDEX displays the client's details, including recorded requirements, buying status,
+   priority and associated property details.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The filter criteria are invalid.
+
+  * 1a1. RESIDEX shows an error explaining the accepted criteria. The displayed list remains unchanged.
+
+  Use case resumes at step 1.
+
+* 2a. No clients satisfy the criteria.
+
+  * 2a1. RESIDEX displays an empty list.
+
+  Use case ends.
+
+* 3a. The selected client is not in the displayed list.
+
+  * 3a1. RESIDEX shows an error. No client records are changed.
+
+  Use case resumes at step 3.
+
+**Use case: UC04 — Update a client's information**
+
+**MSS**
+
+1. Property agent requests to list clients.
+2. RESIDEX displays the client list.
+3. Property agent requests to update a listed client, supplying the new information,
+   such as contact details, budget, preferred location, property type, required number of bedrooms,
+   buying status, priority or associated property details.
+4. RESIDEX updates the client's information and displays the updated details.
+
+   Use case ends.
 
 **Extensions**
 
@@ -315,13 +424,206 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
   Use case ends.
 
-* 3a. The given index is invalid.
+* 3a. The selected client is not in the displayed list.
 
-    * 3a1. AddressBook shows an error message.
+  * 3a1. RESIDEX shows an error. No client records are changed.
 
-      Use case resumes at step 2.
+  Use case resumes at step 3.
 
-*{More to be added}*
+* 3b. The supplied information is invalid or no information to update is supplied.
+
+  * 3b1. RESIDEX explains the input error. The client's information remains unchanged.
+
+  Use case resumes at step 3.
+
+* 3c. Updating the name or phone number would create a duplicate under the Add Client rule.
+
+  * 3c1. RESIDEX reports the duplicate. The client's information remains unchanged.
+
+  Use case resumes at step 3.
+
+**Use case: UC05 — Delete selected client information**
+
+**MSS**
+
+1. Property agent requests to list clients.
+2. RESIDEX displays the client list.
+3. Property agent requests to view a listed client's profile.
+4. RESIDEX displays the client's profile and associated properties.
+5. Property agent requests to remove selected information, such as an interest, buying status
+   or a specific associated property.
+6. RESIDEX removes the selected information and displays the updated profile. The client
+   and their other information are retained.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The list is empty.
+
+  Use case ends.
+
+* 3a. The selected client is not in the displayed list.
+
+  * 3a1. RESIDEX shows an error.
+
+  Use case resumes at step 3.
+
+* 5a. The selected information or property is not recorded for the client.
+
+  * 5a1. RESIDEX reports that the selected information is unavailable. The profile remains unchanged.
+
+  Use case resumes at step 5.
+
+* 5b. Property agent requests to remove a required detail, such as the name, phone number,
+  email or purpose.
+
+  * 5b1. RESIDEX explains that the required detail cannot be removed. The profile remains unchanged.
+
+  Use case resumes at step 5.
+
+**Use case: UC06 — Delete a client**
+
+**MSS**
+
+1. Property agent requests to list clients.
+2. RESIDEX displays the client list.
+3. Property agent requests to delete a listed client.
+4. RESIDEX deletes the client and their stored profile information, reports the deleted client's
+   details and displays the updated list.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. Property agent requests to search for clients instead of listing all clients.
+
+  * 1a1. Property agent <u>finds clients (UC02)</u>.
+
+  Use case resumes at step 2 with the search results as the displayed list.
+
+* 2a. The displayed list is empty.
+
+  Use case ends.
+
+* 3a. The client selection is missing or invalid, or more than one client is selected.
+
+  * 3a1. RESIDEX explains the selection error. No client is deleted and the list remains unchanged.
+
+  Use case resumes at step 3.
+
+* 3b. The selected client is not in the displayed list.
+
+  * 3b1. RESIDEX reports that the selected client is not in the displayed list.
+    No client is deleted and the list remains unchanged.
+
+  Use case resumes at step 3.
+
+**Use case: UC07 — Review a client's information history**
+
+**MSS**
+
+1. Property agent requests to list clients.
+2. RESIDEX displays the client list.
+3. Property agent requests the information history of a listed client.
+4. RESIDEX displays the client's recorded information history for review.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The list is empty.
+
+  Use case ends.
+
+* 3a. The selected client is not in the displayed list.
+
+  * 3a1. RESIDEX shows an error.
+
+  Use case resumes at step 3.
+
+* 3b. No history is recorded for the client.
+
+  * 3b1. RESIDEX reports that no history is available.
+
+  Use case ends.
+
+**Use case: UC08 — Review upcoming or overdue client appointments and follow-ups**
+
+**MSS**
+
+1. Property agent requests to view recorded upcoming or overdue client appointments and follow-ups.
+2. RESIDEX displays the relevant entries with their dates and associated clients.
+3. Property agent requests to view the client associated with an entry.
+4. RESIDEX displays that client's profile so the agent can prepare to contact them.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. No relevant appointments or follow-ups are recorded.
+
+  * 2a1. RESIDEX reports that there are no matching entries.
+
+  Use case ends.
+
+* 3a. The selected entry is invalid.
+
+  * 3a1. RESIDEX shows an error.
+
+  Use case resumes at step 3.
+
+#### Requirements considered outside the MVP
+
+The following requirements were considered during ideation and are outside the current MVP.
+They are documented for future reference, without committing to their implementation.
+
+**Use case: UC09 — Schedule a property viewing**
+
+**MSS**
+
+1. Property agent requests to list clients.
+2. RESIDEX displays the client list.
+3. Property agent requests to schedule a viewing for a listed client, specifying the property
+   and the viewing date and time.
+4. RESIDEX records the viewing and reports its details.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The list is empty.
+
+  Use case ends.
+
+* 3a. The selected client is not in the displayed list, or the property, date or time is missing or invalid.
+
+  * 3a1. RESIDEX explains the input error. No viewing is recorded.
+
+  Use case resumes at step 3.
+
+**Use case: UC10 — Attach a private client note**
+
+**MSS**
+
+1. Property agent requests to list clients.
+2. RESIDEX displays the client list.
+3. Property agent requests to attach a private note to a listed client.
+4. RESIDEX confirms that the note has been attached. Its contents remain hidden from the client list.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The list is empty.
+
+  Use case ends.
+
+* 3a. The selected client is not in the displayed list or the note is empty.
+
+  * 3a1. RESIDEX explains the input error. No note is recorded.
+
+  Use case resumes at step 3.
 
 ### Non-Functional Requirements
 
@@ -343,6 +645,15 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
 * **Viewing**: A scheduled visit to a property with a client.
+
+* **Associated property**: A property linked to a client's profile, such as a property the client is interested in or is selling.
+* **Client information history**: Previously recorded information or changes associated with a client, available for review.
+* **Client profile**: The stored information about a client, including contact details, requirements, buying status, priority and associated properties.
+* **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
+* **Minimum Viable Product (MVP)**: The initial version of RESIDEX containing the features selected to meet its core user needs.
+* **Priority**: An indication of a client's importance or urgency, assigned by the property agent to help decide whom to attend to first.
+* **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
+* **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
 
 --------------------------------------------------------------------------------------------------------------------
 
