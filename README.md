@@ -2,9 +2,9 @@
 
 ![Ui](docs/images/Ui.png)
 
-**RESIDEX** is a desktop address book for property agents who manage buyers and sellers.
+**RESIDEX** is a desktop application for property agents who manage buyers and sellers.
 
-* It keeps client details, requirements, viewings, and follow-ups in one place, so agents spend less time searching across notes and spreadsheets.
-* Agents can record what a client wants, such as budget and preferred location, and retrieve that information quickly when they need to follow up.
-* It has a GUI, and most tasks are done by typing commands, which suits agents who prefer the keyboard.
-* For the detailed documentation of this project, see the **[RESIDEX Product Website](https://ay2627s1-cs2103t-w11-4.github.io/tp/)**.
+* Keep each client's contact details, purpose (buyer or seller), requirements, viewings, and follow-ups in one place instead of spreading them across notes and spreadsheets.
+* Find and filter clients by name, contact details, or category when preparing for a viewing or a follow-up.
+* Most tasks are done by typing commands. A GUI shows the current client list and the result of each command.
+* If you want to use or develop RESIDEX, see the **[RESIDEX Product Website](https://ay2627s1-cs2103t-w11-4.github.io/tp/)**.
