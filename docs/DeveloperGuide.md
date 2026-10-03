@@ -270,13 +270,14 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* is a property agent who manages a significant number of buyers, sellers, and property listings
+* needs to keep track of client details, property viewings, and follow-ups
+* prefers desktop applications over other types of applications
+* can type quickly and prefers keyboard input to mouse-based interactions
+* is reasonably comfortable using CLI-based applications
+* values fast information retrieval and an organised way to categorise clients
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: RESIDEX provides property agents with a fast and organised way to manage buyers, sellers, property listings, viewings, and follow-ups in one place. Its efficient CLI-based commands allow agents to quickly retrieve, update, and filter information, reducing administrative work and helping them organise clients by category.
 
 
 ### User stories
