@@ -19,6 +19,27 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void constructor_nullIntention_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new PersonBuilder().withIntention(null).build());
+    }
+
+    @Test
+    public void getIntention_returnsIntention() {
+        assertEquals(Intention.BUYER, new PersonBuilder().withIntention(Intention.BUYER).build().getIntention());
+        assertEquals(Intention.SELLER, new PersonBuilder().withIntention(Intention.SELLER).build().getIntention());
+    }
+
+    @Test
+    public void intention_differentValue_affectsEqualityButNotIdentity() {
+        Person seller = new PersonBuilder(ALICE).withIntention(Intention.SELLER).build();
+        assertFalse(ALICE.equals(seller));
+        assertTrue(ALICE.isSamePerson(seller));
+        Person sellerCopy = new PersonBuilder(seller).build();
+        assertEquals(seller, sellerCopy);
+        assertEquals(seller.hashCode(), sellerCopy.hashCode());
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
@@ -97,7 +118,8 @@ public class PersonTest {
     @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", remark=" + ALICE.getRemark()
+                + ", email=" + ALICE.getEmail() + ", intention=" + ALICE.getIntention()
+                + ", address=" + ALICE.getAddress() + ", remark=" + ALICE.getRemark()
                 + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
     }
