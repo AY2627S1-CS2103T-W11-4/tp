@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 
 public class FindCommandParserTest {
 
@@ -29,6 +30,43 @@ public class FindCommandParserTest {
 
         // multiple whitespaces between keywords
         assertParseSuccess(parser, " \n Alice \n \t Bob  \t", expectedFindCommand);
+    }
+
+    @Test
+    public void parse_phoneSelectors_returnsPhoneFindCommand() {
+        FindCommand expectedFindCommand =
+                new FindCommand(new PhoneContainsKeywordsPredicate(List.of("98765432")));
+        for (String selector : List.of("/p", "/phone", "/P", "/PHONE", "/Phone")) {
+            assertParseSuccess(parser, selector + " 98765432", expectedFindCommand);
+        }
+    }
+
+    @Test
+    public void parse_multiplePhoneKeywords_returnsPhoneFindCommand() {
+        FindCommand expectedFindCommand =
+                new FindCommand(new PhoneContainsKeywordsPredicate(List.of("9123", "9876")));
+        assertParseSuccess(parser, "/phone 9123 9876", expectedFindCommand);
+        assertParseSuccess(parser, "/p 9123 9876", expectedFindCommand);
+        assertParseSuccess(parser, "  /phone 9123 9876  ", expectedFindCommand);
+        assertParseSuccess(parser, " \n /P \t 9123   \n 9876 \t ", expectedFindCommand);
+    }
+
+    @Test
+    public void parse_phoneSelectorWithoutKeywords_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String selector : List.of("/p", "/phone", "/P", "/PHONE", "/Phone")) {
+            assertParseFailure(parser, selector, expectedMessage);
+            assertParseFailure(parser, " \t " + selector + " \n ", expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_repeatedPhoneSelectors_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : List.of("/p 9876 /phone 9123", "/phone 9876 /p 9123",
+                "/p 9876 /p 9123", "/phone 9876 /phone 9123", "/PHONE 9876 /P 9123", "/p /phone")) {
+            assertParseFailure(parser, args, expectedMessage);
+        }
     }
 
 }
