@@ -16,14 +16,14 @@ public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all persons whose names contain any of "
-            + "the specified keywords (case-insensitive) and displays them as a list with index numbers.\n"
-            + "Parameters: KEYWORD [MORE_KEYWORDS]...\n"
-            + "Example: " + COMMAND_WORD + " alice bob charlie\n"
+    public static final String MESSAGE_USAGE = COMMAND_WORD
+            + ": Finds all persons matching the specified keywords (case-insensitive).\n"
+            + "Name search: " + COMMAND_WORD + " KEYWORD [MORE_KEYWORDS]...\n"
+            + "Email search: " + COMMAND_WORD + " /email KEYWORD [MORE_KEYWORDS]...\n"
+            + "Short email selector: " + COMMAND_WORD + " /e KEYWORD [MORE_KEYWORDS]...\n"
             + "Phone search: " + COMMAND_WORD + " /phone KEYWORD [MORE_KEYWORDS]...\n"
-            + "Use exactly one /phone or /p selector (case-insensitive) and at least one keyword.\n"
-            + "Matches phone numbers containing any keyword as a substring.\n"
-            + "Example: " + COMMAND_WORD + " /p 9123 9876";
+            + "Short phone selector: " + COMMAND_WORD + " /p KEYWORD [MORE_KEYWORDS]...\n"
+            + "Example: " + COMMAND_WORD + " /email alexyeoh@example.com";
 
     private final Predicate<Person> predicate;
 
@@ -36,7 +36,8 @@ public class FindCommand extends Command {
         requireNonNull(model);
         model.updateFilteredPersonList(predicate);
         return new CommandResult(
-                String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));
+                String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW,
+                        model.getFilteredPersonList().size()));
     }
 
     @Override
