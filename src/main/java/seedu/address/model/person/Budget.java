@@ -9,8 +9,8 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Budget {
 
-    public static final String MESSAGE_CONSTRAINTS =
-            "Budget should be a non-negative whole dollar amount, without commas or a decimal point";
+    public static final String MESSAGE_CONSTRAINTS = "Budget should be a non-negative whole dollar amount, "
+            + "without commas or a decimal point, and without leading zeros";
 
     public static final String VALIDATION_REGEX = "0|[1-9]\\d*";
 
