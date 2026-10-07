@@ -31,3 +31,6 @@ CLAUDE.md
 # Temp files
 _temp/
 docs/_markbind/logs/
+
+# Git metadata accidentally created in the project root
+/FETCH_HEAD
