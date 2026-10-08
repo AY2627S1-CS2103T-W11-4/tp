@@ -270,12 +270,11 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* is a property agent who manages a significant number of buyers, sellers, and property listings
-* needs to keep track of client details, property viewings, and follow-ups
-* prefers desktop applications over other types of applications
-* can type quickly and prefers keyboard input to mouse-based interactions
-* is reasonably comfortable using CLI-based applications
-* values fast information retrieval and an organised way to categorise clients
+* is a property agent who manages multiple clients and property listings
+* needs to record, search, and update client preferences and property details efficiently
+* tracks property viewings, follow-ups, leads, and ongoing transactions
+* prefers fast CLI-based interactions for managing information
+* needs to filter clients by categories such as buyer, seller, tenant, or landlord
 
 **Value proposition**: RESIDEX provides property agents with a fast and organised way to manage buyers, sellers, property listings, viewings, and follow-ups in one place. Its efficient CLI-based commands allow agents to quickly retrieve, update, and filter information, reducing administrative work and helping them organise clients by category.
 
@@ -666,14 +665,19 @@ They are documented for future reference, without committing to their implementa
 * **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
 * **Follow-up**: A planned next contact with a client. A follow-up may be upcoming or overdue.
 * **Internal note**: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
+* **Lead**: A potential client or transaction that the property agent is currently pursuing
 * **Mainstream OS**: Windows, Linux, Unix, or macOS.
 * **Minimum Viable Product (MVP)**: The initial version of RESIDEX containing the features selected to meet its core user needs.
 * **Priority**: An indication of a client's importance or urgency, assigned by the property agent to help decide whom to attend to first.
 * **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
+* **Private contact detail**: A contact detail that is not meant to be shared with others
 * **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
+* **Property listing**: A record containing information about a property available for sale or rent
+* **Property viewing**: An appointment for a client to inspect a property
 * **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
 * **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
+* **Transaction**: The process of completing a property sale or rental
 * **Viewing**: A scheduled visit to a property with a client.
 
 
