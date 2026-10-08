@@ -18,12 +18,24 @@ public class FindCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Finds all persons matching the specified keywords (case-insensitive).\n"
-            + "Name search: " + COMMAND_WORD + " KEYWORD [MORE_KEYWORDS]...\n"
+            + "Name search: " + COMMAND_WORD + " /name KEYWORD [MORE_KEYWORDS]...\n"
+            + "Short name selector: " + COMMAND_WORD + " /n KEYWORD [MORE_KEYWORDS]...\n"
             + "Email search: " + COMMAND_WORD + " /email KEYWORD [MORE_KEYWORDS]...\n"
             + "Short email selector: " + COMMAND_WORD + " /e KEYWORD [MORE_KEYWORDS]...\n"
             + "Phone search: " + COMMAND_WORD + " /phone KEYWORD [MORE_KEYWORDS]...\n"
             + "Short phone selector: " + COMMAND_WORD + " /p KEYWORD [MORE_KEYWORDS]...\n"
+            + "Intention search: " + COMMAND_WORD + " /intention buyer|seller\n"
+            + "Short intention selector: " + COMMAND_WORD + " /i buyer|seller\n"
             + "Example: " + COMMAND_WORD + " /email alexyeoh@example.com";
+
+    public static final String MESSAGE_INVALID_INTENTION = "Intention must be buyer or seller (case-insensitive).";
+    public static final String MESSAGE_MISSING_ARGUMENTS = "Client property and search keyword are missing.";
+    public static final String MESSAGE_MISSING_PROPERTY =
+            "Client property is missing. Use /name, /email, /phone, or /intention.";
+    public static final String MESSAGE_INVALID_PROPERTY =
+            "Invalid client property. Use /name, /email, /phone, or /intention.";
+    public static final String MESSAGE_MULTIPLE_PROPERTIES = "Specify exactly one client property.";
+    public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.";
 
     private final Predicate<Person> predicate;
 

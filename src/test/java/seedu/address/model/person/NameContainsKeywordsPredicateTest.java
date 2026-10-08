@@ -57,6 +57,20 @@ public class NameContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_partialName_returnsTrue() {
+        Person person = new PersonBuilder().withName("Alice Bob").build();
+        for (String keyword : List.of("Ali", "LIC", "ice", "bo", "ce b")) {
+            assertTrue(new NameContainsKeywordsPredicate(List.of(keyword)).test(person));
+        }
+    }
+
+    @Test
+    public void test_blankKeywords_returnsFalse() {
+        assertFalse(new NameContainsKeywordsPredicate(List.of("", " ", "\t"))
+                .test(new PersonBuilder().withName("Alice Bob").build()));
+    }
+
+    @Test
     public void test_nameDoesNotContainKeywords_returnsFalse() {
         // Zero keywords
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of());
