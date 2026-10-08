@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
@@ -28,6 +29,7 @@ class JsonAdaptedPerson {
     private final String name;
     private final String phone;
     private final String email;
+    private final String intention;
     private final String address;
     private final String remark;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
@@ -37,11 +39,13 @@ class JsonAdaptedPerson {
      */
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
-            @JsonProperty("email") String email, @JsonProperty("address") String address,
+            @JsonProperty("email") String email, @JsonProperty("intention") String intention,
+            @JsonProperty("address") String address,
             @JsonProperty("remark") String remark, @JsonProperty("tags") List<JsonAdaptedTag> tags) {
         this.name = name;
         this.phone = phone;
         this.email = email;
+        this.intention = intention;
         this.address = address;
         this.remark = remark;
         if (tags != null) {
@@ -52,8 +56,9 @@ class JsonAdaptedPerson {
     /**
      * Constructs a {@code JsonAdaptedPerson} without a remark, used by tests.
      */
-    public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags) {
-        this(name, phone, email, address, "", tags);
+    public JsonAdaptedPerson(String name, String phone, String email, String intention,
+            String address, List<JsonAdaptedTag> tags) {
+        this(name, phone, email, intention, address, "", tags);
     }
 
     /**
@@ -63,6 +68,7 @@ class JsonAdaptedPerson {
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().value;
+        intention = source.getIntention().toString();
         address = source.getAddress().value;
         remark = source.getRemark().value;
         tags.addAll(source.getTags().stream()
@@ -105,6 +111,17 @@ class JsonAdaptedPerson {
         }
         final Email modelEmail = new Email(email);
 
+        if (intention == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
+                    Intention.class.getSimpleName()));
+        }
+        final Intention modelIntention;
+        try {
+            modelIntention = Intention.parse(intention);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalValueException(Intention.MESSAGE_CONSTRAINTS);
+        }
+
         if (address == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Address.class.getSimpleName()));
         }
@@ -116,7 +133,7 @@ class JsonAdaptedPerson {
         final Remark modelRemark = new Remark(remark == null ? "" : remark);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelRemark, modelTags);
+        return new Person(modelName, modelPhone, modelEmail, modelIntention, modelAddress, modelRemark, modelTags);
     }
 
 }

@@ -18,6 +18,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Intention;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Remark;
 import seedu.address.testutil.PersonBuilder;
@@ -30,6 +31,20 @@ public class RemarkCommandTest {
     private static final String REMARK_STUB = "Some remark";
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_seller_preservesIntention() throws Exception {
+        Person seller = new PersonBuilder().withIntention(Intention.SELLER).build();
+        Model sellerModel = new ModelManager(new AddressBook(), new UserPrefs());
+        sellerModel.addPerson(seller);
+        Person expectedPerson = new PersonBuilder(seller).withRemark(REMARK_STUB).build();
+
+        RemarkCommand command = new RemarkCommand(INDEX_FIRST_PERSON, new Remark(REMARK_STUB));
+        command.execute(sellerModel);
+
+        assertEquals(expectedPerson, sellerModel.getFilteredPersonList().get(0));
+        assertEquals(Intention.SELLER, sellerModel.getFilteredPersonList().get(0).getIntention());
+    }
 
     @Test
     public void execute_addRemarkUnfilteredList_success() {

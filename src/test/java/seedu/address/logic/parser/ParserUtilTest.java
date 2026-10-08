@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.tag.Tag;
@@ -33,6 +34,27 @@ public class ParserUtilTest {
     private static final String VALID_TAG_2 = "neighbour";
 
     private static final String WHITESPACE = " \t\r\n";
+
+    @Test
+    public void parseIntention_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseIntention(null));
+    }
+
+    @Test
+    public void parseIntention_validValues_returnsIntention() throws Exception {
+        assertEquals(Intention.BUYER, ParserUtil.parseIntention("Buyer"));
+        assertEquals(Intention.SELLER, ParserUtil.parseIntention("Seller"));
+        assertEquals(Intention.BUYER, ParserUtil.parseIntention(WHITESPACE + "Buyer" + WHITESPACE));
+        assertEquals(Intention.SELLER, ParserUtil.parseIntention(WHITESPACE + "Seller" + WHITESPACE));
+    }
+
+    @Test
+    public void parseIntention_invalidValues_throwsParseException() {
+        for (String value : new String[] {"", WHITESPACE, "buyer", "SELLER", "Tenant", "Buyer Seller"}) {
+            assertThrows(ParseException.class, Intention.MESSAGE_CONSTRAINTS, () ->
+                    ParserUtil.parseIntention(value));
+        }
+    }
 
     @Test
     public void parseIndex_invalidInput_throwsParseException() {

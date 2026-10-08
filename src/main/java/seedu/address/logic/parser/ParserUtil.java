@@ -11,6 +11,7 @@ import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.tag.Tag;
@@ -21,6 +22,21 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    /**
+     * Parses an intention, ignoring leading and trailing whitespace.
+     *
+     * @throws NullPointerException if {@code intention} is null.
+     * @throws ParseException if {@code intention} is not Buyer or Seller.
+     */
+    public static Intention parseIntention(String intention) throws ParseException {
+        requireNonNull(intention);
+        try {
+            return Intention.parse(intention.trim());
+        } catch (IllegalArgumentException exception) {
+            throw new ParseException(Intention.MESSAGE_CONSTRAINTS, exception);
+        }
+    }
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
