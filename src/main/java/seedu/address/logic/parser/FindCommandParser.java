@@ -7,6 +7,8 @@ import java.util.List;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
+import seedu.address.model.person.Intention;
+import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 
@@ -25,36 +27,58 @@ public class FindCommandParser implements Parser<FindCommand> {
         String trimmedArgs = args.trim();
 
         if (trimmedArgs.isEmpty()) {
-            throw new ParseException(
-                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+            throw new ParseException(FindCommand.MESSAGE_MISSING_ARGUMENTS);
         }
 
         List<String> tokens = List.of(trimmedArgs.split("\\s+"));
         String firstToken = tokens.get(0);
 
-        if (isEmailSelector(firstToken)) {
-            List<String> emailKeywords = tokens.subList(1, tokens.size());
+        if (!firstToken.startsWith("/")) {
+            throw new ParseException(FindCommand.MESSAGE_MISSING_PROPERTY);
+        }
+        if (!isSelector(firstToken)) {
+            throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
 
-            if (emailKeywords.isEmpty() || emailKeywords.stream().anyMatch(this::isSelector)) {
+        List<String> keywords = tokens.subList(1, tokens.size());
+        if (keywords.stream().anyMatch(this::isSelector)) {
+            throw new ParseException(FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        }
+        if (keywords.stream().anyMatch(keyword -> keyword.startsWith("/"))) {
+            throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+        if (keywords.isEmpty()) {
+            throw new ParseException(FindCommand.MESSAGE_MISSING_KEYWORD);
+        }
+
+        if (isIntentionSelector(firstToken)) {
+            if (keywords.size() != 1) {
                 throw new ParseException(
                         String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
             }
 
-            return new FindCommand(new EmailContainsKeywordsPredicate(emailKeywords));
+            String intentionKeyword = keywords.get(0);
+            for (Intention intention : Intention.values()) {
+                if (intention.toString().equalsIgnoreCase(intentionKeyword)) {
+                    return new FindCommand(new IntentionMatchesPredicate(intention));
+                }
+            }
+            throw new ParseException(FindCommand.MESSAGE_INVALID_INTENTION);
+        }
+
+        if (isEmailSelector(firstToken)) {
+            return new FindCommand(new EmailContainsKeywordsPredicate(keywords));
         }
 
         if (isPhoneSelector(firstToken)) {
-            List<String> phoneKeywords = tokens.subList(1, tokens.size());
-
-            if (phoneKeywords.isEmpty() || phoneKeywords.stream().anyMatch(this::isSelector)) {
-                throw new ParseException(
-                        String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
-            }
-
-            return new FindCommand(new PhoneContainsKeywordsPredicate(phoneKeywords));
+            return new FindCommand(new PhoneContainsKeywordsPredicate(keywords));
         }
 
-        return new FindCommand(new NameContainsKeywordsPredicate(tokens));
+        return new FindCommand(new NameContainsKeywordsPredicate(keywords));
+    }
+
+    private boolean isNameSelector(String token) {
+        return token.equalsIgnoreCase("/name") || token.equalsIgnoreCase("/n");
     }
 
     private boolean isEmailSelector(String token) {
@@ -66,6 +90,10 @@ public class FindCommandParser implements Parser<FindCommand> {
     }
 
     private boolean isSelector(String token) {
-        return isEmailSelector(token) || isPhoneSelector(token);
+        return isNameSelector(token) || isEmailSelector(token) || isPhoneSelector(token) || isIntentionSelector(token);
+    }
+
+    private boolean isIntentionSelector(String token) {
+        return token.equalsIgnoreCase("/intention") || token.equalsIgnoreCase("/i");
     }
 }
