@@ -52,6 +52,23 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_unsupportedLaterSelector_throwsParseException() {
+        for (String args : List.of("n/Alice phone/9123", "n/Alice x/foo", "e/gmail name/Alice",
+                "p/9123 unknown/foo", "i/buyer phone/9123", "N/Alice PHONE/9123", "E/gmail NAME/Alice",
+                "n/Alice email/gmail", "n/Alice intention/buyer", "n/Alice unknown/", "n/Alice x//foo",
+                "n/Alice /", "n/Alice/foo", "e/alice/gmail", "p/9123/9876", "i/buyer/seller")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+    }
+
+    @Test
+    public void parse_prefixWordsWithoutSlashes_returnsFindCommand() {
+        List<String> keywords = List.of("Alice", "n", "e", "p", "i", "phone", "name", "intention", "unknown");
+        assertParseSuccess(parser, "n/" + String.join(" ", keywords),
+                new FindCommand(new NameContainsKeywordsPredicate(keywords)));
+    }
+
+    @Test
     public void parse_nameSelectorWithoutKeywords_throwsParseException() {
         for (String selector : List.of("n/", "N/")) {
             assertParseFailure(parser, selector, FindCommand.MESSAGE_MISSING_KEYWORD);

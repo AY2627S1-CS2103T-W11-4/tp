@@ -49,10 +49,13 @@ public class FindCommandParser implements Parser<FindCommand> {
             throw new ParseException(FindCommand.MESSAGE_MISSING_KEYWORD);
         }
         List<String> keywords = List.of(keywordArgs.split("\\s+"));
-        if (keywords.stream().anyMatch(keyword -> isSelector(keyword.substring(0, keyword.indexOf('/') + 1)))) {
+        if (keywords.stream()
+                .filter(keyword -> keyword.contains("/"))
+                .map(keyword -> keyword.split("/", 2)[0] + "/")
+                .anyMatch(this::isSelector)) {
             throw new ParseException(FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
         }
-        if (keywords.stream().anyMatch(keyword -> keyword.startsWith("/"))) {
+        if (keywords.stream().anyMatch(keyword -> keyword.contains("/"))) {
             throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
         }
         if (isIntentionSelector(selector)) {
