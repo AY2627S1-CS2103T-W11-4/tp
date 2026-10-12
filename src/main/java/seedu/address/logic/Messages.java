@@ -48,8 +48,6 @@ public class Messages {
                 .append("; Remark: ")
                 .append(person.getRemark());
         person.getBudget().ifPresent(budget -> builder.append("; Budget: ").append(budget.toDisplay()));
-        builder.append("; Tags: ");
-        person.getTags().forEach(builder::append);
         return builder.toString();
     }
 
