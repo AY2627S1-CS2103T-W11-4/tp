@@ -6,6 +6,7 @@
 
 * Keep each client's contact details, purpose (buyer or seller), requirements, viewings, and follow-ups in one place instead of spreading them across notes and spreadsheets.
 * Find and filter clients by name, contact details, or category when preparing for a viewing or a follow-up.
+* Record an optional whole-dollar budget. The client card shows the amount on the right, coloured red, yellow, or green by its price band.
 * Most tasks are done by typing commands. A GUI shows the current client list and the result of each command.
 * If you want to use or develop RESIDEX, see the **[RESIDEX Product Website](https://ay2627s1-cs2103t-w11-4.github.io/tp/)**.
 
