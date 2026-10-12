@@ -10,7 +10,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
-import java.util.Set;
 import java.util.stream.Stream;
 
 import seedu.address.logic.commands.AddCommand;
@@ -59,7 +58,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         Budget budget = argMultimap.getValue(PREFIX_BUDGET).isPresent()
                 ? ParserUtil.parseBudget(argMultimap.getValue(PREFIX_BUDGET).get())
                 : null;
-        Person person = new Person(name, phone, email, intention, address, new Remark(""), Set.of(), budget);
+        Person person = new Person(name, phone, email, intention, address, new Remark(""), budget);
 
         return new AddCommand(person);
     }

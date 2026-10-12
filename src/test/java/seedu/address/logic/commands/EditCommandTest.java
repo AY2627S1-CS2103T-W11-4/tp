@@ -53,9 +53,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
-        Person editedPerson = new PersonBuilder()
-                .withTags(model.getFilteredPersonList().get(0).getTags().stream()
-                        .map(tag -> tag.tagName).toArray(String[]::new)).build();
+        Person editedPerson = new PersonBuilder().build();
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(editedPerson).build();
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
 

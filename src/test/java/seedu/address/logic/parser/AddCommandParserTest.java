@@ -53,7 +53,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_allFieldsPresent_success() {
-        Person expectedPerson = new PersonBuilder(BOB).withTags().withBudget(VALID_BUDGET_BOB).build();
+        Person expectedPerson = new PersonBuilder(BOB).withBudget(VALID_BUDGET_BOB).build();
 
         // whitespace only preamble
         assertParseSuccess(parser, PREAMBLE_WHITESPACE + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
@@ -127,7 +127,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_seller_success() {
-        Person expectedPerson = new PersonBuilder(AMY).withIntention(Intention.SELLER).withTags().build();
+        Person expectedPerson = new PersonBuilder(AMY).withIntention(Intention.SELLER).build();
         assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
                 + INTENTION_DESC_SELLER + ADDRESS_DESC_AMY, new AddCommand(expectedPerson));
     }
@@ -159,7 +159,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_optionalBudget_success() {
-        Person expectedPerson = new PersonBuilder(AMY).withBudget(VALID_BUDGET_BOB).withTags().build();
+        Person expectedPerson = new PersonBuilder(AMY).withBudget(VALID_BUDGET_BOB).build();
         assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
                 + INTENTION_DESC_BUYER + ADDRESS_DESC_AMY + BUDGET_DESC_BOB,
                 new AddCommand(expectedPerson));
@@ -182,7 +182,7 @@ public class AddCommandParserTest {
     @Test
     public void parse_optionalFieldsMissing_success() {
         // no budget
-        Person expectedPerson = new PersonBuilder(AMY).withTags().build();
+        Person expectedPerson = new PersonBuilder(AMY).build();
         assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
                 + INTENTION_DESC_BUYER + ADDRESS_DESC_AMY,
                 new AddCommand(expectedPerson));
@@ -260,7 +260,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_addressContainingTagSubstring_success() {
-        Person expectedPerson = new PersonBuilder(BOB).withTags().withAddress("West/12").build();
+        Person expectedPerson = new PersonBuilder(BOB).withAddress("West/12").build();
         assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + INTENTION_DESC_BUYER + " a/West/12", new AddCommand(expectedPerson));
     }
