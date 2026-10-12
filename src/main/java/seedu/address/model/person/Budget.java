@@ -3,6 +3,9 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+
 /**
  * Represents a client's budget in whole dollars.
  * Guarantees: immutable; is valid as declared in {@link #isValidBudget(String)}
@@ -48,6 +51,13 @@ public class Budget {
      */
     public BudgetBand getBand() {
         return BudgetBand.of(amount);
+    }
+
+    /**
+     * Returns the amount for the client card, with a dollar sign and thousands separators.
+     */
+    public String toDisplay() {
+        return "$" + NumberFormat.getIntegerInstance(Locale.US).format(amount);
     }
 
     @Override

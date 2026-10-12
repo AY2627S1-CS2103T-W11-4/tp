@@ -44,8 +44,9 @@ public class Messages {
                 .append("; Address: ")
                 .append(person.getAddress())
                 .append("; Remark: ")
-                .append(person.getRemark())
-                .append("; Tags: ");
+                .append(person.getRemark());
+        person.getBudget().ifPresent(budget -> builder.append("; Budget: ").append(budget.toDisplay()));
+        builder.append("; Tags: ");
         person.getTags().forEach(builder::append);
         return builder.toString();
     }

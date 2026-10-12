@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
@@ -32,6 +33,7 @@ class JsonAdaptedPerson {
     private final String intention;
     private final String address;
     private final String remark;
+    private final String budget;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
 
     /**
@@ -41,13 +43,15 @@ class JsonAdaptedPerson {
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("intention") String intention,
             @JsonProperty("address") String address,
-            @JsonProperty("remark") String remark, @JsonProperty("tags") List<JsonAdaptedTag> tags) {
+            @JsonProperty("remark") String remark, @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("budget") String budget) {
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.intention = intention;
         this.address = address;
         this.remark = remark;
+        this.budget = budget;
         if (tags != null) {
             this.tags.addAll(tags);
         }
@@ -58,7 +62,7 @@ class JsonAdaptedPerson {
      */
     public JsonAdaptedPerson(String name, String phone, String email, String intention,
             String address, List<JsonAdaptedTag> tags) {
-        this(name, phone, email, intention, address, "", tags);
+        this(name, phone, email, intention, address, "", tags, null);
     }
 
     /**
@@ -71,6 +75,7 @@ class JsonAdaptedPerson {
         intention = source.getIntention().toString();
         address = source.getAddress().value;
         remark = source.getRemark().value;
+        budget = source.getBudget().map(Budget::toString).orElse(null);
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -132,8 +137,18 @@ class JsonAdaptedPerson {
 
         final Remark modelRemark = new Remark(remark == null ? "" : remark);
 
+        final Budget modelBudget;
+        if (budget == null) {
+            modelBudget = null;
+        } else if (!Budget.isValidBudget(budget)) {
+            throw new IllegalValueException(Budget.MESSAGE_CONSTRAINTS);
+        } else {
+            modelBudget = new Budget(budget);
+        }
+
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelIntention, modelAddress, modelRemark, modelTags);
+        return new Person(modelName, modelPhone, modelEmail, modelIntention, modelAddress, modelRemark,
+                modelTags, modelBudget);
     }
 
 }

@@ -80,10 +80,15 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION a/ADDRESS [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION a/ADDRESS [b/BUDGET] [t/TAG]... `
 
 Intention is required and must be `Buyer` or `Seller` (case-sensitive). For example, use `i/Buyer`.
 Existing `edit` and `remark` commands preserve intention; changing it through `edit` is not supported yet.
+
+Budget is optional. It is a whole-dollar amount with no commas and no decimal point, such as `b/1500000`.
+The client card shows that amount on the right.
+$800,000 and below is red, above $800,000 up to $2,500,000 is yellow, and above $2,500,000 is green.
+A saved file that has no budget still opens.
 
 **Existing data:** Before using this version, back up `data/addressbook.json`. Each person needs an
 `"intention": "Buyer"` or `"intention": "Seller"` property matching their actual intention.
@@ -95,7 +100,7 @@ Files with missing or invalid intentions cannot be loaded. Do not save new chang
 </box>
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com i/Buyer a/John street, block 123, #01-01`
+* `add n/John Doe p/98765432 e/johnd@example.com i/Buyer a/John street, block 123, #01-01 b/1500000`
 * `add n/Betsy Crowe t/friend e/betsycrowe@example.com i/Seller a/Newgate Prison p/1234567 t/criminal`
 
 ### Listing all persons: `list`
@@ -108,16 +113,18 @@ Format: `list`
 
 Edits an existing person in the address book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [b/BUDGET] [t/TAG]... `
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* `b/BUDGET` replaces the client's budget. Leaving `b/` out keeps the existing budget.
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 1 b/900000` Sets the 1st person's budget to $900,000, shown in yellow.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 
 ### Locating persons by name, email, phone, or intention: `find`

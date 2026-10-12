@@ -7,6 +7,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import seedu.address.model.person.Budget;
+import seedu.address.model.person.BudgetBand;
 import seedu.address.model.person.Person;
 
 /**
@@ -41,6 +43,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label remark;
     @FXML
+    private Label budget;
+    @FXML
     private FlowPane tags;
 
     /**
@@ -55,8 +59,33 @@ public class PersonCard extends UiPart<Region> {
         address.setText(person.getAddress().value);
         email.setText(person.getEmail().value);
         remark.setText(person.getRemark().value);
+        person.getBudget().ifPresentOrElse(this::showBudget, this::hideBudget);
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+    }
+
+    /**
+     * Shows {@code clientBudget} on the right of the card, coloured by its price band.
+     */
+    private void showBudget(Budget clientBudget) {
+        budget.setText(clientBudget.toDisplay());
+        budget.getStyleClass().add(styleClassFor(clientBudget.getBand()));
+        budget.setVisible(true);
+        budget.setManaged(true);
+    }
+
+    private void hideBudget() {
+        budget.setText("");
+        budget.setVisible(false);
+        budget.setManaged(false);
+    }
+
+    private static String styleClassFor(BudgetBand band) {
+        return switch (band) {
+            case LOW -> "budget-low";
+            case MIDDLE -> "budget-middle";
+            case HIGH -> "budget-high";
+        };
     }
 }

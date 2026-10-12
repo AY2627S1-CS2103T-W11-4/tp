@@ -113,6 +113,10 @@ public class PersonTest {
         // different remark -> returns false
         editedAlice = new PersonBuilder(ALICE).withRemark("Likes baseball").build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // different budget -> returns false
+        editedAlice = new PersonBuilder(ALICE).withBudget("1500000").build();
+        assertFalse(ALICE.equals(editedAlice));
     }
 
     @Test
@@ -120,6 +124,7 @@ public class PersonTest {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", email=" + ALICE.getEmail() + ", intention=" + ALICE.getIntention()
                 + ", address=" + ALICE.getAddress() + ", remark=" + ALICE.getRemark()
+                + ", budget=" + ALICE.getBudget().orElse(null)
                 + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
     }
