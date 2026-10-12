@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_TAGS_NOT_SUPPORTED;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_BUDGET;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
@@ -22,7 +23,6 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Remark;
-import seedu.address.model.tag.Tag;
 
 /**
  * Parses input arguments and creates a new AddCommand object
@@ -38,6 +38,10 @@ public class AddCommandParser implements Parser<AddCommand> {
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                         PREFIX_INTENTION, PREFIX_BUDGET, PREFIX_TAG);
+
+        if (!argMultimap.getAllValues(PREFIX_TAG).isEmpty()) {
+            throw new ParseException(MESSAGE_TAGS_NOT_SUPPORTED);
+        }
 
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL,
                 PREFIX_INTENTION)
@@ -55,9 +59,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         Budget budget = argMultimap.getValue(PREFIX_BUDGET).isPresent()
                 ? ParserUtil.parseBudget(argMultimap.getValue(PREFIX_BUDGET).get())
                 : null;
-        Set<Tag> tagList = ParserUtil.parseTags(argMultimap.getAllValues(PREFIX_TAG));
-
-        Person person = new Person(name, phone, email, intention, address, new Remark(""), tagList, budget);
+        Person person = new Person(name, phone, email, intention, address, new Remark(""), Set.of(), budget);
 
         return new AddCommand(person);
     }
