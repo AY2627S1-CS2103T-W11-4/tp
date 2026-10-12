@@ -5,6 +5,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -25,13 +26,14 @@ public class Person {
     private final Address address;
     private final Intention intention;
     private final Remark remark;
+    private final Budget budget;
     private final Set<Tag> tags = new HashSet<>();
 
     /**
-     * Every field must be present and not null.
+     * Every field must be present and not null, except {@code budget}, which may be null when the client has none.
      */
     public Person(Name name, Phone phone, Email email, Intention intention,
-            Address address, Remark remark, Set<Tag> tags) {
+            Address address, Remark remark, Set<Tag> tags, Budget budget) {
         requireAllNonNull(name, phone, email, intention, address, remark, tags);
         this.name = name;
         this.phone = phone;
@@ -39,6 +41,7 @@ public class Person {
         this.intention = intention;
         this.address = address;
         this.remark = remark;
+        this.budget = budget;
         this.tags.addAll(tags);
     }
 
@@ -56,6 +59,13 @@ public class Person {
 
     public Intention getIntention() {
         return intention;
+    }
+
+    /**
+     * Returns the client's budget, or an empty optional when none has been recorded.
+     */
+    public Optional<Budget> getBudget() {
+        return Optional.ofNullable(budget);
     }
 
     public Address getAddress() {
@@ -108,13 +118,14 @@ public class Person {
                 && intention == otherPerson.intention
                 && address.equals(otherPerson.address)
                 && remark.equals(otherPerson.remark)
+                && Objects.equals(budget, otherPerson.budget)
                 && tags.equals(otherPerson.tags);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, intention, address, remark, tags);
+        return Objects.hash(name, phone, email, intention, address, remark, budget, tags);
     }
 
     @Override
@@ -126,6 +137,7 @@ public class Person {
                 .add("intention", intention)
                 .add("address", address)
                 .add("remark", remark)
+                .add("budget", budget)
                 .add("tags", tags)
                 .toString();
     }

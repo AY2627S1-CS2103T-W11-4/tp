@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
@@ -41,6 +42,29 @@ public class JsonAdaptedPersonTest {
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(BENSON);
         assertEquals(BENSON, person.toModelType());
+    }
+
+    @Test
+    public void toModelType_budget_roundTrip() throws Exception {
+        Person buyer = new PersonBuilder(BENSON).withBudget("1800000").build();
+        assertEquals(buyer, new JsonAdaptedPerson(buyer).toModelType());
+    }
+
+    @Test
+    public void toModelType_missingBudget_returnsPersonWithoutBudget() throws Exception {
+        String json = "{\"name\":\"" + VALID_NAME + "\",\"phone\":\"" + VALID_PHONE + "\","
+                + "\"email\":\"" + VALID_EMAIL + "\",\"intention\":\"" + VALID_INTENTION + "\","
+                + "\"address\":\"" + VALID_ADDRESS + "\"}";
+        JsonAdaptedPerson person = JsonUtil.fromJsonString(json, JsonAdaptedPerson.class);
+        Person expected = new PersonBuilder(BENSON).withTags().build();
+        assertEquals(expected, person.toModelType());
+    }
+
+    @Test
+    public void toModelType_invalidBudget_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION, VALID_ADDRESS, "", VALID_TAGS, "800,000");
+        assertThrows(IllegalValueException.class, Budget.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test
