@@ -30,29 +30,30 @@ public class FindCommandParserTest {
         FindCommand expectedFindCommand =
                 new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice", "Bob")));
 
-        for (String selector : List.of("/name", "/n", "/NAME", "/N", "/Name")) {
-            assertParseSuccess(parser, selector + " Alice Bob", expectedFindCommand);
+        for (String selector : List.of("n/", "N/")) {
+            assertParseSuccess(parser, selector + "Alice Bob", expectedFindCommand);
         }
-        assertParseSuccess(parser, " \n /n Alice \n \t Bob  \t", expectedFindCommand);
+        assertParseSuccess(parser, " \n n/Alice \n \t Bob  \t", expectedFindCommand);
     }
 
     @Test
     public void parse_missingProperty_throwsParseException() {
-        for (String args : List.of("alice", "Alice Bob", "name alice", "n/alice", "alice /n bob")) {
+        for (String args : List.of("Alice", "Alice Bob", "name Alice", "n Alice", "p 9123", "Alice n/Bob")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_MISSING_PROPERTY);
         }
     }
 
     @Test
     public void parse_invalidProperty_throwsParseException() {
-        for (String args : List.of("/address nus", "/unknown alice", "/", "/ name alice", "/n alice /unknown bob")) {
+        for (String args : List.of("a/NUS", "x/foo", "z/Alice", "unknown/Alice", "/", "/ name Alice",
+                "n/Alice /unknown Bob")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
         }
     }
 
     @Test
     public void parse_nameSelectorWithoutKeywords_throwsParseException() {
-        for (String selector : List.of("/n", "/name", "/N", "/NAME", "/Name")) {
+        for (String selector : List.of("n/", "N/")) {
             assertParseFailure(parser, selector, FindCommand.MESSAGE_MISSING_KEYWORD);
             assertParseFailure(parser, " \t " + selector + " \n ", FindCommand.MESSAGE_MISSING_KEYWORD);
         }
@@ -62,11 +63,13 @@ public class FindCommandParserTest {
     public void parse_emailSelectors_returnsEmailFindCommand() {
         FindCommand expectedFindCommand =
                 new FindCommand(
-                        new EmailContainsKeywordsPredicate(List.of("alice@example.com")));
+                        new EmailContainsKeywordsPredicate(List.of("gmail")));
 
-        for (String selector : List.of("/e", "/email", "/E", "/EMAIL", "/Email")) {
-            assertParseSuccess(parser, selector + " alice@example.com",
+        for (String selector : List.of("e/", "E/")) {
+            assertParseSuccess(parser, selector + "gmail",
                     expectedFindCommand);
+            assertParseSuccess(parser, selector + "alice@example.com",
+                    new FindCommand(new EmailContainsKeywordsPredicate(List.of("alice@example.com"))));
         }
     }
 
@@ -76,9 +79,9 @@ public class FindCommandParserTest {
                 new FindCommand(
                         new EmailContainsKeywordsPredicate(List.of("alice", "gmail")));
 
-        assertParseSuccess(parser, "/email alice gmail", expectedFindCommand);
-        assertParseSuccess(parser, "/e alice gmail", expectedFindCommand);
-        assertParseSuccess(parser, " \n /E \t alice   \n gmail \t ",
+        assertParseSuccess(parser, "e/alice gmail", expectedFindCommand);
+        assertParseSuccess(parser, "E/alice gmail", expectedFindCommand);
+        assertParseSuccess(parser, " \n E/\t alice   \n gmail \t ",
                 expectedFindCommand);
     }
 
@@ -86,7 +89,7 @@ public class FindCommandParserTest {
     public void parse_emailSelectorWithoutKeywords_throwsParseException() {
         String expectedMessage = FindCommand.MESSAGE_MISSING_KEYWORD;
 
-        for (String selector : List.of("/e", "/email", "/E", "/EMAIL", "/Email")) {
+        for (String selector : List.of("e/", "E/")) {
             assertParseFailure(parser, selector, expectedMessage);
             assertParseFailure(parser, " \t " + selector + " \n ",
                     expectedMessage);
@@ -99,8 +102,8 @@ public class FindCommandParserTest {
                 new FindCommand(
                         new PhoneContainsKeywordsPredicate(List.of("98765432")));
 
-        for (String selector : List.of("/p", "/phone", "/P", "/PHONE", "/Phone")) {
-            assertParseSuccess(parser, selector + " 98765432",
+        for (String selector : List.of("p/", "P/")) {
+            assertParseSuccess(parser, selector + "98765432",
                     expectedFindCommand);
         }
     }
@@ -111,11 +114,11 @@ public class FindCommandParserTest {
                 new FindCommand(
                         new PhoneContainsKeywordsPredicate(List.of("9123", "9876")));
 
-        assertParseSuccess(parser, "/phone 9123 9876", expectedFindCommand);
-        assertParseSuccess(parser, "/p 9123 9876", expectedFindCommand);
-        assertParseSuccess(parser, "  /phone 9123 9876  ",
+        assertParseSuccess(parser, "p/9123 9876", expectedFindCommand);
+        assertParseSuccess(parser, "P/9123 9876", expectedFindCommand);
+        assertParseSuccess(parser, "  p/9123 9876  ",
                 expectedFindCommand);
-        assertParseSuccess(parser, " \n /P \t 9123   \n 9876 \t ",
+        assertParseSuccess(parser, " \n P/\t 9123   \n 9876 \t ",
                 expectedFindCommand);
     }
 
@@ -123,7 +126,7 @@ public class FindCommandParserTest {
     public void parse_phoneSelectorWithoutKeywords_throwsParseException() {
         String expectedMessage = FindCommand.MESSAGE_MISSING_KEYWORD;
 
-        for (String selector : List.of("/p", "/phone", "/P", "/PHONE", "/Phone")) {
+        for (String selector : List.of("p/", "P/")) {
             assertParseFailure(parser, selector, expectedMessage);
             assertParseFailure(parser, " \t " + selector + " \n ",
                     expectedMessage);
@@ -132,24 +135,24 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_intentionSelectors_returnsIntentionFindCommand() {
-        for (String selector : List.of("/i", "/intention", "/I", "/INTENTION", "/Intention")) {
+        for (String selector : List.of("i/", "I/")) {
             for (String keyword : List.of("buyer", "Buyer", "BUYER", "bUyEr")) {
-                assertParseSuccess(parser, selector + " " + keyword,
+                assertParseSuccess(parser, selector + keyword,
                         new FindCommand(new IntentionMatchesPredicate(Intention.BUYER)));
             }
             for (String keyword : List.of("seller", "Seller", "SELLER", "sElLeR")) {
-                assertParseSuccess(parser, selector + " " + keyword,
+                assertParseSuccess(parser, selector + keyword,
                         new FindCommand(new IntentionMatchesPredicate(Intention.SELLER)));
             }
         }
-        assertParseSuccess(parser, " \n /i \t buyer \n ",
+        assertParseSuccess(parser, " \n i/\t buyer \n ",
                 new FindCommand(new IntentionMatchesPredicate(Intention.BUYER)));
     }
 
     @Test
     public void parse_intentionSelectorWithoutValue_throwsParseException() {
         String expectedMessage = FindCommand.MESSAGE_MISSING_KEYWORD;
-        for (String selector : List.of("/i", "/intention", "/I", "/INTENTION", "/Intention")) {
+        for (String selector : List.of("i/", "I/")) {
             assertParseFailure(parser, selector, expectedMessage);
             assertParseFailure(parser, " \t " + selector + " \n ", expectedMessage);
         }
@@ -157,9 +160,9 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidIntention_throwsParseException() {
-        for (String selector : List.of("/i", "/intention")) {
+        for (String selector : List.of("i/", "I/")) {
             for (String keyword : List.of("tenant", "buy", "sell", "buyers", "sellers", "buyer,seller")) {
-                assertParseFailure(parser, selector + " " + keyword, FindCommand.MESSAGE_INVALID_INTENTION);
+                assertParseFailure(parser, selector + keyword, FindCommand.MESSAGE_INVALID_INTENTION);
             }
         }
     }
@@ -167,7 +170,7 @@ public class FindCommandParserTest {
     @Test
     public void parse_multipleIntentionValues_throwsParseException() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
-        for (String args : List.of("/i buyer seller", "/intention buyer buyer", "/i seller extra")) {
+        for (String args : List.of("i/buyer seller", "I/buyer buyer", "i/seller extra")) {
             assertParseFailure(parser, args, expectedMessage);
         }
     }
@@ -177,28 +180,63 @@ public class FindCommandParserTest {
         String expectedMessage = FindCommand.MESSAGE_MULTIPLE_PROPERTIES;
 
         for (String args : List.of(
-                "/name alice /name bob",
-                "/n alice /NAME bob",
-                "/name alice /email gmail",
-                "/phone 9123 /n alice",
-                "/intention buyer /name alice",
-                "/n alice /i buyer",
-                "/p 9876 /phone 9123",
-                "/phone 9876 /p 9123",
-                "/e alice /email gmail",
-                "/email alice /e gmail",
-                "/email alice /phone 9123",
-                "/phone 9123 /email alice",
-                "/i buyer /intention seller",
-                "/intention buyer /i buyer",
-                "/i /intention",
-                "/i buyer /email alice",
-                "/intention seller /phone 9123",
-                "/email alice /intention buyer",
-                "/e alice /i seller",
-                "/phone 9123 /i buyer",
-                "/p 9123 /INTENTION seller")) {
+                "n/Alice n/Bob",
+                "n/Alice N/Bob",
+                "p/9123 p/9876",
+                "e/gmail e/yahoo",
+                "i/buyer i/seller",
+                "n/Alice p/9123",
+                "n/Alice e/gmail",
+                "e/gmail i/buyer",
+                "p/9123 i/seller",
+                "p/9123 n/Alice",
+                "i/buyer n/Alice",
+                "i/buyer e/gmail",
+                "i/seller p/9123",
+                "e/gmail p/9123",
+                "p/9123 e/gmail",
+                "n/ n/",
+                "i/ I/",
+                "n/Alice\tP/9123",
+                "n/Alice\nE/gmail")) {
             assertParseFailure(parser, args, expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_singleNameKeyword_returnsNameFindCommand() {
+        FindCommand expectedFindCommand = new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice")));
+        assertParseSuccess(parser, "n/Alice", expectedFindCommand);
+        assertParseSuccess(parser, "N/Alice", expectedFindCommand);
+        assertParseSuccess(parser, " \t n/Alice \n ", expectedFindCommand);
+    }
+
+    @Test
+    public void parse_uppercaseEmailKeyword_returnsEmailFindCommand() {
+        assertParseSuccess(parser, "E/GMAIL",
+                new FindCommand(new EmailContainsKeywordsPredicate(List.of("GMAIL"))));
+    }
+
+    @Test
+    public void parse_singlePhoneSubstring_returnsPhoneFindCommand() {
+        assertParseSuccess(parser, "P/9123",
+                new FindCommand(new PhoneContainsKeywordsPredicate(List.of("9123"))));
+    }
+
+    @Test
+    public void parse_leadingSlashSelectors_throwsParseException() {
+        for (String args : List.of("/n Alice", "/name Alice", "/e gmail", "/email gmail",
+                "/p 9123", "/phone 9123", "/i buyer", "/intention buyer", "/intention seller",
+                "/N Alice", "/EMAIL gmail", "/PHONE 9123", "/INTENTION BUYER")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+    }
+
+    @Test
+    public void parse_longTrailingSlashSelectors_throwsParseException() {
+        for (String args : List.of("name/Alice", "email/gmail", "phone/9123", "intention/buyer",
+                "NAME/Alice", "Email/gmail", "Phone/9123", "Intention/BUYER")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
         }
     }
 }
