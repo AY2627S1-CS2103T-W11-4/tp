@@ -3,7 +3,6 @@ package seedu.address.testutil;
 import java.util.HashSet;
 import java.util.Set;
 
-import seedu.address.model.person.Address;
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Intention;
@@ -22,7 +21,6 @@ public class PersonBuilder {
     public static final String DEFAULT_NAME = "Amy Bee";
     public static final String DEFAULT_PHONE = "85355255";
     public static final String DEFAULT_EMAIL = "amy@gmail.com";
-    public static final String DEFAULT_ADDRESS = "123, Jurong West Ave 6, #08-111";
     public static final String DEFAULT_REMARK = "";
     public static final Intention DEFAULT_INTENTION = Intention.BUYER;
 
@@ -30,7 +28,6 @@ public class PersonBuilder {
     private Phone phone;
     private Email email;
     private Intention intention;
-    private Address address;
     private Remark remark;
     private Budget budget;
     private Set<Tag> tags;
@@ -43,7 +40,6 @@ public class PersonBuilder {
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
         intention = DEFAULT_INTENTION;
-        address = new Address(DEFAULT_ADDRESS);
         remark = new Remark(DEFAULT_REMARK);
         budget = null;
         tags = new HashSet<>();
@@ -57,7 +53,6 @@ public class PersonBuilder {
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         intention = personToCopy.getIntention();
-        address = personToCopy.getAddress();
         remark = personToCopy.getRemark();
         budget = personToCopy.getBudget().orElse(null);
         tags = new HashSet<>(personToCopy.getTags());
@@ -76,14 +71,6 @@ public class PersonBuilder {
      */
     public PersonBuilder withTags(String ... tags) {
         this.tags = SampleDataUtil.getTagSet(tags);
-        return this;
-    }
-
-    /**
-     * Sets the {@code Address} of the {@code Person} that we are building.
-     */
-    public PersonBuilder withAddress(String address) {
-        this.address = new Address(address);
         return this;
     }
 
@@ -128,7 +115,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, intention, address, remark, tags, budget);
+        return new Person(name, phone, email, intention, remark, tags, budget);
     }
 
 }
