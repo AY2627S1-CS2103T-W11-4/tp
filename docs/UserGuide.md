@@ -131,20 +131,21 @@ Examples:
 
 Finds contacts using exactly one selected property.
 
-Format: `find /CLIENT_PROPERTY KEYWORD [MORE_KEYWORDS]`
+Format: `find PROPERTY/KEYWORD [MORE_KEYWORDS]`
 
-Property | Selector | Short form
---- | --- | ---
-Name | `/name` | `/n`
-Email | `/email` | `/e`
-Phone | `/phone` | `/p`
-Intention | `/intention` | `/i`
+Property | Prefix
+--- | ---
+Name | `n/`
+Email | `e/`
+Phone | `p/`
+Intention | `i/`
 
-* Selectors and keywords are case-insensitive; `/NAME` and `/name` have the same effect.
-* Specify exactly one selector immediately after `find`, with `/` immediately before the property.
-  Missing, unknown, repeated, or mixed selectors are rejected. For example, use `find /n alice`.
+* Prefix letters and keywords are case-insensitive; `N/` and `n/` have the same effect.
+* Specify exactly one short prefix immediately after `find`, with `/` immediately after the letter.
+  Missing, unknown, repeated, or mixed prefixes are rejected. For example, use `find n/alice`.
+  Long property aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
-* Name, email, and phone searches use substring matching; `find /n ali` matches `Alice`.
+* Name, email, and phone searches use substring matching; `find n/ali` matches `Alice`.
 * Multiple keywords use `OR` matching: a contact is returned if any keyword matches the selected property.
 * Intention searches require exactly one complete value: `buyer` or `seller`, in any capitalization.
 * Only the selected property is searched. Each search filters the entire contact list, replacing any previous filter.
@@ -152,12 +153,12 @@ Intention | `/intention` | `/i`
 
 Examples:
 
-* `find /name alice` or `find /n alice` finds names containing `alice`.
-* `find /n alex david` returns `Alex Yeoh` and `David Li`.
-* `find /email gmail` or `find /e gmail` finds email addresses containing `gmail`.
-* `find /phone 9123` or `find /p 9123` finds phone numbers containing `9123`.
-* `find /intention buyer` or `find /i buyer` lists all buyers.
-* `find /intention seller` or `find /i seller` lists all sellers.
+* `find n/alice` finds names containing `alice`.
+* `find n/alex david` returns `Alex Yeoh` and `David Li`.
+* `find e/gmail` finds email addresses containing `gmail`.
+* `find p/9123` finds phone numbers containing `9123`.
+* `find i/buyer` lists all buyers.
+* `find i/seller` lists all sellers.
 
 ### Deleting a person: `delete`
 
@@ -171,7 +172,7 @@ Format: `delete INDEX`
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find /n Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+* `find n/Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
 ### Clearing all entries: `clear`
 
@@ -228,6 +229,6 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find /CLIENT_PROPERTY KEYWORD [MORE_KEYWORDS]`<br> e.g., `find /n James Jake`, `find /e gmail`, `find /p 9123`, `find /i seller`
+**Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find i/seller`
 **List**   | `list`
 **Help**   | `help`

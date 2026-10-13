@@ -159,6 +159,15 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Find command
+
+`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, or `i/`.
+For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
+Name, email, and phone searches use substring matching with OR semantics across keywords.
+Intention searches accept exactly one value, `buyer` or `seller`, case-insensitively.
+Missing keywords, repeated or mixed prefixes, and unsupported selectors are rejected.
+`FindCommand` replaces the filter on the complete client list without modifying stored clients.
+
 ### Budget feature
 
 #### Implementation
