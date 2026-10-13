@@ -35,8 +35,6 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
-   * `clear` : Deletes all contacts.
-
    * `exit` : Exits the app.
 
 1. Refer to the [Features](#features) section below for details of each command.
@@ -58,7 +56,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
+* Extraneous parameters for commands that take no parameters, such as `help`, `list`, and `exit`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -164,12 +162,6 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find n/Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
-### Clearing all entries: `clear`
-
-Clears all entries from the address book.
-
-Format: `clear`
-
 ### Exiting the program: `exit`
 
 Exits the program.
@@ -215,8 +207,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION a/ADDRESS [b/BUDGET]`<br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer a/123, Clementi Rd, 1234665 b/1500000`
-**Clear**  | `clear`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION a/ADDRESS [b/BUDGET] ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer a/123, Clementi Rd, 1234665 t/friend t/colleague`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find i/seller`
