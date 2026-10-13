@@ -151,6 +151,20 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Command reference help
+
+`HelpCommand` returns a `CommandResult` with `showHelp` set to `true`. The existing `MainWindow#handleHelp()`
+method shows or focuses a single `HelpWindow`. The `F1` shortcut and Help menu use the same method.
+
+`HelpContent` holds each command's description, syntax, notes and examples, using shared command words,
+prefixes and validation messages where appropriate. `HelpWindow` creates a `CommandHelpCard` for each entry.
+The cards are display-only and sit inside a scrolling pane, with the heading and User Guide footer outside it.
+The layout and styles are defined in `HelpWindow.fxml`, `CommandHelpCard.fxml` and `HelpWindow.css`.
+
+The reference is bundled with the app and works offline. The footer's Copy URL button copies the RESIDEX User Guide URL.
+Update `HelpContent` and the User Guide together when commands change. `HelpContentTest` checks that the documented
+examples parse as the intended commands without executing them or starting JavaFX.
+
 ### Find command
 
 `FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, or `i/`.
@@ -758,6 +772,33 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Viewing command help
+
+1. Opening and reopening help
+
+   1. Test case: `help`<br>
+      Expected: A separate, resizable window titled `RESIDEX Help` opens with command-reference cards.
+
+   1. With help already open, enter `help` again in the main window.<br>
+      Expected: The existing help window is focused; no second help window is created.
+
+   1. Close help, focus the main command box and press `F1`. Also try **Help > Help**.<br>
+      Expected: Each action opens the same command-reference window.
+
+1. Reading the reference
+
+   1. Scroll through the cards.<br>
+      Expected: Cards for `add`, `edit`, `find`, `list`, `delete`, `remark`, `help` and `exit` show their formats,
+      details and examples. The heading and User Guide footer remain visible while the cards scroll.
+
+   1. Resize the window narrower and wider.<br>
+      Expected: Long text and examples wrap inside their cards. The cards can be read without horizontal scrolling.
+
+1. Copying the guide URL
+
+   1. Click **Copy URL** and paste the clipboard contents into a text editor.<br>
+      Expected: `https://ay2627s1-cs2103t-w11-4.github.io/tp/UserGuide.html` is pasted.
 
 ### Recording a budget
 
