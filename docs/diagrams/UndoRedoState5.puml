@@ -4,7 +4,7 @@ skinparam ClassFontColor #000000
 skinparam ClassBorderColor #000000
 skinparam ClassBackgroundColor #FFFFAA
 
-title After command "clear"
+title After command "delete 1"
 
 package States <<rectangle>> {
     class State1 as "<u>ab0:AddressBook</u>"
