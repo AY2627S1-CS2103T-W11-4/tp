@@ -1,6 +1,10 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 
 import java.util.List;
 
@@ -30,28 +34,31 @@ public class FindCommandParser implements Parser<FindCommand> {
             throw new ParseException(FindCommand.MESSAGE_MISSING_ARGUMENTS);
         }
 
-        List<String> tokens = List.of(trimmedArgs.split("\\s+"));
-        String firstToken = tokens.get(0);
-
-        if (!firstToken.startsWith("/")) {
+        String firstToken = trimmedArgs.split("\\s+", 2)[0];
+        int prefixLength = firstToken.indexOf('/') + 1;
+        if (prefixLength == 0) {
             throw new ParseException(FindCommand.MESSAGE_MISSING_PROPERTY);
         }
-        if (!isSelector(firstToken)) {
+        String selector = firstToken.substring(0, prefixLength);
+        if (!isSelector(selector)) {
             throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
         }
 
-        List<String> keywords = tokens.subList(1, tokens.size());
-        if (keywords.stream().anyMatch(this::isSelector)) {
-            throw new ParseException(FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
-        }
-        if (keywords.stream().anyMatch(keyword -> keyword.startsWith("/"))) {
-            throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
-        }
-        if (keywords.isEmpty()) {
+        String keywordArgs = trimmedArgs.substring(prefixLength).trim();
+        if (keywordArgs.isEmpty()) {
             throw new ParseException(FindCommand.MESSAGE_MISSING_KEYWORD);
         }
-
-        if (isIntentionSelector(firstToken)) {
+        List<String> keywords = List.of(keywordArgs.split("\\s+"));
+        if (keywords.stream()
+                .filter(keyword -> keyword.contains("/"))
+                .map(keyword -> keyword.split("/", 2)[0] + "/")
+                .anyMatch(this::isSelector)) {
+            throw new ParseException(FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        }
+        if (keywords.stream().anyMatch(keyword -> keyword.contains("/"))) {
+            throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+        if (isIntentionSelector(selector)) {
             if (keywords.size() != 1) {
                 throw new ParseException(
                         String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
@@ -66,11 +73,11 @@ public class FindCommandParser implements Parser<FindCommand> {
             throw new ParseException(FindCommand.MESSAGE_INVALID_INTENTION);
         }
 
-        if (isEmailSelector(firstToken)) {
+        if (isEmailSelector(selector)) {
             return new FindCommand(new EmailContainsKeywordsPredicate(keywords));
         }
 
-        if (isPhoneSelector(firstToken)) {
+        if (isPhoneSelector(selector)) {
             return new FindCommand(new PhoneContainsKeywordsPredicate(keywords));
         }
 
@@ -78,15 +85,15 @@ public class FindCommandParser implements Parser<FindCommand> {
     }
 
     private boolean isNameSelector(String token) {
-        return token.equalsIgnoreCase("/name") || token.equalsIgnoreCase("/n");
+        return token.equalsIgnoreCase(PREFIX_NAME.getPrefix());
     }
 
     private boolean isEmailSelector(String token) {
-        return token.equalsIgnoreCase("/email") || token.equalsIgnoreCase("/e");
+        return token.equalsIgnoreCase(PREFIX_EMAIL.getPrefix());
     }
 
     private boolean isPhoneSelector(String token) {
-        return token.equalsIgnoreCase("/phone") || token.equalsIgnoreCase("/p");
+        return token.equalsIgnoreCase(PREFIX_PHONE.getPrefix());
     }
 
     private boolean isSelector(String token) {
@@ -94,6 +101,6 @@ public class FindCommandParser implements Parser<FindCommand> {
     }
 
     private boolean isIntentionSelector(String token) {
-        return token.equalsIgnoreCase("/intention") || token.equalsIgnoreCase("/i");
+        return token.equalsIgnoreCase(PREFIX_INTENTION.getPrefix());
     }
 }
