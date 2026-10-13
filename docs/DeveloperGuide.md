@@ -130,14 +130,6 @@ The `Model` component,
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
 
-<box type="info" seamless>
-
-**Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
-
-<puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
-</box>
-
-
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
@@ -158,6 +150,62 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Find command
+
+`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, or `i/`.
+For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
+Name, email, and phone searches use substring matching with OR semantics across keywords.
+Intention searches accept exactly one value, `buyer` or `seller`, case-insensitively.
+Missing keywords, repeated or mixed prefixes, and unsupported selectors are rejected.
+`FindCommand` replaces the filter on the complete client list without modifying stored clients.
+
+### Budget feature
+
+#### Implementation
+
+A client's budget is optional.
+`Budget` stores a non-negative whole-dollar amount.
+`BudgetBand` classifies that amount.
+
+The bands are:
+
+* **Low:** $800,000 and below.
+* **Middle:** above $800,000, up to and including $2,500,000.
+* **High:** above $2,500,000.
+
+`add` and `edit` accept the amount with the `b/` prefix.
+Omitting `b/` on `add` stores no budget.
+Omitting `b/` on `edit` keeps the client's current budget.
+An invalid amount, such as a decimal, a comma, or a leading zero, is rejected and the stored client is left unchanged.
+
+`JsonAdaptedPerson` writes the amount as a whole-dollar string.
+A saved client with no `budget` field loads with no budget.
+`PersonCard` shows the amount on the right of the card.
+Low is red, Middle is yellow, and High is green.
+A client with no budget has no amount on the card.
+
+`RemarkCommand` copies the existing budget onto the updated client, so adding a remark does not remove it.
+
+#### Design considerations
+
+**Aspect: Whether every client must have a budget**
+
+* **Alternative 1 (current choice):** The budget is optional.
+  * Pros: Sellers and existing saved files can omit it. Old data files still load.
+  * Cons: The card does not show an amount for every client.
+* **Alternative 2:** Require a budget in every `add` command.
+  * Pros: Every card shows a coloured amount.
+  * Cons: Existing data files without a budget cannot be loaded, and a seller must be given an amount that may not mean anything.
+
+**Aspect: How the amount is stored**
+
+* **Alternative 1 (current choice):** Store the whole-dollar amount and derive the colour from `BudgetBand`.
+  * Pros: The user can enter any valid amount. The colour stays consistent with the thresholds.
+  * Cons: The colour is not stored, so changing a threshold changes the colour of existing clients.
+* **Alternative 2:** Store the colour the user picks.
+  * Pros: The displayed colour stays as the user left it.
+  * Cons: The colour can disagree with the amount.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -225,7 +273,7 @@ Step 5. The user then decides to execute the command `list`. Commands that do no
 
 <puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
 
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
+Step 6. The user executes `delete 1`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
 
 <puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
 
@@ -710,6 +758,40 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Recording a budget
+
+1. Adding a client with a budget
+
+   1. Test case: `add n/Chloe Tan p/91234567 e/chloe@example.com i/Buyer a/12 Clementi Ave b/500000`<br>
+      Expected: Chloe is added. `$500,000` is shown on the right of the card in red.
+
+   1. Test case: `add n/Marcus Lim p/92345678 e/marcus@example.com i/Buyer a/8 Holland Road b/1500000`<br>
+      Expected: `$1,500,000` is shown in yellow.
+
+   1. Test case: `add n/Ava Ng p/93456789 e/ava@example.com i/Seller a/3 Orchard Road b/3000000`<br>
+      Expected: `$3,000,000` is shown in green.
+
+   1. Test case: `add n/Ben Ong p/94567890 e/ben@example.com i/Seller a/1 River Valley`<br>
+      Expected: Ben is added. The card shows no budget amount.
+
+   1. Test case: `add n/Invalid Budget p/95678901 e/bad@example.com i/Buyer a/1 Road b/800,000`<br>
+      Expected: No client is added. The error states that the budget must be a whole-dollar amount without commas.
+
+1. Editing a budget
+
+   1. Prerequisites: At least one client is shown.
+
+   1. Test case: `edit 1 b/900000`<br>
+      Expected: The first client's amount becomes `$900,000` in yellow. The other fields stay the same.
+
+   1. Test case: `edit 1 p/90000000`<br>
+      Expected: The phone number changes. The budget stays as it was.
+
+1. Saving a budget
+
+   1. Add or edit a budget, exit, and launch the app again.<br>
+      Expected: The same amount and colour are still shown.
 
 ### Deleting a person
 

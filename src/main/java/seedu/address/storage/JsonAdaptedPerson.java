@@ -1,11 +1,5 @@
 package seedu.address.storage;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -17,7 +11,6 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Remark;
-import seedu.address.model.tag.Tag;
 
 /**
  * Jackson-friendly version of {@link Person}.
@@ -32,7 +25,6 @@ class JsonAdaptedPerson {
     private final String intention;
     private final String remark;
     private final String budget;
-    private final List<JsonAdaptedTag> tags = new ArrayList<>();
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -40,7 +32,7 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("intention") String intention,
-            @JsonProperty("remark") String remark, @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("remark") String remark,
             @JsonProperty("budget") String budget) {
         this.name = name;
         this.phone = phone;
@@ -48,17 +40,13 @@ class JsonAdaptedPerson {
         this.intention = intention;
         this.remark = remark;
         this.budget = budget;
-        if (tags != null) {
-            this.tags.addAll(tags);
-        }
     }
 
     /**
      * Constructs a {@code JsonAdaptedPerson} without a remark, used by tests.
      */
-    public JsonAdaptedPerson(String name, String phone, String email, String intention,
-            List<JsonAdaptedTag> tags) {
-        this(name, phone, email, intention, "", tags, null);
+    public JsonAdaptedPerson(String name, String phone, String email, String intention) {
+        this(name, phone, email, intention, "", null);
     }
 
     /**
@@ -71,9 +59,6 @@ class JsonAdaptedPerson {
         intention = source.getIntention().toString();
         remark = source.getRemark().value;
         budget = source.getBudget().map(Budget::toString).orElse(null);
-        tags.addAll(source.getTags().stream()
-                .map(JsonAdaptedTag::new)
-                .collect(Collectors.toList()));
     }
 
     /**
@@ -82,11 +67,6 @@ class JsonAdaptedPerson {
      * @throws IllegalValueException if there were any data constraints violated in the adapted person.
      */
     public Person toModelType() throws IllegalValueException {
-        final List<Tag> personTags = new ArrayList<>();
-        for (JsonAdaptedTag tag : tags) {
-            personTags.add(tag.toModelType());
-        }
-
         if (name == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName()));
         }
@@ -133,9 +113,7 @@ class JsonAdaptedPerson {
             modelBudget = new Budget(budget);
         }
 
-        final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelIntention, modelRemark,
-                modelTags, modelBudget);
+        return new Person(modelName, modelPhone, modelEmail, modelIntention, modelRemark, modelBudget);
     }
 
 }

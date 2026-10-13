@@ -2,14 +2,10 @@ package seedu.address.model.person;
 
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.model.tag.Tag;
 
 /**
  * Represents a Person in the address book.
@@ -26,21 +22,19 @@ public class Person {
     private final Intention intention;
     private final Remark remark;
     private final Budget budget;
-    private final Set<Tag> tags = new HashSet<>();
 
     /**
      * Every field must be present and not null, except {@code budget}, which may be null when the client has none.
      */
     public Person(Name name, Phone phone, Email email, Intention intention,
-            Remark remark, Set<Tag> tags, Budget budget) {
-        requireAllNonNull(name, phone, email, intention, remark, tags);
+            Remark remark, Budget budget) {
+        requireAllNonNull(name, phone, email, intention, remark);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.intention = intention;
         this.remark = remark;
         this.budget = budget;
-        this.tags.addAll(tags);
     }
 
     public Name getName() {
@@ -68,14 +62,6 @@ public class Person {
 
     public Remark getRemark() {
         return remark;
-    }
-
-    /**
-     * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
-     * if modification is attempted.
-     */
-    public Set<Tag> getTags() {
-        return Collections.unmodifiableSet(tags);
     }
 
     /**
@@ -111,14 +97,13 @@ public class Person {
                 && email.equals(otherPerson.email)
                 && intention == otherPerson.intention
                 && remark.equals(otherPerson.remark)
-                && Objects.equals(budget, otherPerson.budget)
-                && tags.equals(otherPerson.tags);
+                && Objects.equals(budget, otherPerson.budget);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, intention, remark, budget, tags);
+        return Objects.hash(name, phone, email, intention, remark, budget);
     }
 
     @Override
@@ -130,7 +115,6 @@ public class Person {
                 .add("intention", intention)
                 .add("remark", remark)
                 .add("budget", budget)
-                .add("tags", tags)
                 .toString();
     }
 

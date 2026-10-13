@@ -31,11 +31,9 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer` : Adds a contact named `John Doe` to the Address Book.
+   * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000` : Adds a buyer named `John Doe` with a budget of $1,500,000.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
-
-   * `clear` : Deletes all contacts.
 
    * `exit` : Exits the app.
 
@@ -53,15 +51,12 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
 * Items in square brackets are optional.<br>
-  For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
-
-* Items followed by `...` can appear zero or more times.<br>
-  For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
+  For example, `n/NAME [b/BUDGET]` can be used as `n/John Doe b/1500000` or as `n/John Doe`.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
+* Extraneous parameters for commands that take no parameters, such as `help`, `list`, and `exit`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -80,7 +75,7 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET] [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]`
 
 Intention is required and must be `Buyer` or `Seller` (case-sensitive). For example, use `i/Buyer`.
 Existing `edit` and `remark` commands preserve intention; changing it through `edit` is not supported yet.
@@ -94,14 +89,9 @@ A saved file that has no budget still opens.
 `"intention": "Buyer"` or `"intention": "Seller"` property matching their actual intention.
 Files with missing or invalid intentions cannot be loaded. Do not save new changes over an unmigrated file.
 
-<box type="tip" seamless>
-
-**Tip:** A person can have any number of tags, including zero.
-</box>
-
 Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com i/Seller p/1234567 t/criminal`
+* `add n/Betsy Crowe e/betsycrowe@example.com i/Seller p/1234567`
 
 ### Listing all persons: `list`
 
@@ -113,38 +103,37 @@ Format: `list`
 
 Edits an existing person in the address book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [b/BUDGET] [t/TAG]... `
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [b/BUDGET]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * `b/BUDGET` replaces the client's budget. Leaving `b/` out keeps the existing budget.
-* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
-* To remove all of a person's tags, enter `t/` without a tag after it.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 1 b/900000` Sets the 1st person's budget to $900,000, shown in yellow.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
+*  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
 
 ### Locating persons by name, email, phone, or intention: `find`
 
 Finds contacts using exactly one selected property.
 
-Format: `find /CLIENT_PROPERTY KEYWORD [MORE_KEYWORDS]`
+Format: `find PROPERTY/KEYWORD [MORE_KEYWORDS]`
 
-Property | Selector | Short form
---- | --- | ---
-Name | `/name` | `/n`
-Email | `/email` | `/e`
-Phone | `/phone` | `/p`
-Intention | `/intention` | `/i`
+Property | Prefix
+--- | ---
+Name | `n/`
+Email | `e/`
+Phone | `p/`
+Intention | `i/`
 
-* Selectors and keywords are case-insensitive; `/NAME` and `/name` have the same effect.
-* Specify exactly one selector immediately after `find`, with `/` immediately before the property.
-  Missing, unknown, repeated, or mixed selectors are rejected. For example, use `find /n alice`.
+* Prefix letters and keywords are case-insensitive; `N/` and `n/` have the same effect.
+* Specify exactly one short prefix immediately after `find`, with `/` immediately after the letter.
+  Missing, unknown, repeated, or mixed prefixes are rejected. For example, use `find n/alice`.
+  Long property aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
-* Name, email, and phone searches use substring matching; `find /n ali` matches `Alice`.
+* Name, email, and phone searches use substring matching; `find n/ali` matches `Alice`.
 * Multiple keywords use `OR` matching: a contact is returned if any keyword matches the selected property.
 * Intention searches require exactly one complete value: `buyer` or `seller`, in any capitalization.
 * Only the selected property is searched. Each search filters the entire contact list, replacing any previous filter.
@@ -152,12 +141,12 @@ Intention | `/intention` | `/i`
 
 Examples:
 
-* `find /name alice` or `find /n alice` finds names containing `alice`.
-* `find /n alex david` returns `Alex Yeoh` and `David Li`.
-* `find /email gmail` or `find /e gmail` finds email addresses containing `gmail`.
-* `find /phone 9123` or `find /p 9123` finds phone numbers containing `9123`.
-* `find /intention buyer` or `find /i buyer` lists all buyers.
-* `find /intention seller` or `find /i seller` lists all sellers.
+* `find n/alice` finds names containing `alice`.
+* `find n/alex david` returns `Alex Yeoh` and `David Li`.
+* `find e/gmail` finds email addresses containing `gmail`.
+* `find p/9123` finds phone numbers containing `9123`.
+* `find i/buyer` lists all buyers.
+* `find i/seller` lists all sellers.
 
 ### Deleting a person: `delete`
 
@@ -171,13 +160,7 @@ Format: `delete INDEX`
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find /n Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
-
-### Clearing all entries: `clear`
-
-Clears all entries from the address book.
-
-Format: `clear`
+* `find n/Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
 ### Exiting the program: `exit`
 
@@ -224,10 +207,9 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer t/friend t/colleague`
-**Clear**  | `clear`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer b/1500000`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find /CLIENT_PROPERTY KEYWORD [MORE_KEYWORDS]`<br> e.g., `find /n James Jake`, `find /e gmail`, `find /p 9123`, `find /i seller`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find i/seller`
 **List**   | `list`
 **Help**   | `help`

@@ -3,8 +3,7 @@
     "name": "Alice Pauline",
     "intention" : "Buyer",
     "phone": "94351253",
-    "email": "alice@example.com",
-    "tags": [ "friends" ]
+    "email": "alice@example.com"
   }, {
     "name": "Alice Pauline",
     "intention" : "Buyer",

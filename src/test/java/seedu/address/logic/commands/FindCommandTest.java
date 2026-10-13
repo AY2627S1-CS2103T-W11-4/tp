@@ -15,6 +15,7 @@ import static seedu.address.testutil.TypicalPersons.GEORGE;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,11 +25,13 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.EmailContainsKeywordsPredicate;
 import seedu.address.model.person.Intention;
 import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) for {@code FindCommand}.
@@ -86,63 +89,59 @@ public class FindCommandTest {
 
     @Test
     public void execute_nameSelectors_matchSubstrings() throws ParseException {
-        List<Person> originalPersons = List.copyOf(model.getAddressBook().getPersonList());
-        for (String selector : List.of("/name", "/n", "/NAME", "/N")) {
-            FindCommand command = (FindCommand) new AddressBookParser().parseCommand(
-                    "find " + selector + " ALI nonexistent BEN");
-            expectedModel.updateFilteredPersonList(
-                    new NameContainsKeywordsPredicate(List.of("ALI", "nonexistent", "BEN")));
-            assertCommandSuccess(command, model, String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 2), expectedModel);
-            assertEquals(List.of(ALICE, BENSON), model.getFilteredPersonList());
-            assertEquals(originalPersons, model.getAddressBook().getPersonList());
+        for (String selector : List.of("n/", "N/")) {
+            for (String keywords : List.of("ALI BEN", "ALI nonexistent BEN")) {
+                assertParsedFindSuccess("find " + selector + keywords, preparePredicate(keywords),
+                        List.of(ALICE, BENSON));
+            }
         }
     }
 
     @Test
-    public void execute_exactPhone_bensonFound() {
+    public void execute_exactPhone_bensonFound() throws ParseException {
         assertPhoneFindSuccess(List.of("98765432"), List.of(BENSON));
     }
 
     @Test
-    public void execute_phoneSubstring_bensonFound() {
+    public void execute_phoneSubstring_bensonFound() throws ParseException {
         assertPhoneFindSuccess(List.of("7654"), List.of(BENSON));
     }
 
     @Test
-    public void execute_multiplePhoneKeywords_multiplePersonsFound() {
+    public void execute_multiplePhoneKeywords_multiplePersonsFound() throws ParseException {
         assertPhoneFindSuccess(List.of("0000", "9435", "7654"), List.of(ALICE, BENSON));
     }
 
     @Test
-    public void execute_nonMatchingPhoneKeywords_noPersonFound() {
+    public void execute_nonMatchingPhoneKeywords_noPersonFound() throws ParseException {
         assertPhoneFindSuccess(List.of("0000", "1111"), List.of());
     }
 
     @Test
-    public void execute_phoneKeywordsAfterNameFilter_searchesAllPersons() {
+    public void execute_phoneKeywordsAfterNameFilter_searchesAllPersons() throws ParseException {
         model.updateFilteredPersonList(preparePredicate("Alice"));
         assertEquals(List.of(ALICE), model.getFilteredPersonList());
         assertPhoneFindSuccess(List.of("7654"), List.of(BENSON));
     }
 
     @Test
-    public void execute_phoneKeywordsAfterEmptyFilter_searchesAllPersons() {
+    public void execute_phoneKeywordsAfterEmptyFilter_searchesAllPersons() throws ParseException {
         assertPhoneFindSuccess(List.of("0000"), List.of());
         assertPhoneFindSuccess(List.of("7654"), List.of(BENSON));
     }
 
     @Test
     public void execute_buyerIntention_buyersFound() throws ParseException {
-        for (String selector : List.of("/intention", "/i")) {
-            assertIntentionFindSuccess("find " + selector + " buyer", Intention.BUYER,
+        for (String selector : List.of("i/", "I/")) {
+            assertIntentionFindSuccess("find " + selector + "buyer", Intention.BUYER,
                     List.of(ALICE, CARL, DANIEL, ELLE, FIONA, GEORGE));
         }
     }
 
     @Test
     public void execute_sellerIntention_sellersFound() throws ParseException {
-        for (String selector : List.of("/intention", "/i")) {
-            assertIntentionFindSuccess("find " + selector + " seller", Intention.SELLER, List.of(BENSON));
+        for (String selector : List.of("i/", "I/")) {
+            assertIntentionFindSuccess("find " + selector + "seller", Intention.SELLER, List.of(BENSON));
         }
     }
 
@@ -150,30 +149,56 @@ public class FindCommandTest {
     public void execute_intentionAfterNameFilter_searchesAllPersons() throws ParseException {
         model.updateFilteredPersonList(preparePredicate("Alice"));
         assertEquals(List.of(ALICE), model.getFilteredPersonList());
-        assertIntentionFindSuccess("find /i seller", Intention.SELLER, List.of(BENSON));
+        assertIntentionFindSuccess("find i/seller", Intention.SELLER, List.of(BENSON));
     }
 
     @Test
     public void execute_intentionAfterEmptyFilter_searchesAllPersons() throws ParseException {
         model.updateFilteredPersonList(preparePredicate("Nobody"));
         assertEquals(List.of(), model.getFilteredPersonList());
-        assertIntentionFindSuccess("find /intention BUYER", Intention.BUYER,
+        assertIntentionFindSuccess("find i/BUYER", Intention.BUYER,
                 List.of(ALICE, CARL, DANIEL, ELLE, FIONA, GEORGE));
     }
 
     @Test
     public void execute_intentionAfterIntentionFilter_switchesIntention() throws ParseException {
-        assertIntentionFindSuccess("find /i buyer", Intention.BUYER,
+        assertIntentionFindSuccess("find i/buyer", Intention.BUYER,
                 List.of(ALICE, CARL, DANIEL, ELLE, FIONA, GEORGE));
-        assertIntentionFindSuccess("find /i seller", Intention.SELLER, List.of(BENSON));
+        assertIntentionFindSuccess("find i/seller", Intention.SELLER, List.of(BENSON));
     }
 
     @Test
     public void execute_intentionOnEmptyAddressBook_noPersonFound() throws ParseException {
         model = new ModelManager(new AddressBook(), new UserPrefs());
         expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
-        assertIntentionFindSuccess("find /intention buyer", Intention.BUYER, List.of());
-        assertIntentionFindSuccess("find /i seller", Intention.SELLER, List.of());
+        assertIntentionFindSuccess("find i/buyer", Intention.BUYER, List.of());
+        assertIntentionFindSuccess("find i/seller", Intention.SELLER, List.of());
+    }
+
+    @Test
+    public void execute_emailSelectors_matchSubstringsAndAnyKeyword() throws ParseException {
+        Person gmailClient = new PersonBuilder().withName("Gmail Client").withEmail("CLIENT@GMAIL.COM")
+                .withBudget("1500000").withRemark("Follow up tomorrow")
+                .withIntention(Intention.SELLER).build();
+        model.addPerson(gmailClient);
+        expectedModel.addPerson(gmailClient);
+
+        assertParsedFindSuccess("find e/gmail", new EmailContainsKeywordsPredicate(List.of("gmail")),
+                List.of(gmailClient));
+        assertParsedFindSuccess("find E/GMAIL", new EmailContainsKeywordsPredicate(List.of("GMAIL")),
+                List.of(gmailClient));
+        assertParsedFindSuccess("find e/ALICE gmail", new EmailContainsKeywordsPredicate(List.of("ALICE", "gmail")),
+                List.of(ALICE, gmailClient));
+    }
+
+    @Test
+    public void execute_switchingPropertiesAfterEmptyResult_searchesAllPersons() throws ParseException {
+        assertParsedFindSuccess("find n/ALI", preparePredicate("ALI"), List.of(ALICE));
+        assertPhoneFindSuccess(List.of("7654"), List.of(BENSON));
+        assertParsedFindSuccess("find e/missing", new EmailContainsKeywordsPredicate(List.of("missing")), List.of());
+        assertParsedFindSuccess("find e/ALICE", new EmailContainsKeywordsPredicate(List.of("ALICE")), List.of(ALICE));
+        assertIntentionFindSuccess("find i/seller", Intention.SELLER, List.of(BENSON));
+        assertParsedFindSuccess("find n/ALI BEN", preparePredicate("ALI BEN"), List.of(ALICE, BENSON));
     }
 
     @Test
@@ -189,22 +214,25 @@ public class FindCommandTest {
      */
     private void assertIntentionFindSuccess(String userInput, Intention intention, List<Person> expectedPersons)
             throws ParseException {
-        List<Person> originalPersons = List.copyOf(model.getAddressBook().getPersonList());
-        FindCommand command = (FindCommand) new AddressBookParser().parseCommand(userInput);
-        expectedModel.updateFilteredPersonList(new IntentionMatchesPredicate(intention));
-        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, expectedPersons.size());
-        assertCommandSuccess(command, model, expectedMessage, expectedModel);
-        assertEquals(expectedPersons, model.getFilteredPersonList());
-        assertEquals(originalPersons, model.getAddressBook().getPersonList());
+        assertParsedFindSuccess(userInput, new IntentionMatchesPredicate(intention), expectedPersons);
     }
 
     /**
-     * Checks phone filtering, the result count, and that the stored persons remain unchanged.
+     * Checks phone filtering through the command parser.
      */
-    private void assertPhoneFindSuccess(List<String> keywords, List<Person> expectedPersons) {
-        List<Person> originalPersons = List.copyOf(model.getAddressBook().getPersonList());
-        PhoneContainsKeywordsPredicate predicate = new PhoneContainsKeywordsPredicate(keywords);
-        FindCommand command = new FindCommand(predicate);
+    private void assertPhoneFindSuccess(List<String> keywords, List<Person> expectedPersons) throws ParseException {
+        assertParsedFindSuccess("find p/" + String.join(" ", keywords),
+                new PhoneContainsKeywordsPredicate(keywords), expectedPersons);
+    }
+
+    /**
+     * Checks parsing, filtering, result counts, and every field of the stored persons against independent copies.
+     */
+    private void assertParsedFindSuccess(String userInput, Predicate<Person> predicate, List<Person> expectedPersons)
+            throws ParseException {
+        List<Person> originalPersons = model.getAddressBook().getPersonList().stream()
+                .map(person -> new PersonBuilder(person).build()).toList();
+        FindCommand command = (FindCommand) new AddressBookParser().parseCommand(userInput);
         expectedModel.updateFilteredPersonList(predicate);
         String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, expectedPersons.size());
         assertCommandSuccess(command, model, expectedMessage, expectedModel);

@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
+import static seedu.address.logic.Messages.MESSAGE_TAGS_NOT_SUPPORTED;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.INTENTION_DESC_BUYER;
@@ -12,6 +13,7 @@ import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -55,14 +57,28 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_addSeller_savesIntention() throws Exception {
-        Person seller = new PersonBuilder(AMY).withIntention(Intention.SELLER).build();
+    public void execute_addSeller_savesIntentionAndBudget() throws Exception {
+        Person seller = new PersonBuilder(AMY).withIntention(Intention.SELLER).withBudget("1500000").build();
 
         logic.execute(PersonUtil.getAddCommand(seller));
 
         assertEquals(seller, model.getAddressBook().getPersonList().get(0));
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         assertEquals(seller, storage.readAddressBook().orElseThrow().getPersonList().get(0));
+    }
+
+    @Test
+    public void execute_tagArguments_doesNotChangeModelOrStorage() throws Exception {
+        Person person = new PersonBuilder(AMY).build();
+        logic.execute(PersonUtil.getAddCommand(person));
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        String savedData = Files.readString(dataFile);
+
+        assertParseException(PersonUtil.getAddCommand(person) + " t/friends", MESSAGE_TAGS_NOT_SUPPORTED);
+        assertParseException("edit 1 a/New address t/clients", MESSAGE_TAGS_NOT_SUPPORTED);
+        assertParseException("edit 1 t/", MESSAGE_TAGS_NOT_SUPPORTED);
+
+        assertEquals(savedData, Files.readString(dataFile));
     }
 
     @Test
@@ -179,7 +195,7 @@ public class LogicManagerTest {
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + EMAIL_DESC_AMY + INTENTION_DESC_BUYER;
-        Person expectedPerson = new PersonBuilder(AMY).withTags().build();
+        Person expectedPerson = new PersonBuilder(AMY).build();
         ModelManager expectedModel = new ModelManager();
         expectedModel.addPerson(expectedPerson);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);

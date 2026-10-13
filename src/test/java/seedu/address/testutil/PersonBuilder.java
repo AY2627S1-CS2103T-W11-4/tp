@@ -1,8 +1,5 @@
 package seedu.address.testutil;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Intention;
@@ -10,8 +7,6 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Remark;
-import seedu.address.model.tag.Tag;
-import seedu.address.model.util.SampleDataUtil;
 
 /**
  * A utility class to help with building Person objects.
@@ -30,7 +25,6 @@ public class PersonBuilder {
     private Intention intention;
     private Remark remark;
     private Budget budget;
-    private Set<Tag> tags;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -42,7 +36,6 @@ public class PersonBuilder {
         intention = DEFAULT_INTENTION;
         remark = new Remark(DEFAULT_REMARK);
         budget = null;
-        tags = new HashSet<>();
     }
 
     /**
@@ -55,7 +48,6 @@ public class PersonBuilder {
         intention = personToCopy.getIntention();
         remark = personToCopy.getRemark();
         budget = personToCopy.getBudget().orElse(null);
-        tags = new HashSet<>(personToCopy.getTags());
     }
 
     /**
@@ -63,14 +55,6 @@ public class PersonBuilder {
      */
     public PersonBuilder withName(String name) {
         this.name = new Name(name);
-        return this;
-    }
-
-    /**
-     * Parses the {@code tags} into a {@code Set<Tag>} and sets it to the {@code Person} that we are building.
-     */
-    public PersonBuilder withTags(String ... tags) {
-        this.tags = SampleDataUtil.getTagSet(tags);
         return this;
     }
 
@@ -115,7 +99,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, intention, remark, tags, budget);
+        return new Person(name, phone, email, intention, remark, budget);
     }
 
 }
