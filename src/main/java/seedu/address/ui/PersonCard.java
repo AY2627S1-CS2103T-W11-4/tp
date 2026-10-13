@@ -1,10 +1,7 @@
 package seedu.address.ui;
 
-import java.util.Comparator;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Budget;
@@ -44,9 +41,6 @@ public class PersonCard extends UiPart<Region> {
     private Label remark;
     @FXML
     private Label budget;
-    @FXML
-    private FlowPane tags;
-
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
      */
@@ -60,9 +54,6 @@ public class PersonCard extends UiPart<Region> {
         email.setText(person.getEmail().value);
         remark.setText(person.getRemark().value);
         person.getBudget().ifPresentOrElse(this::showBudget, this::hideBudget);
-        person.getTags().stream()
-                .sorted(Comparator.comparing(tag -> tag.tagName))
-                .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
     }
 
     /**
