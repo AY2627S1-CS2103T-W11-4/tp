@@ -19,7 +19,6 @@ public class Person {
     private final Email email;
 
     // Data fields
-    private final Address address;
     private final Intention intention;
     private final Remark remark;
     private final Budget budget;
@@ -28,13 +27,12 @@ public class Person {
      * Every field must be present and not null, except {@code budget}, which may be null when the client has none.
      */
     public Person(Name name, Phone phone, Email email, Intention intention,
-            Address address, Remark remark, Budget budget) {
-        requireAllNonNull(name, phone, email, intention, address, remark);
+            Remark remark, Budget budget) {
+        requireAllNonNull(name, phone, email, intention, remark);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.intention = intention;
-        this.address = address;
         this.remark = remark;
         this.budget = budget;
     }
@@ -60,10 +58,6 @@ public class Person {
      */
     public Optional<Budget> getBudget() {
         return Optional.ofNullable(budget);
-    }
-
-    public Address getAddress() {
-        return address;
     }
 
     public Remark getRemark() {
@@ -102,7 +96,6 @@ public class Person {
                 && phone.equals(otherPerson.phone)
                 && email.equals(otherPerson.email)
                 && intention == otherPerson.intention
-                && address.equals(otherPerson.address)
                 && remark.equals(otherPerson.remark)
                 && Objects.equals(budget, otherPerson.budget);
     }
@@ -110,7 +103,7 @@ public class Person {
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, intention, address, remark, budget);
+        return Objects.hash(name, phone, email, intention, remark, budget);
     }
 
     @Override
@@ -120,7 +113,6 @@ public class Person {
                 .add("phone", phone)
                 .add("email", email)
                 .add("intention", intention)
-                .add("address", address)
                 .add("remark", remark)
                 .add("budget", budget)
                 .toString();

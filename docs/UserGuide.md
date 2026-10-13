@@ -31,7 +31,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer a/John street, block 123, #01-01 b/1500000` : Adds a buyer named `John Doe` with a budget of $1,500,000.
+   * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000` : Adds a buyer named `John Doe` with a budget of $1,500,000.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -51,7 +51,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
 * Items in square brackets are optional.<br>
-  For example, `a/ADDRESS [b/BUDGET]` can be used as `a/John street b/1500000` or as `a/John street`.
+  For example, `n/NAME [b/BUDGET]` can be used as `n/John Doe b/1500000` or as `n/John Doe`.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
@@ -75,7 +75,7 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION a/ADDRESS [b/BUDGET]`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]`
 
 Intention is required and must be `Buyer` or `Seller` (case-sensitive). For example, use `i/Buyer`.
 Existing `edit` and `remark` commands preserve intention; changing it through `edit` is not supported yet.
@@ -90,8 +90,8 @@ A saved file that has no budget still opens.
 Files with missing or invalid intentions cannot be loaded. Do not save new changes over an unmigrated file.
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com i/Buyer a/John street, block 123, #01-01 b/1500000`
-* `add n/Betsy Crowe e/betsycrowe@example.com i/Seller a/Newgate Prison p/1234567`
+* `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000`
+* `add n/Betsy Crowe e/betsycrowe@example.com i/Seller p/1234567`
 
 ### Listing all persons: `list`
 
@@ -103,7 +103,7 @@ Format: `list`
 
 Edits an existing person in the address book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [b/BUDGET]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [b/BUDGET]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -207,9 +207,9 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION a/ADDRESS [b/BUDGET] ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer a/123, Clementi Rd, 1234665`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer b/1500000`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find i/seller`
 **List**   | `list`
 **Help**   | `help`

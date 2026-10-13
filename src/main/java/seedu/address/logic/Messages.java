@@ -43,8 +43,6 @@ public class Messages {
                 .append(person.getPhone())
                 .append("; Email: ")
                 .append(person.getEmail())
-                .append("; Address: ")
-                .append(person.getAddress())
                 .append("; Remark: ")
                 .append(person.getRemark());
         person.getBudget().ifPresent(budget -> builder.append("; Budget: ").append(budget.toDisplay()));

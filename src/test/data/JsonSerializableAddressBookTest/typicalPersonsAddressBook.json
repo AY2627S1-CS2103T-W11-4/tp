@@ -4,43 +4,36 @@
     "name" : "Alice Pauline",
     "intention" : "Buyer",
     "phone" : "94351253",
-    "email" : "alice@example.com",
-    "address" : "123, Jurong West Ave 6, #08-111"
+    "email" : "alice@example.com"
   }, {
     "name" : "Benson Meier",
     "intention" : "Seller",
     "phone" : "98765432",
-    "email" : "johnd@example.com",
-    "address" : "311, Clementi Ave 2, #02-25"
+    "email" : "johnd@example.com"
   }, {
     "name" : "Carl Kurz",
     "intention" : "Buyer",
     "phone" : "95352563",
-    "email" : "heinz@example.com",
-    "address" : "wall street"
+    "email" : "heinz@example.com"
   }, {
     "name" : "Daniel Meier",
     "intention" : "Buyer",
     "phone" : "87652533",
-    "email" : "cornelia@example.com",
-    "address" : "10th street"
+    "email" : "cornelia@example.com"
   }, {
     "name" : "Elle Meyer",
     "intention" : "Buyer",
     "phone" : "9482224",
-    "email" : "werner@example.com",
-    "address" : "michegan ave"
+    "email" : "werner@example.com"
   }, {
     "name" : "Fiona Kunz",
     "intention" : "Buyer",
     "phone" : "9482427",
-    "email" : "lydia@example.com",
-    "address" : "little tokyo"
+    "email" : "lydia@example.com"
   }, {
     "name" : "George Best",
     "intention" : "Buyer",
     "phone" : "9482442",
-    "email" : "anna@example.com",
-    "address" : "4th street"
+    "email" : "anna@example.com"
   } ]
 }

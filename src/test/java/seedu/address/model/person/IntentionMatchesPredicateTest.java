@@ -49,7 +49,7 @@ public class IntentionMatchesPredicateTest {
     public void test_keywordInOtherFields_returnsFalse() {
         IntentionMatchesPredicate predicate = new IntentionMatchesPredicate(Intention.BUYER);
         Person seller = new PersonBuilder().withIntention(Intention.SELLER).withName("Buyer")
-                .withEmail("buyer@example.com").withAddress("Buyer Street").build();
+                .withEmail("buyer@example.com").build();
         assertFalse(predicate.test(seller));
     }
 

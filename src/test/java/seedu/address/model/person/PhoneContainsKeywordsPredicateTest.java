@@ -69,7 +69,7 @@ public class PhoneContainsKeywordsPredicateTest {
     public void test_keywordMatchesOtherFields_returnsFalse() {
         PhoneContainsKeywordsPredicate predicate = new PhoneContainsKeywordsPredicate(List.of("91234567"));
         assertFalse(predicate.test(new PersonBuilder().withPhone("99999999").withName("91234567")
-                .withEmail("91234567@example.com").withAddress("91234567 Street").build()));
+                .withEmail("91234567@example.com").build()));
     }
 
     @Test

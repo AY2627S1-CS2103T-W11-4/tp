@@ -14,7 +14,7 @@ public class MessagesTest {
         Person person = new PersonBuilder().withRemark("Call next week").withBudget("1500000").build();
 
         assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
-                + "Address: 123, Jurong West Ave 6, #08-111; Remark: Call next week; Budget: $1,500,000",
+                + "Remark: Call next week; Budget: $1,500,000",
                 Messages.format(person));
     }
 
@@ -23,6 +23,6 @@ public class MessagesTest {
         Person person = new PersonBuilder().build();
 
         assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
-                + "Address: 123, Jurong West Ave 6, #08-111; Remark: ", Messages.format(person));
+                + "Remark: ", Messages.format(person));
     }
 }
