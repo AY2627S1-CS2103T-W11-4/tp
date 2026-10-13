@@ -32,12 +32,13 @@ public class CommandBox extends UiPart<Region> {
     }
 
     /**
-     * Handles the Enter button pressed event.
+     * Executes the command when Enter is pressed or the Run button is clicked.
      */
     @FXML
     private void handleCommandEntered() {
         String commandText = commandTextField.getText();
         if (commandText.equals("")) {
+            commandTextField.requestFocus();
             return;
         }
 
@@ -46,6 +47,8 @@ public class CommandBox extends UiPart<Region> {
             commandTextField.setText("");
         } catch (CommandException | ParseException e) {
             setStyleToIndicateCommandFailure();
+        } finally {
+            commandTextField.requestFocus();
         }
     }
 

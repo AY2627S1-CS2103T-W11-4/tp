@@ -1,8 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <ListView fx:id="personListView" VBox.vgrow="ALWAYS" />
+<VBox spacing="14" minHeight="0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <HBox alignment="CENTER_LEFT">
+    <Label fx:id="clientListHeading" text="All clients" styleClass="section-heading" />
+    <Region HBox.hgrow="ALWAYS" />
+    <Label fx:id="clientCount" styleClass="client-count" />
+  </HBox>
+  <ListView fx:id="personListView" minHeight="0" VBox.vgrow="ALWAYS" accessibleText="Clients">
+    <placeholder>
+      <Label text="No clients to display" styleClass="muted-label" />
+    </placeholder>
+  </ListView>
 </VBox>

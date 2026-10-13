@@ -1,41 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <GridPane HBox.hgrow="ALWAYS">
-    <columnConstraints>
-      <ColumnConstraints hgrow="ALWAYS" minWidth="10" />
-      <ColumnConstraints hgrow="NEVER" halignment="RIGHT" />
-    </columnConstraints>
-    <VBox alignment="CENTER_LEFT" minHeight="105" GridPane.columnIndex="0">
-      <padding>
-        <Insets top="5" right="5" bottom="5" left="15" />
-      </padding>
-      <HBox spacing="0.5" alignment="CENTER_LEFT">
-        <Label fx:id="id" styleClass="cell_big_label">
-          <minWidth>
-            <!-- Ensures that the label text is never truncated -->
-            <Region fx:constant="USE_PREF_SIZE" />
-          </minWidth>
-        </Label>
-        <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
-      </HBox>
-      <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
-      <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
-      <Label fx:id="remark" styleClass="cell_small_label" text="\$remark" />
-    </VBox>
-    <Label fx:id="budget" styleClass="budget-amount" text="\$budget" GridPane.columnIndex="1"
-        GridPane.halignment="RIGHT" GridPane.valignment="CENTER">
-      <padding>
-        <Insets top="5" right="15" bottom="5" left="5" />
-      </padding>
-    </Label>
-  </GridPane>
+<HBox fx:id="cardPane" styleClass="client-card" spacing="24" alignment="TOP_LEFT" minWidth="0"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <VBox spacing="4" minWidth="0" HBox.hgrow="ALWAYS">
+    <HBox spacing="12" alignment="CENTER_LEFT" styleClass="client-name-row">
+      <Label fx:id="id" styleClass="client-index">
+        <minWidth>
+          <Region fx:constant="USE_PREF_SIZE" />
+        </minWidth>
+      </Label>
+      <Label fx:id="name" styleClass="client-name" />
+    </HBox>
+    <HBox spacing="12" alignment="CENTER_LEFT">
+      <Label text="Phone" styleClass="field-caption" minWidth="56" prefWidth="56" />
+      <Label fx:id="phone" styleClass="client-detail" />
+    </HBox>
+    <HBox spacing="12" alignment="CENTER_LEFT">
+      <Label text="Email" styleClass="field-caption" minWidth="56" prefWidth="56" />
+      <Label fx:id="email" styleClass="client-detail" />
+    </HBox>
+    <Label fx:id="remark" styleClass="client-remark" wrapText="true" />
+  </VBox>
+  <VBox spacing="12" alignment="TOP_RIGHT" minWidth="-Infinity">
+    <Label fx:id="intention" styleClass="intention-badge" />
+    <Label fx:id="budget" styleClass="budget-amount" />
+  </VBox>
 </HBox>
