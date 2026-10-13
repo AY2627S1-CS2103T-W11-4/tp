@@ -178,7 +178,7 @@ public class FindCommandTest {
     @Test
     public void execute_emailSelectors_matchSubstringsAndAnyKeyword() throws ParseException {
         Person gmailClient = new PersonBuilder().withName("Gmail Client").withEmail("CLIENT@GMAIL.COM")
-                .withBudget("1500000").withRemark("Follow up tomorrow").withTags("priority")
+                .withBudget("1500000").withRemark("Follow up tomorrow")
                 .withIntention(Intention.SELLER).build();
         model.addPerson(gmailClient);
         expectedModel.addPerson(gmailClient);
