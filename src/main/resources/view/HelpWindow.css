@@ -1,4 +1,101 @@
-#helpMessageContainer {
-    -fx-background-color: #f1f3f5;
-    -fx-padding: 20;
+.help-root {
+    -fx-background-color: #383838;
+    -fx-base: #383838;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-focus-color: #6da0b2;
+    -fx-faint-focus-color: transparent;
+}
+
+.help-root .label {
+    -fx-text-fill: #f2f2f2;
+}
+
+.help-header {
+    -fx-padding: 20 24 16 24;
+}
+
+.help-root .help-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.help-root .help-secondary {
+    -fx-font-size: 13px;
+    -fx-text-fill: #cccccc;
+}
+
+.help-scroll, .help-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.help-scroll {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.help-card {
+    -fx-background-color: #3c3e3f;
+    -fx-background-radius: 6;
+    -fx-border-color: #5a6064;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-padding: 16;
+}
+
+.help-root .help-command-name {
+    -fx-font-family: "Consolas";
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.help-root .help-description {
+    -fx-text-fill: #dddddd;
+}
+
+.help-section-heading {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 0 0 0;
+}
+
+.help-root .help-note {
+    -fx-font-size: 13px;
+    -fx-text-fill: #dddddd;
+}
+
+.help-syntax, .help-example {
+    -fx-font-family: "Consolas";
+    -fx-font-size: 13px;
+    -fx-background-color: #2c2e30;
+    -fx-background-radius: 4;
+    -fx-padding: 9 10;
+}
+
+.help-footer {
+    -fx-border-color: #505458 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 14 24 18 24;
+}
+
+.help-root #copyButton {
+    -fx-text-fill: white;
+    -fx-background-color: #5b6166;
+    -fx-background-radius: 4;
+    -fx-padding: 8 12;
+    -fx-min-width: 100;
+    -fx-cursor: hand;
+}
+
+.help-root #copyButton:hover {
+    -fx-background-color: #70777d;
+}
+
+.help-root #copyButton:armed {
+    -fx-background-color: #484d51;
+}
+
+.help-root #copyButton:focused {
+    -fx-border-color: #6da0b2;
+    -fx-border-radius: 4;
 }

@@ -7,16 +7,17 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 
 /**
- * Controller for a help page
+ * Controller for the command-reference window.
  */
 public class HelpWindow extends UiPart<Stage> {
 
-    public static final String USERGUIDE_URL = "https://se-education.org/addressbook-level3/UserGuide.html";
-    public static final String HELP_MESSAGE = "Refer to the user guide: " + USERGUIDE_URL;
+    public static final String USERGUIDE_URL = "https://ay2627s1-cs2103t-w11-4.github.io/tp/UserGuide.html";
+    public static final String HELP_MESSAGE = "For more information, visit the RESIDEX User Guide:\n" + USERGUIDE_URL;
 
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";
@@ -27,6 +28,9 @@ public class HelpWindow extends UiPart<Stage> {
     @FXML
     private Label helpMessage;
 
+    @FXML
+    private VBox commandCards;
+
     /**
      * Creates a new HelpWindow.
      *
@@ -35,6 +39,9 @@ public class HelpWindow extends UiPart<Stage> {
     public HelpWindow(Stage root) {
         super(FXML, root);
         helpMessage.setText(HELP_MESSAGE);
+        for (HelpContent.CommandHelp command : HelpContent.getCommands()) {
+            commandCards.getChildren().add(new CommandHelpCard(command).getRoot());
+        }
     }
 
     /**
@@ -63,7 +70,7 @@ public class HelpWindow extends UiPart<Stage> {
      *     </ul>
      */
     public void show() {
-        logger.fine("Showing help page about the application.");
+        logger.fine("Showing the command reference.");
         getRoot().show();
         getRoot().centerOnScreen();
     }
