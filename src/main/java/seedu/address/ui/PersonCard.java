@@ -38,6 +38,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label remark;
     @FXML
+    private Label intention;
+    @FXML
     private Label budget;
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -49,12 +51,15 @@ public class PersonCard extends UiPart<Region> {
         name.setText(person.getName().fullName);
         phone.setText(person.getPhone().value);
         email.setText(person.getEmail().value);
+        intention.setText("Intention: " + person.getIntention());
         remark.setText(person.getRemark().value);
+        remark.setVisible(!person.getRemark().value.isEmpty());
+        remark.setManaged(remark.isVisible());
         person.getBudget().ifPresentOrElse(this::showBudget, this::hideBudget);
     }
 
     /**
-     * Shows {@code clientBudget} on the right of the card, coloured by its price band.
+     * Shows {@code clientBudget} below the intention, coloured by its price band.
      */
     private void showBudget(Budget clientBudget) {
         budget.setText(clientBudget.toDisplay());

@@ -1,0 +1,256 @@
+.root {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 16px;
+    -fx-base: #f1f3f5;
+    -fx-background: #f1f3f5;
+    -fx-control-inner-background: white;
+    -fx-accent: #344d6b;
+    -fx-focus-color: #344d6b;
+    -fx-faint-focus-color: transparent;
+}
+
+.app-shell, .app-content {
+    -fx-background-color: #f1f3f5;
+}
+
+.label {
+    -fx-text-fill: #27313d;
+}
+
+.app-header {
+    -fx-background-color: #e3e7ec;
+    -fx-padding: 0 124 0 24;
+    -fx-min-height: 60;
+    -fx-pref-height: 60;
+    -fx-max-height: 60;
+}
+
+.brand {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.app-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #657185;
+}
+
+.app-content {
+    -fx-padding: 18 24 0 24;
+}
+
+.section-heading {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.client-count, .muted-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #657185;
+}
+
+#commandTextField {
+    -fx-background-color: white;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-border-color: #687486;
+    -fx-border-width: 1;
+    -fx-padding: 10 14;
+    -fx-min-height: 50;
+    -fx-pref-height: 50;
+    -fx-max-height: 50;
+    -fx-font-family: "Consolas";
+    -fx-font-size: 20px;
+    -fx-text-fill: #27313d;
+    -fx-prompt-text-fill: #657185;
+}
+
+#commandTextField:focused {
+    -fx-border-color: #344d6b;
+}
+
+#commandTextField.error {
+    -fx-text-fill: #c0392b;
+    -fx-border-color: #e74c3c;
+}
+
+.button {
+    -fx-background-color: #344d6b;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-text-fill: white;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #415e80;
+}
+
+.button:armed {
+    -fx-background-color: #263b54;
+}
+
+.button:focused {
+    -fx-border-color: #657185;
+    -fx-border-insets: 3;
+}
+
+.run-button {
+    -fx-min-width: 100;
+    -fx-pref-width: 100;
+    -fx-min-height: 50;
+    -fx-pref-height: 50;
+    -fx-max-height: 50;
+}
+
+.result-box {
+    -fx-background-color: white;
+    -fx-border-color: #ced5df #ced5df #ced5df #5e6a7a;
+    -fx-border-width: 1 1 1 3;
+}
+
+.result-display {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-font-size: 16px;
+    -fx-text-fill: #27313d;
+}
+
+.result-display .content {
+    -fx-background-color: white;
+    -fx-background-radius: 0;
+    -fx-padding: 10 14;
+}
+
+.result-display .scroll-pane, .result-display .viewport {
+    -fx-background-color: transparent;
+}
+
+.list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 10 0;
+    -fx-graphic-text-gap: 0;
+}
+
+.list-cell:empty {
+    -fx-padding: 0;
+}
+
+.client-card {
+    -fx-background-color: white;
+    -fx-border-color: #ced5df;
+    -fx-border-width: 1;
+    -fx-padding: 12 16;
+    -fx-min-height: 118;
+}
+
+.list-cell:filled:selected .client-card {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #344d6b;
+}
+
+.client-name-row {
+    -fx-padding: 0 0 8 0;
+}
+
+.client-name {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.client-index {
+    -fx-font-size: 18px;
+    -fx-text-fill: #657185;
+}
+
+.field-caption {
+    -fx-text-fill: #657185;
+}
+
+.client-detail, .client-remark {
+    -fx-font-size: 16px;
+}
+
+.client-remark {
+    -fx-padding: 4 0 0 0;
+    -fx-text-fill: #657185;
+}
+
+.intention-badge {
+    -fx-background-color: #f1f3f5;
+    -fx-border-color: #ced5df;
+    -fx-border-width: 1;
+    -fx-padding: 4 12;
+    -fx-font-size: 14px;
+    -fx-min-width: 142;
+    -fx-alignment: center;
+}
+
+.budget-amount {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.budget-low {
+    -fx-text-fill: #e74c3c;
+}
+
+.budget-middle {
+    -fx-text-fill: #f1c40f;
+}
+
+.budget-high {
+    -fx-text-fill: #2ecc71;
+}
+
+.status-bar {
+    -fx-background-color: #f1f3f5;
+    -fx-border-color: #ced5df transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 6 24;
+    -fx-min-height: 34;
+    -fx-pref-height: 34;
+}
+
+.status-bar .label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #657185;
+}
+
+.scroll-bar {
+    -fx-background-color: #f1f3f5;
+    -fx-pref-width: 12;
+    -fx-pref-height: 12;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #bcc5d0;
+    -fx-background-radius: 3;
+    -fx-background-insets: 2;
+}
+
+.scroll-bar .increment-button, .scroll-bar .decrement-button {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow {
+    -fx-padding: 0;
+    -fx-shape: "";
+}
+
+.dialog-pane {
+    -fx-background-color: #f1f3f5;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #e3e7ec;
+}
