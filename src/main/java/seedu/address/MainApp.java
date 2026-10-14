@@ -43,14 +43,32 @@ public class MainApp extends Application {
     protected Storage storage;
     protected Model model;
 
+    private final Path userPrefsFilePath;
+    private final Path addressBookFilePath;
+
+    /**
+     * Creates the application with its default storage locations.
+     */
+    public MainApp() {
+        this(USER_PREFS_FILE_PATH, ADDRESS_BOOK_FILE_PATH);
+    }
+
+    /**
+     * Creates the application with the given storage locations.
+     */
+    MainApp(Path userPrefsFilePath, Path addressBookFilePath) {
+        this.userPrefsFilePath = userPrefsFilePath;
+        this.addressBookFilePath = addressBookFilePath;
+    }
+
     @Override
     public void init() throws Exception {
         logger.info("=============================[ Initializing RESIDEX ]===========================");
         super.init();
 
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
+        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
         UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(ADDRESS_BOOK_FILE_PATH);
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFilePath);
         storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
         model = initModelManager(storage, userPrefs);
