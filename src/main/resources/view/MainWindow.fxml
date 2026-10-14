@@ -24,7 +24,7 @@
         <HBox styleClass="app-header" alignment="CENTER_LEFT" VBox.vgrow="NEVER">
           <Label text="R E S I D E X" styleClass="brand" />
           <Region HBox.hgrow="ALWAYS" />
-          <Label text="Client address book for property agents" styleClass="app-subtitle" />
+          <Label text="Client manager for property agents" styleClass="app-subtitle" />
         </HBox>
         <VBox styleClass="app-content" spacing="12" minHeight="0" VBox.vgrow="ALWAYS">
           <StackPane fx:id="commandBoxPlaceholder" VBox.vgrow="NEVER" />
