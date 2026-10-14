@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="8" minWidth="0" styleClass="help-card"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <Label fx:id="commandName" styleClass="help-command-name" />
+  <Label fx:id="description" wrapText="true" minWidth="0" styleClass="help-description" />
+  <Label text="Format" styleClass="help-section-heading" />
+  <Label fx:id="syntax" wrapText="true" minWidth="0" maxWidth="Infinity" styleClass="help-syntax" />
+  <Label text="Details" styleClass="help-section-heading" />
+  <VBox fx:id="notes" spacing="5" />
+  <Label text="Examples" styleClass="help-section-heading" />
+  <VBox fx:id="examples" spacing="6" />
+</VBox>

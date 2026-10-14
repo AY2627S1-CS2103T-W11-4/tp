@@ -64,11 +64,18 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
-
-![help message](images/helpMessage.png)
+Opens a separate, resizable window containing the command reference. Each command has a card showing its
+purpose, format, parameter rules and examples. The command reference is available without an internet connection.
 
 Format: `help`
+
+![RESIDEX help window showing command reference cards](images/helpMessage.png)
+
+* Scroll through the cards using the mouse wheel or scrollbar. Resize the window for more space.
+* Examples are for reference only. Enter commands in the main application's command box to run them.
+* You can also open help by pressing `F1` or selecting **Help > Help**. Opening help again focuses the existing window.
+* Click **Copy URL** in the footer to copy the RESIDEX User Guide link for further information.
+  Opening the online guide requires an internet connection.
 
 
 ### Adding a person: `add`
@@ -162,6 +169,21 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find n/Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
+### Setting or removing a remark: `remark`
+
+Sets or removes a client's remark.
+
+Format: `remark INDEX r/[REMARK]`
+
+* `INDEX` is a positive integer referring to the client in the currently displayed list, including search results.
+* The supplied remark replaces the existing remark. Enter `r/` without text to remove it.
+* Contact details, intention and budget are kept.
+
+Examples:
+
+* `remark 1 r/Call next week` replaces the first displayed client's remark with `Call next week`.
+* `remark 1 r/` removes the first displayed client's remark.
+
 ### Exiting the program: `exit`
 
 Exits the program.
@@ -212,4 +234,5 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find i/seller`
 **List**   | `list`
+**Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
 **Help**   | `help`
