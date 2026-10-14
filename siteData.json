@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "command-reference-help": "Command reference help",
         "find-command": "Find command",
         "budget-feature": "Budget feature",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
@@ -64,6 +65,7 @@
         "glossary": "Glossary",
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
+        "viewing-command-help": "Viewing command help",
         "recording-a-budget": "Recording a budget",
         "deleting-a-person": "Deleting a person",
         "saving-data": "Saving data"
@@ -119,6 +121,7 @@
         "editing-a-person-edit": "Editing a person: edit",
         "locating-persons-by-name-email-phone-or-intention-find": "Locating persons by name, email, phone, or intention: find",
         "deleting-a-person-delete": "Deleting a person: delete",
+        "setting-or-removing-a-remark-remark": "Setting or removing a remark: remark",
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
         "editing-the-data-file": "Editing the data file",
