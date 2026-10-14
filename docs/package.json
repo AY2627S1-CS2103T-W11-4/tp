@@ -4,8 +4,8 @@
   "description": "RESIDEX docs",
   "scripts": {
     "init": "markbind init",
-    "build": "markbind build",
-    "serve": "markbind serve",
+    "build": "node scripts/markbind.cjs build",
+    "serve": "node scripts/markbind.cjs serve",
     "deploy": "markbind deploy"
   },
   "devDependencies": {
