@@ -40,7 +40,7 @@
       "src": "DeveloperGuide.md",
       "title": "Developer Guide",
       "headings": {
-        "ab-3-developer-guide": "AB-3 Developer Guide",
+        "residex-developer-guide": "RESIDEX Developer Guide",
         "acknowledgements": "Acknowledgements",
         "setting-up-getting-started": "Setting up, getting started",
         "design": "Design",
@@ -76,7 +76,8 @@
       "src": "Documentation.md",
       "title": "Documentation guide",
       "headings": {
-        "documentation-guide": "Documentation Guide"
+        "documentation-guide": "Documentation Guide",
+        "building-locally": "Building locally"
       },
       "headingKeywords": {}
     },
@@ -112,15 +113,15 @@
       "src": "UserGuide.md",
       "title": "User Guide",
       "headings": {
-        "ab-3-user-guide": "AB-3 User Guide",
+        "residex-user-guide": "RESIDEX User Guide",
         "quick-start": "Quick start",
         "features": "Features",
         "viewing-help-help": "Viewing help: help",
-        "adding-a-person-add": "Adding a person: add",
-        "listing-all-persons-list": "Listing all persons: list",
-        "editing-a-person-edit": "Editing a person: edit",
+        "adding-a-client-add": "Adding a client: add",
+        "listing-all-clients-list": "Listing all clients: list",
+        "editing-a-client-edit": "Editing a client: edit",
         "locating-persons-by-name-email-phone-or-intention-find": "Locating persons by name, email, phone, or intention: find",
-        "deleting-a-person-delete": "Deleting a person: delete",
+        "deleting-a-client-delete": "Deleting a client: delete",
         "setting-or-removing-a-remark-remark": "Setting or removing a remark: remark",
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
