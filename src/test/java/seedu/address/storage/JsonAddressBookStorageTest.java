@@ -25,6 +25,9 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -125,6 +128,48 @@ public class JsonAddressBookStorageTest {
         ReadOnlyAddressBook reloaded = new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow();
         assertEquals(expected, new AddressBook(reloaded));
         assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO), reloaded.getPersonList().get(1).getProperties());
+    }
+
+    @Test
+    public void execute_duplicateRulesWithProperties_preservesClientsAndSavedData() throws Exception {
+        Path filePath = testFolder.resolve("duplicateRulesWithProperties.json");
+        Storage storage = new StorageManager(new JsonAddressBookStorage(filePath),
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json")));
+        Person first = new PersonBuilder(ALICE).withName("Alice Tan").withPhone("91234567")
+                .withProperties(CLEMENTI_HDB).build();
+        Person second = new PersonBuilder(HOON).withName("ALICE   TAN").withPhone("92345678")
+                .withProperties(TAMPINES_CONDO).build();
+        AddressBook original = new AddressBook();
+        original.setPersons(List.of(first, second));
+        Model model = new ModelManager(original, new UserPrefs());
+        LogicManager logic = new LogicManager(model, storage);
+
+        logic.execute("find p/92345678");
+        String savedData = Files.readString(filePath);
+        assertEquals(original, new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow());
+
+        assertThrows(CommandException.class, AddCommand.MESSAGE_DUPLICATE_PERSON, () ->
+                logic.execute("add n/alice tan p/91234567 e/duplicate@example.com i/Buyer"));
+        assertEquals(original, model.getAddressBook());
+        assertEquals(savedData, Files.readString(filePath));
+
+        assertThrows(CommandException.class, EditCommand.MESSAGE_DUPLICATE_PERSON, () ->
+                logic.execute("edit 1 p/91234567"));
+        assertEquals(original, model.getAddressBook());
+        assertEquals(List.of(second), model.getFilteredPersonList());
+        assertEquals(savedData, Files.readString(filePath));
+
+        logic.execute("edit 1 n/Alice Tan");
+        logic.execute("find p/92345678");
+        logic.execute("remark 1 r/Call next week");
+
+        Person updatedSecond = new PersonBuilder(second).withName("Alice Tan").withRemark("Call next week").build();
+        AddressBook expected = new AddressBook();
+        expected.setPersons(List.of(first, updatedSecond));
+        ReadOnlyAddressBook reloaded = new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow();
+        assertEquals(expected, new AddressBook(reloaded));
+        assertEquals(List.of(CLEMENTI_HDB), reloaded.getPersonList().get(0).getProperties());
+        assertEquals(List.of(TAMPINES_CONDO), reloaded.getPersonList().get(1).getProperties());
     }
 
     @Test
