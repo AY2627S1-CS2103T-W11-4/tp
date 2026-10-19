@@ -7,17 +7,34 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.HOON;
 import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
+import static seedu.address.testutil.TypicalProperties.BUKIT_TIMAH_LANDED;
+import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
+import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.util.JsonUtil;
+import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
+import seedu.address.model.Model;
+import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -43,6 +60,153 @@ public class JsonAddressBookStorageTest {
     @Test
     public void read_missingFile_emptyResult() throws Exception {
         assertFalse(readAddressBook("NonExistentFile.json").isPresent());
+    }
+
+    @Test
+    public void readAddressBook_v13FileWithoutProperties_loadsUnchanged() throws Exception {
+        Path legacyFile = TEST_DATA_FOLDER.resolveSibling("JsonSerializableAddressBookTest")
+                .resolve("typicalPersonsAddressBook.json");
+        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(legacyFile).readAddressBook().orElseThrow();
+        assertEquals(getTypicalAddressBook(), new AddressBook(loaded));
+        for (Person person : loaded.getPersonList()) {
+            assertEquals(List.of(), person.getProperties());
+        }
+    }
+
+    @Test
+    public void readAndSaveAddressBook_properties_preservesIndependentClientsAndUpdatedIndexes() throws Exception {
+        Path filePath = testFolder.resolve("properties.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        Person first = new PersonBuilder(ALICE)
+                .withProperties(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB, BUKIT_TIMAH_LANDED).build();
+        Person second = new PersonBuilder(HOON).withProperties(CLEMENTI_HDB).build();
+        Person third = new PersonBuilder(IDA).withProperties().build();
+        AddressBook original = new AddressBook();
+        original.setPersons(List.of(first, second, third));
+        storage.saveAddressBook(original);
+
+        JsonAddressBookStorage reopenedStorage = new JsonAddressBookStorage(filePath);
+        ReadOnlyAddressBook reloaded = reopenedStorage.readAddressBook().orElseThrow();
+        assertEquals(original, new AddressBook(reloaded));
+
+        Person reloadedFirst = reloaded.getPersonList().get(0);
+        Person changedFirst = reloadedFirst.withoutProperty(Index.fromOneBased(2))
+                .withUpdatedProperty(Index.fromOneBased(2), TAMPINES_CONDO);
+        AddressBook updated = new AddressBook(reloaded);
+        updated.setPerson(reloadedFirst, changedFirst);
+        reopenedStorage.saveAddressBook(updated);
+        ReadOnlyAddressBook finalReload = new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow();
+
+        assertEquals(updated, new AddressBook(finalReload));
+        assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO, BUKIT_TIMAH_LANDED),
+                finalReload.getPersonList().get(0).getProperties());
+        assertEquals(List.of(CLEMENTI_HDB), finalReload.getPersonList().get(1).getProperties());
+        assertEquals(List.of(), finalReload.getPersonList().get(2).getProperties());
+    }
+
+    @Test
+    public void execute_editAndRemarkOnFilteredClient_persistsProperties() throws Exception {
+        Path filePath = testFolder.resolve("editedProperties.json");
+        JsonAddressBookStorage addressStorage = new JsonAddressBookStorage(filePath);
+        Storage storage = new StorageManager(addressStorage,
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json")));
+        Person first = new PersonBuilder(ALICE).withProperties(TAMPINES_CONDO).build();
+        Person target = new PersonBuilder(HOON).withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
+        AddressBook original = new AddressBook();
+        original.setPersons(List.of(first, target));
+        Model model = new ModelManager(original, new UserPrefs());
+        LogicManager logic = new LogicManager(model, storage);
+
+        logic.execute("find n/Hoon");
+        logic.execute("edit 1 p/90000000");
+        logic.execute("find n/Hoon");
+        logic.execute("remark 1 r/Call next week");
+
+        Person expectedTarget = new PersonBuilder(target).withPhone("90000000").withRemark("Call next week").build();
+        AddressBook expected = new AddressBook();
+        expected.setPersons(List.of(first, expectedTarget));
+        ReadOnlyAddressBook reloaded = new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow();
+        assertEquals(expected, new AddressBook(reloaded));
+        assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO), reloaded.getPersonList().get(1).getProperties());
+    }
+
+    @Test
+    public void execute_duplicateRulesWithProperties_preservesClientsAndSavedData() throws Exception {
+        Path filePath = testFolder.resolve("duplicateRulesWithProperties.json");
+        Storage storage = new StorageManager(new JsonAddressBookStorage(filePath),
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json")));
+        Person first = new PersonBuilder(ALICE).withName("Alice Tan").withPhone("91234567")
+                .withProperties(CLEMENTI_HDB).build();
+        Person second = new PersonBuilder(HOON).withName("ALICE   TAN").withPhone("92345678")
+                .withProperties(TAMPINES_CONDO).build();
+        AddressBook original = new AddressBook();
+        original.setPersons(List.of(first, second));
+        Model model = new ModelManager(original, new UserPrefs());
+        LogicManager logic = new LogicManager(model, storage);
+
+        logic.execute("find p/92345678");
+        String savedData = Files.readString(filePath);
+        assertEquals(original, new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow());
+
+        assertThrows(CommandException.class, AddCommand.MESSAGE_DUPLICATE_PERSON, () ->
+                logic.execute("add n/alice tan p/91234567 e/duplicate@example.com i/Buyer"));
+        assertEquals(original, model.getAddressBook());
+        assertEquals(savedData, Files.readString(filePath));
+
+        assertThrows(CommandException.class, EditCommand.MESSAGE_DUPLICATE_PERSON, () ->
+                logic.execute("edit 1 p/91234567"));
+        assertEquals(original, model.getAddressBook());
+        assertEquals(List.of(second), model.getFilteredPersonList());
+        assertEquals(savedData, Files.readString(filePath));
+
+        logic.execute("edit 1 n/Alice Tan");
+        logic.execute("find p/92345678");
+        logic.execute("remark 1 r/Call next week");
+
+        Person updatedSecond = new PersonBuilder(second).withName("Alice Tan").withRemark("Call next week").build();
+        AddressBook expected = new AddressBook();
+        expected.setPersons(List.of(first, updatedSecond));
+        ReadOnlyAddressBook reloaded = new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow();
+        assertEquals(expected, new AddressBook(reloaded));
+        assertEquals(List.of(CLEMENTI_HDB), reloaded.getPersonList().get(0).getProperties());
+        assertEquals(List.of(TAMPINES_CONDO), reloaded.getPersonList().get(1).getProperties());
+    }
+
+    @Test
+    public void readAddressBook_invalidPropertyEntry_rejectsWholeFileWithoutChangingIt() throws Exception {
+        Path filePath = testFolder.resolve("invalidProperties.json");
+        List<JsonAdaptedProperty> validProperties = List.of(new JsonAdaptedProperty(CLEMENTI_HDB));
+        JsonAdaptedProperty[] invalidProperties = {null,
+            new JsonAdaptedProperty(null, "Buyer", "Clementi", null),
+            new JsonAdaptedProperty("flat", "Buyer", "Clementi", null),
+            new JsonAdaptedProperty("HDB", null, "Clementi", null),
+            new JsonAdaptedProperty("HDB", "Tenant", "Clementi", null),
+            new JsonAdaptedProperty("HDB", "Buyer", null, null),
+            new JsonAdaptedProperty("HDB", "Buyer", " ", null),
+            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0")};
+        for (JsonAdaptedProperty invalid : invalidProperties) {
+            List<JsonAdaptedProperty> properties = new ArrayList<>(validProperties);
+            properties.add(invalid);
+            JsonAdaptedPerson person = new JsonAdaptedPerson("Alice", "91234567", "alice@example.com", "Buyer",
+                    "", null, properties);
+            JsonSerializableAddressBook data = new JsonSerializableAddressBook(List.of(person));
+            JsonUtil.saveJsonFile(data, filePath);
+            String originalContents = Files.readString(filePath);
+
+            assertThrows(DataLoadingException.class, () -> new JsonAddressBookStorage(filePath).readAddressBook());
+            assertEquals(originalContents, Files.readString(filePath));
+        }
+    }
+
+    @Test
+    public void readAddressBook_malformedPropertiesShape_throwsDataLoadingException() throws Exception {
+        Path filePath = testFolder.resolve("malformedProperties.json");
+        for (String properties : new String[]{"{}", "\"invalid\"", "[42]", "[[]]"}) {
+            String json = "{\"persons\":[{\"name\":\"Alice\",\"phone\":\"91234567\","
+                    + "\"email\":\"alice@example.com\",\"intention\":\"Buyer\",\"properties\":" + properties + "}]}";
+            Files.writeString(filePath, json);
+            assertThrows(DataLoadingException.class, () -> new JsonAddressBookStorage(filePath).readAddressBook());
+        }
     }
 
     @Test
