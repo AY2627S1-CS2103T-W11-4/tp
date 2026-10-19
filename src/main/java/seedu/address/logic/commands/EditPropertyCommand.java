@@ -1,0 +1,155 @@
+package seedu.address.logic.commands;
+
+import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+
+import java.util.Objects;
+
+import seedu.address.commons.core.index.Index;
+import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.model.Model;
+import seedu.address.model.person.Intention;
+import seedu.address.model.person.Person;
+import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyType;
+
+/**
+ * Replaces selected property fields only after all supplied values and indexes have been validated.
+ */
+public class EditPropertyCommand extends Command {
+    public static final String COMMAND_WORD = "editp";
+    public static final String MESSAGE_USAGE = COMMAND_WORD
+            + ": Edits a property belonging to the displayed client.\n"
+            + "Parameters: CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]\n"
+            + "Supply at least one field. Empty pr/ removes the price.\n"
+            + "Example: " + COMMAND_WORD + " 1 2 l/Toa Payoh pr/600000";
+    public static final String MESSAGE_NOT_EDITED = "Supply at least one property field to edit.";
+    public static final String MESSAGE_UNCHANGED = "Property %1$d for %2$s is unchanged.";
+    public static final String MESSAGE_SUCCESS = "Edited property %1$d for %2$s: %3$s";
+
+    private final Index clientIndex;
+    private final Index propertyIndex;
+    private final EditPropertyDescriptor descriptor;
+
+    /**
+     * Creates a command with a defensive copy of the requested edits.
+     */
+    public EditPropertyCommand(Index clientIndex, Index propertyIndex, EditPropertyDescriptor descriptor) {
+        requireAllNonNull(clientIndex, propertyIndex, descriptor);
+        this.clientIndex = clientIndex;
+        this.propertyIndex = propertyIndex;
+        this.descriptor = new EditPropertyDescriptor(descriptor);
+    }
+
+    @Override
+    public CommandResult execute(Model model) throws CommandException {
+        Person original = PropertyCommandUtil.getClient(model, clientIndex);
+        Property current = PropertyCommandUtil.getProperty(original, propertyIndex);
+        if (!descriptor.isAnyFieldEdited()) {
+            throw new CommandException(MESSAGE_NOT_EDITED);
+        }
+        Property replacement = descriptor.applyTo(current);
+        if (replacement.equals(current)) {
+            return new CommandResult(String.format(MESSAGE_UNCHANGED, propertyIndex.getOneBased(), original.getName()));
+        }
+        model.setPerson(original, original.withUpdatedProperty(propertyIndex, replacement));
+        return new CommandResult(String.format(MESSAGE_SUCCESS, propertyIndex.getOneBased(),
+                original.getName(), replacement.toDisplay()));
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+        return other instanceof EditPropertyCommand otherCommand
+                && clientIndex.equals(otherCommand.clientIndex)
+                && propertyIndex.equals(otherCommand.propertyIndex)
+                && descriptor.equals(otherCommand.descriptor);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this).add("clientIndex", clientIndex).add("propertyIndex", propertyIndex)
+                .add("descriptor", descriptor).toString();
+    }
+
+    /**
+     * Requested edits. Null required fields are omitted; an explicitly set null price clears the optional price.
+     */
+    public static class EditPropertyDescriptor {
+        private PropertyType type;
+        private Intention intention;
+        private PropertyLocation location;
+        private PropertyPrice price;
+        private boolean priceEdited;
+
+        public EditPropertyDescriptor() {
+        }
+
+        /**
+         * Copies immutable field values and the explicit price-edit flag from {@code source}.
+         */
+        public EditPropertyDescriptor(EditPropertyDescriptor source) {
+            requireNonNull(source);
+            type = source.type;
+            intention = source.intention;
+            location = source.location;
+            price = source.price;
+            priceEdited = source.priceEdited;
+        }
+
+        public void setType(PropertyType type) {
+            this.type = requireNonNull(type);
+        }
+
+        public void setIntention(Intention intention) {
+            this.intention = requireNonNull(intention);
+        }
+
+        public void setLocation(PropertyLocation location) {
+            this.location = requireNonNull(location);
+        }
+
+        /**
+         * Sets the price, or explicitly removes it if {@code price} is null.
+         */
+        public void setPrice(PropertyPrice price) {
+            this.price = price;
+            priceEdited = true;
+        }
+
+        public boolean isAnyFieldEdited() {
+            return type != null || intention != null || location != null || priceEdited;
+        }
+
+        private Property applyTo(Property original) {
+            return new Property(type == null ? original.getType() : type,
+                    intention == null ? original.getIntention() : intention,
+                    location == null ? original.getLocation() : location,
+                    priceEdited ? price : original.getPrice().orElse(null));
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            }
+            return other instanceof EditPropertyDescriptor otherDescriptor
+                    && type == otherDescriptor.type
+                    && intention == otherDescriptor.intention
+                    && Objects.equals(location, otherDescriptor.location)
+                    && Objects.equals(price, otherDescriptor.price)
+                    && priceEdited == otherDescriptor.priceEdited;
+        }
+
+        @Override
+        public String toString() {
+            return new ToStringBuilder(this).add("type", type).add("intention", intention).add("location", location)
+                    .add("price", price).add("priceEdited", priceEdited).toString();
+        }
+    }
+}

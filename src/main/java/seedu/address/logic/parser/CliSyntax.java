@@ -14,5 +14,8 @@ public class CliSyntax {
     // Recognized only to reject the removed tagging syntax.
     public static final Prefix PREFIX_TAG = new Prefix("t/");
     public static final Prefix PREFIX_REMARK = new Prefix("r/");
+    public static final Prefix PREFIX_PROPERTY_TYPE = new Prefix("t/");
+    public static final Prefix PREFIX_PROPERTY_LOCATION = new Prefix("l/");
+    public static final Prefix PREFIX_PROPERTY_PRICE = new Prefix("pr/");
 
 }

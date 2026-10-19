@@ -25,6 +25,7 @@
       <Label fx:id="email" styleClass="client-detail" />
     </HBox>
     <Label fx:id="remark" styleClass="client-remark" wrapText="true" />
+    <VBox fx:id="properties" spacing="6" minWidth="0" styleClass="client-properties" />
   </VBox>
   <VBox spacing="12" alignment="TOP_RIGHT" minWidth="-Infinity">
     <Label fx:id="intention" styleClass="intention-badge" />

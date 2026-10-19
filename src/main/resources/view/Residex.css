@@ -184,6 +184,17 @@
     -fx-text-fill: #657185;
 }
 
+.client-properties {
+    -fx-padding: 8 0 0 0;
+    -fx-border-color: #ced5df transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.property-detail {
+    -fx-font-size: 14px;
+    -fx-text-fill: #344d6b;
+}
+
 .intention-badge {
     -fx-background-color: #f1f3f5;
     -fx-border-color: #ced5df;

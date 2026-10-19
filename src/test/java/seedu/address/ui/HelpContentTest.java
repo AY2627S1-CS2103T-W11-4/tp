@@ -14,9 +14,12 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.AddPropertyCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeletePropertyCommand;
 import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.EditPropertyCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -37,15 +40,18 @@ import seedu.address.testutil.PersonBuilder;
  * Checks the command reference against the real parsers without executing commands or starting JavaFX.
  */
 public class HelpContentTest {
-    private static final Map<String, Class<? extends Command>> COMMAND_TYPES = Map.of(
-            AddCommand.COMMAND_WORD, AddCommand.class,
-            EditCommand.COMMAND_WORD, EditCommand.class,
-            FindCommand.COMMAND_WORD, FindCommand.class,
-            ListCommand.COMMAND_WORD, ListCommand.class,
-            DeleteCommand.COMMAND_WORD, DeleteCommand.class,
-            RemarkCommand.COMMAND_WORD, RemarkCommand.class,
-            HelpCommand.COMMAND_WORD, HelpCommand.class,
-            ExitCommand.COMMAND_WORD, ExitCommand.class);
+    private static final Map<String, Class<? extends Command>> COMMAND_TYPES = Map.ofEntries(
+            Map.entry(AddCommand.COMMAND_WORD, AddCommand.class),
+            Map.entry(EditCommand.COMMAND_WORD, EditCommand.class),
+            Map.entry(AddPropertyCommand.COMMAND_WORD, AddPropertyCommand.class),
+            Map.entry(DeletePropertyCommand.COMMAND_WORD, DeletePropertyCommand.class),
+            Map.entry(EditPropertyCommand.COMMAND_WORD, EditPropertyCommand.class),
+            Map.entry(FindCommand.COMMAND_WORD, FindCommand.class),
+            Map.entry(ListCommand.COMMAND_WORD, ListCommand.class),
+            Map.entry(DeleteCommand.COMMAND_WORD, DeleteCommand.class),
+            Map.entry(RemarkCommand.COMMAND_WORD, RemarkCommand.class),
+            Map.entry(HelpCommand.COMMAND_WORD, HelpCommand.class),
+            Map.entry(ExitCommand.COMMAND_WORD, ExitCommand.class));
 
     private final AddressBookParser parser = new AddressBookParser();
 

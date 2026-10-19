@@ -10,8 +10,11 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 import java.util.List;
 
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.AddPropertyCommand;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeletePropertyCommand;
 import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.EditPropertyCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -32,6 +35,10 @@ final class HelpContent {
     private static final String EMAIL_NOTE =
             PREFIX_EMAIL + "EMAIL: enter a valid email address, such as john@example.com.";
     private static final String BUDGET_NOTE = PREFIX_BUDGET + "BUDGET: " + Budget.MESSAGE_CONSTRAINTS + ".";
+    private static final String PROPERTY_INDEX_NOTE =
+            "CLIENT_INDEX selects a displayed client; PROPERTY_INDEX selects a numbered property under that client.";
+    private static final String PROPERTY_CASE_NOTE =
+            "Command words, property prefixes, types and property intentions ignore case. Location text is preserved.";
 
     private static final List<CommandHelp> COMMANDS = List.of(
             new CommandHelp(AddCommand.COMMAND_WORD, "Add a new client.",
@@ -53,12 +60,41 @@ final class HelpContent {
                             + PREFIX_EMAIL + "EMAIL] [" + PREFIX_BUDGET + "BUDGET]",
                     List.of(INDEX_NOTE, "Supply at least one field. Each supplied field replaces its current value.",
                             NAME_NOTE, PHONE_NOTE, EMAIL_NOTE, BUDGET_NOTE,
-                            "Omitted fields are kept. Intention and remark are unchanged.",
+                            "Omitted fields are kept. Intention, remark and properties are unchanged.",
                             "The updated name and phone number must not duplicate another client.",
                             "Supply each field once, in any order."),
                     List.of(EditCommand.COMMAND_WORD + " 1 " + PREFIX_PHONE + "91234567 "
                                     + PREFIX_EMAIL + "johndoe@example.com",
                             EditCommand.COMMAND_WORD + " 1 " + PREFIX_BUDGET + "900000")),
+            new CommandHelp(AddPropertyCommand.COMMAND_WORD, "Add a property to a client.",
+                    "addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]",
+                    List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE,
+                            "Type, property intention and location are required. Price is optional.",
+                            "Types: HDB (h), Condominium (c), Landed (l). Property intentions: Buyer or Seller.",
+                            "Location must not be blank. Supply each field once, in any order.",
+                            "pr/PRICE is a positive whole-dollar amount without commas, decimals or leading zeros.",
+                            "Omit pr/ when adding an unknown price. It does not change the client's budget.",
+                            "Identical entries are allowed and are independent, including across clients.",
+                            "The property is appended. The current client filter is kept."),
+                    List.of("addp 1 t/HDB i/Buyer l/Clementi pr/800000",
+                            "addp 1 t/Condominium i/Seller l/Bishan")),
+            new CommandHelp(DeletePropertyCommand.COMMAND_WORD, "Delete one property from a client.",
+                    "delp CLIENT_INDEX PROPERTY_INDEX",
+                    List.of(PROPERTY_INDEX_NOTE,
+                            "Deletes the whole selected property. Location cannot be removed on its own.",
+                            "Later properties shift down by one index. Other clients' properties are unchanged.",
+                            "The current client filter is kept. There is no undo command."),
+                    List.of("delp 1 2")),
+            new CommandHelp(EditPropertyCommand.COMMAND_WORD, "Edit selected fields of a client's property.",
+                    "editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]",
+                    List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE,
+                            "Supply at least one field, once each. Omitted fields keep their current values.",
+                            "Empty pr/ removes the price. Empty t/, i/ and l/ are rejected.",
+                            "Property intention and price are separate from the client's intention and budget.",
+                            "Invalid input keeps the original property. An identical edit reports no change.",
+                            "The property keeps its position. The current client filter is kept.",
+                            "Prefix-like words ending in / are reserved for fields; use t/, i/, l/ and pr/ only."),
+                    List.of("editp 1 2 l/Toa Payoh", "editp 1 2 t/Landed i/Seller pr/3200000", "editp 1 2 pr/")),
             new CommandHelp(FindCommand.COMMAND_WORD, "Find clients by name, email, phone or intention.",
                     FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"
@@ -85,7 +121,7 @@ final class HelpContent {
                     RemarkCommand.COMMAND_WORD + " INDEX " + PREFIX_REMARK + "[REMARK]",
                     List.of(INDEX_NOTE, "The supplied remark replaces the existing one.",
                             "Enter " + PREFIX_REMARK + " with no text to remove the remark.",
-                            "Contact details, intention and budget are kept."),
+                            "Contact details, intention, budget and properties are kept."),
                     List.of(RemarkCommand.COMMAND_WORD + " 1 " + PREFIX_REMARK + "Call next week",
                             RemarkCommand.COMMAND_WORD + " 1 " + PREFIX_REMARK)),
             new CommandHelp(HelpCommand.COMMAND_WORD, "Show the command reference.", HelpCommand.COMMAND_WORD,

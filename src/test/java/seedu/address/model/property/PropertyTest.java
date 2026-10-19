@@ -74,6 +74,14 @@ public class PropertyTest {
     }
 
     @Test
+    public void toDisplay_showsReadableDetailsAndOptionalPrice() {
+        assertEquals("HDB | Buyer | Clementi Ave 3 | $800,000",
+                new Property(PropertyType.HDB, Intention.BUYER, LOCATION, PRICE).toDisplay());
+        assertEquals("HDB | Buyer | Clementi Ave 3",
+                new Property(PropertyType.HDB, Intention.BUYER, LOCATION).toDisplay());
+    }
+
+    @Test
     public void toString_includesFieldsAndOptionalPrice() {
         String expected = Property.class.getCanonicalName()
                 + "{type=HDB, intention=Buyer, location=Clementi Ave 3, price=800000}";

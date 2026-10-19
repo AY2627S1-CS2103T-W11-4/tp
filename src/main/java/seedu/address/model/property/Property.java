@@ -56,6 +56,14 @@ public final class Property {
         return Optional.ofNullable(price);
     }
 
+    /**
+     * Returns the property details for client cards and command feedback.
+     */
+    public String toDisplay() {
+        return type + " | " + intention + " | " + location
+                + getPrice().map(value -> " | " + value.toDisplay()).orElse("");
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {

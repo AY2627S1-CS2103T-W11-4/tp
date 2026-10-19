@@ -47,6 +47,9 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 
 **Notes about the command format:**<br>
 
+* Command words are case-insensitive; `ADDP` and `addp` run the same command.
+  Prefixes for property commands are also case-insensitive, while existing client commands retain their documented field rules.
+
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
@@ -124,6 +127,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [b/BUDGET]`
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* Client edits preserve all property entries.
+  Use `editp` to change a property.
 * `b/BUDGET` replaces the client's budget. Leaving `b/` out keeps the existing budget.
 * The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
   Changing only the capitalisation or spacing of the selected client's own name is allowed.
@@ -132,6 +137,74 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 1 b/900000` Sets the 1st person's budget to $900,000, shown in yellow.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
+
+### Managing a client's properties
+
+Each client can have an ordered list of properties, shown as numbered entries on their client card.
+Each property has one type, one buying or selling intention, one location, and an optional price.
+Property intentions and prices are independent of the client's intention and budget.
+
+* `CLIENT_INDEX` selects a client in the currently displayed list, including search results.
+* `PROPERTY_INDEX` selects a numbered property under that client, starting from 1.
+* Property commands keep the current client filter.
+* Identical property entries are allowed within one client and across clients.
+  Each entry is independent; editing one does not change another client's entry.
+* Property fields can be supplied in any order, once each.
+  Prefixes, property types and property intentions are case-insensitive.
+* Valid types are `HDB` (`h`), `Condominium` (`c`) and `Landed` (`l`).
+  Valid property intentions are `Buyer` and `Seller`.
+* Location is nonblank text, for example `Clementi Ave 3`.
+  Surrounding whitespace is removed; capitalisation and internal spaces are preserved.
+* `pr/PRICE` is the property's price in whole Singapore dollars, separate from `b/BUDGET` on the client.
+  A supplied price must be positive, no greater than `9223372036854775807`, and contain no commas, decimals or leading zeros.
+  Use `pr/` rather than `p/` for property prices.
+* Whitespace-separated words ending in `/` are treated as field prefixes in property commands.
+  Use only `t/`, `i/`, `l/` and `pr/`; do not include prefix-like text such as `MRT/Exit` in a location.
+
+### Adding a property: `addp`
+
+Format: `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`
+
+Type, property intention and location are required.
+Omit `pr/` if the price is unknown; a supplied empty `pr/` is rejected when adding.
+The new property is appended to the selected client's list.
+
+Examples:
+
+* `addp 1 t/HDB i/Buyer l/Clementi pr/800000` adds a property with an $800,000 price to the first displayed client.
+* `addp 1 t/c i/Seller l/Bishan` adds a condominium entry without a price to the same client.
+* `ADDP 1 T/l I/buyer L/Bukit Timah PR/3200000` adds a landed property using mixed-case syntax.
+
+### Deleting a property: `delp`
+
+Format: `delp CLIENT_INDEX PROPERTY_INDEX`
+
+Deletes only the selected property, leaving the client and their other information intact.
+Later property entries shift down by one index.
+Location is required, so deleting only a property's location is not supported.
+Deletion has no undo command.
+
+Example: `delp 1 2` deletes property 2 from the first displayed client.
+The former property 3, if any, becomes property 2.
+
+### Editing a property: `editp`
+
+Format: `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]`
+
+* Supply at least one field.
+  Omitted fields keep their current values.
+* Empty `pr/` removes the optional price.
+  Empty `t/`, `i/` and `l/` are rejected.
+* All supplied values and both indexes are checked before anything changes.
+  Invalid input leaves the original property unchanged.
+* An edit that produces the same stored values reports that the property is unchanged.
+* Editing a property keeps its position and does not change other properties, client details or the client's budget.
+
+Examples:
+
+* `editp 1 2 l/Toa Payoh` changes only property 2's location for the first displayed client.
+* `editp 1 2 t/Landed i/Seller pr/3200000` changes its type, property intention and price together.
+* `editp 1 2 pr/` removes its price while preserving its location and other fields.
 
 ### Locating persons by name, email, phone, or intention: `find`
 
@@ -188,7 +261,7 @@ Format: `remark INDEX r/[REMARK]`
 
 * `INDEX` is a positive integer referring to the client in the currently displayed list, including search results.
 * The supplied remark replaces the existing remark. Enter `r/` without text to remove it.
-* Contact details, intention and budget are kept.
+* Contact details, intention, budget and properties are kept.
 
 Examples:
 
@@ -243,6 +316,9 @@ Action     | Format, Examples
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer b/1500000`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`<br> e.g., `addp 1 t/HDB i/Buyer l/Clementi pr/800000`
+**Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
+**Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]`<br> e.g., `editp 1 2 l/Toa Payoh`
 **Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find i/seller`
 **List**   | `list`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
