@@ -9,6 +9,10 @@ import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
+import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
+import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +38,8 @@ public class RemarkCommandTest {
 
     @Test
     public void execute_seller_preservesIntention() throws Exception {
-        Person seller = new PersonBuilder().withIntention(Intention.SELLER).build();
+        Person seller = new PersonBuilder().withIntention(Intention.SELLER)
+                .withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
         Model sellerModel = new ModelManager(new AddressBook(), new UserPrefs());
         sellerModel.addPerson(seller);
         Person expectedPerson = new PersonBuilder(seller).withRemark(REMARK_STUB).build();
@@ -44,6 +49,32 @@ public class RemarkCommandTest {
 
         assertEquals(expectedPerson, sellerModel.getFilteredPersonList().get(0));
         assertEquals(Intention.SELLER, sellerModel.getFilteredPersonList().get(0).getIntention());
+        assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO),
+                sellerModel.getFilteredPersonList().get(0).getProperties());
+    }
+
+    @Test
+    public void execute_replaceOrClearFilteredRemark_preservesPropertiesAndOtherClients() {
+        for (String remark : List.of(REMARK_STUB, "")) {
+            Model filteredModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+            Person original = filteredModel.getAddressBook().getPersonList().get(1);
+            Person target = new PersonBuilder(original).withRemark("Existing remark").withBudget("1500000")
+                    .withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
+            filteredModel.setPerson(original, target);
+            showPersonAtIndex(filteredModel, INDEX_SECOND_PERSON);
+
+            Person expectedPerson = new PersonBuilder(target).withRemark(remark).build();
+            Model expectedModel = new ModelManager(new AddressBook(filteredModel.getAddressBook()), new UserPrefs());
+            expectedModel.setPerson(target, expectedPerson);
+            String message = remark.isEmpty() ? RemarkCommand.MESSAGE_DELETE_REMARK_SUCCESS
+                    : RemarkCommand.MESSAGE_ADD_REMARK_SUCCESS;
+            RemarkCommand command = new RemarkCommand(INDEX_FIRST_PERSON, new Remark(remark));
+
+            assertCommandSuccess(command, filteredModel, String.format(message, Messages.format(expectedPerson)),
+                    expectedModel);
+            assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO),
+                    filteredModel.getAddressBook().getPersonList().get(1).getProperties());
+        }
     }
 
     @Test
