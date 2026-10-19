@@ -18,6 +18,7 @@ import seedu.address.logic.commands.EditPropertyCommand.EditPropertyDescriptor;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.testutil.PersonBuilder;
 
@@ -112,5 +113,51 @@ public class PropertyCommandTest {
         assertThrows(CommandException.class, EditPropertyCommand.MESSAGE_NOT_EDITED, () -> command.execute(model));
 
         assertEquals(original, model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_editOnlyIntention_preservesOtherPropertyFields() throws Exception {
+        Model model = new ModelManager();
+        model.addPerson(new PersonBuilder(ALICE).withProperties(CLEMENTI_HDB).build());
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setIntention(TAMPINES_CONDO.getIntention());
+
+        new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor).execute(model);
+
+        Property updated = model.getFilteredPersonList().get(0).getProperties().get(0);
+        assertEquals(TAMPINES_CONDO.getIntention(), updated.getIntention());
+        assertEquals(CLEMENTI_HDB.getType(), updated.getType());
+        assertEquals(CLEMENTI_HDB.getLocation(), updated.getLocation());
+        assertEquals(CLEMENTI_HDB.getPrice(), updated.getPrice());
+    }
+
+    @Test
+    public void toString_addAndDelete_includeSelectedIndexesAndProperty() {
+        AddPropertyCommand add = new AddPropertyCommand(INDEX_FIRST_PERSON, CLEMENTI_HDB);
+        assertEquals(AddPropertyCommand.class.getCanonicalName() + "{clientIndex=" + INDEX_FIRST_PERSON
+                + ", property=" + CLEMENTI_HDB + "}", add.toString());
+
+        DeletePropertyCommand delete = new DeletePropertyCommand(INDEX_SECOND_PERSON, INDEX_FIRST_PERSON);
+        assertEquals(DeletePropertyCommand.class.getCanonicalName() + "{clientIndex=" + INDEX_SECOND_PERSON
+                + ", propertyIndex=" + INDEX_FIRST_PERSON + "}", delete.toString());
+    }
+
+    @Test
+    public void toString_editIncludesIndexesAndRequestedChanges() {
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setType(CLEMENTI_HDB.getType());
+        descriptor.setIntention(CLEMENTI_HDB.getIntention());
+        descriptor.setLocation(CLEMENTI_HDB.getLocation());
+        descriptor.setPrice(CLEMENTI_HDB.getPrice().orElseThrow());
+        String expectedDescriptor = EditPropertyDescriptor.class.getCanonicalName()
+                + "{type=" + CLEMENTI_HDB.getType() + ", intention=" + CLEMENTI_HDB.getIntention()
+                + ", location=" + CLEMENTI_HDB.getLocation() + ", price=" + CLEMENTI_HDB.getPrice().orElseThrow()
+                + ", priceEdited=true}";
+        assertEquals(expectedDescriptor, descriptor.toString());
+
+        EditPropertyCommand edit = new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON, descriptor);
+        String expectedCommand = EditPropertyCommand.class.getCanonicalName() + "{clientIndex=" + INDEX_FIRST_PERSON
+                + ", propertyIndex=" + INDEX_SECOND_PERSON + ", descriptor=" + expectedDescriptor + "}";
+        assertEquals(expectedCommand, edit.toString());
     }
 }

@@ -4,10 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
+import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
@@ -33,6 +36,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import seedu.address.logic.Logic;
@@ -105,6 +109,83 @@ public class ResidexUiTest {
             assertFalse(label(seller, "budget").isManaged());
             assertTrue(label(seller, "remark").isManaged());
             assertEquals("Call after 6 pm", label(seller, "remark").getText());
+        });
+    }
+
+    @Test
+    public void clientCards_showNumberedPropertiesWithAndWithoutPrices() throws Exception {
+        runOnFxThread(() -> {
+            Person person = new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB).build();
+            Region card = new PersonCard(person, 2).getRoot();
+            styleCard(card);
+            VBox properties = (VBox) card.lookup("#properties");
+            assertTrue(properties.isVisible());
+            assertTrue(properties.isManaged());
+            assertEquals(3, properties.getChildren().size());
+            assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000",
+                    "2. Condominium | Seller | Tampines", "3. HDB | Buyer | Clementi Ave 3 | $800,000"),
+                    propertyTexts(properties));
+            for (Node node : properties.getChildren()) {
+                Label property = (Label) node;
+                assertTrue(property.getStyleClass().contains("property-detail"));
+                assertTrue(property.isWrapText());
+                assertEquals(0, property.getMinWidth());
+                assertEquals(Double.MAX_VALUE, property.getMaxWidth());
+            }
+
+            Region otherClient = new PersonCard(new PersonBuilder().withProperties(CLEMENTI_HDB).build(), 3).getRoot();
+            styleCard(otherClient);
+            VBox otherProperties = (VBox) otherClient.lookup("#properties");
+            assertEquals(1, otherProperties.getChildren().size());
+            assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000"), propertyTexts(otherProperties));
+        });
+    }
+
+    @Test
+    public void propertyCommands_updateCardAndHideEmptyPropertyList() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            model.addPerson(new PersonBuilder().build());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                VBox properties = (VBox) root.lookup("#properties");
+                assertTrue(properties.getChildren().isEmpty());
+                assertFalse(properties.isVisible());
+                assertFalse(properties.isManaged());
+
+                command.setText("addp 1 t/HDB i/Buyer l/Clementi Ave 3 pr/800000");
+                run.fire();
+                root.applyCss();
+                root.layout();
+                properties = (VBox) root.lookup("#properties");
+                assertTrue(properties.isVisible());
+                assertTrue(properties.isManaged());
+                assertEquals(1, properties.getChildren().size());
+                assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000"), propertyTexts(properties));
+
+                command.setText("editp 1 1 l/Bishan pr/");
+                command.fireEvent(new ActionEvent());
+                root.applyCss();
+                root.layout();
+                properties = (VBox) root.lookup("#properties");
+                assertEquals(1, properties.getChildren().size());
+                assertEquals(List.of("1. HDB | Buyer | Bishan"), propertyTexts(properties));
+
+                command.setText("delp 1 1");
+                run.fire();
+                root.applyCss();
+                root.layout();
+                properties = (VBox) root.lookup("#properties");
+                assertTrue(properties.getChildren().isEmpty());
+                assertFalse(properties.isVisible());
+                assertFalse(properties.isManaged());
+                assertTrue(model.getFilteredPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
         });
     }
 
@@ -268,6 +349,10 @@ public class ResidexUiTest {
 
     private static Label label(Region root, String id) {
         return (Label) root.lookup("#" + id);
+    }
+
+    private static List<String> propertyTexts(VBox properties) {
+        return properties.getChildren().stream().map(Label.class::cast).map(Label::getText).toList();
     }
 
     private static void saveSnapshot(Region root, String name) throws Exception {
