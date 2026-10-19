@@ -125,6 +125,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the client data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores each client's properties as an ordered, unmodifiable list within `Person`.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -139,6 +140,7 @@ The `Model` component,
 The `Storage` component,
 * can save both client data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
+* uses `JsonAdaptedPerson` and `JsonAdaptedProperty` to preserve each client's property list and its order.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 ### Common classes
@@ -220,6 +222,82 @@ A client with no budget has no amount on the card.
 * **Alternative 2:** Store the colour the user picks.
   * Pros: The displayed colour stays as the user left it.
   * Cons: The colour can disagree with the amount.
+
+### Client property model
+
+The property model and storage support are implemented. Property commands and property display are future integration
+work; the existing client commands do not yet accept property fields.
+
+#### Fields and validation
+
+`Property` is an immutable value object in `seedu.address.model.property`.
+Each entry describes one client's interest in buying or selling a property.
+
+| Field | Type | Rules |
+| --- | --- | --- |
+| Type | `PropertyType` | Required: `HDB`, `CONDOMINIUM`, or `LANDED`. `parse` accepts full names and `h`, `c`, or `l`, ignoring case and surrounding whitespace. |
+| Intention | `Intention` | Required: `BUYER` or `SELLER`. This belongs to the property and is independent of the client's existing intention. `Intention.parse` accepts exactly `Buyer` or `Seller`. |
+| Location | `PropertyLocation` | Required, nonblank text. Surrounding whitespace is removed; case and internal whitespace are preserved. |
+| Price | `PropertyPrice` | Optional. A supplied price must be a positive whole-dollar SGD amount up to `Long.MAX_VALUE`, without commas, decimals, leading zeros, or surrounding whitespace. |
+
+Use the three-argument `Property` constructor when the price is unknown, or pass `null` as the fourth argument.
+`getPrice()` returns `Optional.empty()` for an unknown price. Zero is invalid for a property price.
+The existing client budget remains a separate field with its existing validation.
+
+#### Ownership and indexes
+
+`Person` owns a `List<Property>`, initially empty. The constructor copies incoming lists, rejects null lists and entries,
+and `getProperties()` exposes an unmodifiable list. Properties have no owner reference or permanent ID.
+Identical entries are allowed within a client and across clients; they are independent records.
+
+Displayed property indexes start at 1 within each client. Appending adds to the end, replacing keeps the same position,
+and removing an entry shifts later entries down by one. For example, deleting property 2 from a three-entry list makes
+the former property 3 become property 2. A future property display must use this same list order.
+
+Property changes affect `Person.equals()` and `hashCode()`, including list order. They do not change the client's
+identity as determined by `isSamePerson()`.
+
+#### Integrating future commands
+
+Resolve the client using its index in `model.getFilteredPersonList()`. A property index then refers to that client's
+property list. Pass indexes using the existing `Index` class, and validate both indexes before accessing an entry.
+Report invalid user input through the command's normal `CommandException` handling.
+
+The following example shows the model calls a future add-property command can use after validating `personIndex`:
+
+```java
+Property property = new Property(
+        PropertyType.HDB, Intention.BUYER, new PropertyLocation("Clementi Ave 3"));
+Person original = model.getFilteredPersonList().get(personIndex.getZeroBased());
+Person updated = original.withAddedProperty(property);
+model.setPerson(original, updated);
+```
+
+For editing, call `original.withUpdatedProperty(propertyIndex, replacement)` with a complete replacement property.
+A command accepting partial edits should preserve the original values for omitted fields.
+For deletion, call `original.withoutProperty(propertyIndex)`. Both methods return a new person and throw
+`IndexOutOfBoundsException` when the property index is outside this client's list.
+All three methods preserve unrelated client fields and leave the original person unchanged.
+Apply the returned person through `model.setPerson`; calling a method alone does not update the model.
+
+Existing `EditCommand` and `RemarkCommand` carry the property list into the replacement person so that changing contact
+details or remarks preserves all properties. Future code that reconstructs a `Person` must also preserve the list.
+The original six-argument `Person` constructor creates a client with no properties; the seven-argument constructor
+accepts the property list as its final argument.
+
+#### Storage and compatibility
+
+Each saved client has a `properties` array. `JsonAdaptedProperty` stores `type`, `intention`, and `location` as strings,
+and `price` as a whole-dollar string or `null` when unknown. Property order and duplicate entries survive saving and
+loading. A missing `price` also loads as unknown.
+
+`JsonAdaptedPerson` treats a missing or null `properties` field as an empty list, so valid v1.3 files load without
+migration. Null property entries, missing required fields, and invalid values are rejected with `IllegalValueException`;
+the error includes the property's one-based index. File loading reports these errors as `DataLoadingException`.
+Invalid entries are not silently discarded.
+
+The regression tests cover field validation, immutable lists, index changes, independent clients, preservation through
+client edits and remarks, old-file compatibility, and saving and reloading property data.
 
 ### \[Proposed\] Undo/redo feature
 
