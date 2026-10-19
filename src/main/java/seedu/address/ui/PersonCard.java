@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.BudgetBand;
 import seedu.address.model.person.Person;
@@ -41,6 +42,8 @@ public class PersonCard extends UiPart<Region> {
     private Label intention;
     @FXML
     private Label budget;
+    @FXML
+    private VBox properties;
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
      */
@@ -56,6 +59,16 @@ public class PersonCard extends UiPart<Region> {
         remark.setVisible(!person.getRemark().value.isEmpty());
         remark.setManaged(remark.isVisible());
         person.getBudget().ifPresentOrElse(this::showBudget, this::hideBudget);
+        for (int i = 0; i < person.getProperties().size(); i++) {
+            Label property = new Label((i + 1) + ". " + person.getProperties().get(i).toDisplay());
+            property.getStyleClass().add("property-detail");
+            property.setWrapText(true);
+            property.setMinWidth(0);
+            property.setMaxWidth(Double.MAX_VALUE);
+            properties.getChildren().add(property);
+        }
+        properties.setVisible(!person.getProperties().isEmpty());
+        properties.setManaged(properties.isVisible());
     }
 
     /**

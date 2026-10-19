@@ -119,7 +119,7 @@ How the parsing works:
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-W11-4/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<puml src="diagrams/ModelClassDiagram.puml" width="450" />
+<puml src="diagrams/ModelClassDiagram.puml" width="580" />
 
 
 The `Model` component,
@@ -234,8 +234,8 @@ A client with no budget has no amount on the card.
 
 ### Client property model
 
-The property model and storage support are implemented. Property commands and property display are future integration
-work; the existing client commands do not yet accept property fields.
+The property model, storage, numbered client-card display and `addp`, `delp` and `editp` commands are implemented.
+Existing client `add` and `edit` commands retain their syntax; property fields belong to the separate property commands.
 
 #### Fields and validation
 
@@ -261,18 +261,37 @@ Identical entries are allowed within a client and across clients; they are indep
 
 Displayed property indexes start at 1 within each client. Appending adds to the end, replacing keeps the same position,
 and removing an entry shifts later entries down by one. For example, deleting property 2 from a three-entry list makes
-the former property 3 become property 2. A future property display must use this same list order.
+the former property 3 become property 2. The client-card display uses this same list order.
 
 Property changes affect `Person.equals()` and `hashCode()`, including list order. They do not change the client's
 identity as determined by `isSamePerson()`.
 
-#### Integrating future commands
+#### Commands and parsing
 
-Resolve the client using its index in `model.getFilteredPersonList()`. A property index then refers to that client's
-property list. Pass indexes using the existing `Index` class, and validate both indexes before accessing an entry.
-Report invalid user input through the command's normal `CommandException` handling.
+`AddressBookParser` normalises command words with `Locale.ROOT`, making command words case-insensitive.
+`AddPropertyCommandParser`, `DeletePropertyCommandParser` and `EditPropertyCommandParser` parse the three property commands.
+`PropertyParserUtil` recognises `t/`, `i/`, `l/` and `pr/` case-insensitively without changing field values.
+Unknown and repeated fields are rejected, including repeated prefixes with different capitalisation.
+Whitespace-separated alphabetic words ending in `/` are reserved as prefixes and cannot be used as literal location text.
+Property type aliases and Buyer/Seller values ignore case in property commands; the underlying property intention enum remains unchanged.
 
-The following example shows the model calls a future add-property command can use after validating `personIndex`:
+`addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]` requires a type, intention and nonblank location.
+The parser validates every field before constructing a complete `Property`; an omitted price is unknown.
+A supplied empty price is invalid when adding.
+`delp CLIENT_INDEX PROPERTY_INDEX` accepts exactly two positive indexes and no field arguments.
+`editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]` requires at least one field.
+`EditPropertyDescriptor` copies the requested edits and distinguishes an omitted price from an explicitly cleared price.
+An empty `pr/` clears the price on edit, while empty required fields are rejected.
+
+`PropertyCommandUtil` resolves the client from `model.getFilteredPersonList()` and validates the property index within that client's list.
+Both indexes use the existing `Index` class and errors are reported through `CommandException`.
+Commands preserve the active client filter and all unrelated fields.
+`EditPropertyCommand` constructs a replacement using the current values for omitted fields.
+Only after successful validation does it call `model.setPerson` once.
+An equal replacement reports no change and leaves the original `Person` in the model.
+Invalid parses or indexes leave both the model and saved data unchanged.
+
+The add-property command applies the immutable model update after validating the displayed client index:
 
 ```java
 Property property = new Property(
@@ -283,7 +302,7 @@ model.setPerson(original, updated);
 ```
 
 For editing, call `original.withUpdatedProperty(propertyIndex, replacement)` with a complete replacement property.
-A command accepting partial edits should preserve the original values for omitted fields.
+The edit-property command preserves the original values for omitted fields.
 For deletion, call `original.withoutProperty(propertyIndex)`. Both methods return a new person and throw
 `IndexOutOfBoundsException` when the property index is outside this client's list.
 All three methods preserve unrelated client fields and leave the original person unchanged.
@@ -305,8 +324,16 @@ migration. Null property entries, missing required fields, and invalid values ar
 the error includes the property's one-based index. File loading reports these errors as `DataLoadingException`.
 Invalid entries are not silently discarded.
 
-The regression tests cover field validation, immutable lists, index changes, independent clients, preservation through
-client edits and remarks, old-file compatibility, and saving and reloading property data.
+The regression tests cover field validation, case-insensitive parsing, price clearing, index changes, independent clients and preservation through client edits and remarks.
+Integration tests execute command strings through the real parser, model and JSON storage, checking unchanged data after rejected operations and persistence after valid operations.
+Old-file compatibility and property-list immutability are also covered.
+
+#### Property display
+
+`PersonCard` renders one wrapped label per property, using its one-based list position and `Property#toDisplay()`.
+The property list is hidden when empty, and `PersonListPanel` measures each card at its available width so longer locations expand the row.
+Type, property intention, location and a known price are displayed together; an unknown price has no amount.
+`HelpContent` includes the three property commands and its examples are parsed by `HelpContentTest`.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -881,8 +908,8 @@ testers are expected to do more *exploratory* testing.
 1. Reading the reference
 
    1. Scroll through the cards.<br>
-      Expected: Cards for `add`, `edit`, `find`, `list`, `delete`, `remark`, `help` and `exit` show their formats,
-      details and examples. The heading and User Guide footer remain visible while the cards scroll.
+      Expected: Cards for `add`, `edit`, `addp`, `delp`, `editp`, `find`, `list`, `delete`, `remark`, `help` and `exit` show their formats, details and examples.
+      The heading and User Guide footer remain visible while the cards scroll.
 
    1. Resize the window narrower and wider.<br>
       Expected: Long text and examples wrap inside their cards. The cards can be read without horizontal scrolling.
@@ -928,23 +955,71 @@ Prerequisite: Use a fresh data folder with no clients named Jordan Lee or Taylor
    1. Exit and relaunch the app, then enter `find n/jordan`.<br>
       Expected: Both Jordan clients remain, with phone numbers `91001001` and `91001002`.
 
+### Managing client properties
+
+Prerequisite: Use a fresh data folder without a client named Property Test Client.
+Run these steps in order; client indexes below refer to the filtered list.
+
+1. Adding properties
+
+   1. Enter `add n/Property Test Client p/91009001 e/propertytest@example.com i/Buyer b/900000`, then `find p/91009001`.<br>
+      Expected: Exactly one client is shown, with displayed index 1.
+
+   1. Enter `ADDP 1 T/h I/buyer L/Clementi Ave 3 PR/800000`.<br>
+      Expected: Property 1 appears under this client as HDB, Buyer, Clementi Ave 3, $800,000.
+      The client filter remains active and the client's budget remains $900,000.
+
+   1. Enter `addp 1 t/c i/Seller l/Bishan`.<br>
+      Expected: Property 2 appears as Condominium, Seller, Bishan with no price.
+      The client's own intention remains Buyer.
+
+1. Editing and clearing price
+
+   1. Enter `editp 1 2 l/Toa Payoh pr/1500000`.<br>
+      Expected: Only property 2's location and price change; its type, property intention and position are retained.
+
+   1. Enter `editp 1 2 pr/`.<br>
+      Expected: Property 2's price is removed; all other fields remain unchanged.
+
+   1. Enter `editp 1 2 l/Toa Payoh`.<br>
+      Expected: The feedback reports an unchanged property and the original entry is retained.
+
+1. Rejecting invalid requests
+
+   1. Try `editp 1 2 l/`, `editp 1 2 l/Bishan pr/1.5`, `editp 1 2 l/Bishan L/Tampines`, and `addp 1 t/HDB i/Buyer l/Bishan p/800000`.<br>
+      Expected: Each command reports an input error; no property or saved data is changed.
+      Price uses `pr/`, not `p/`.
+
+   1. Try `addp 2 t/HDB i/Buyer l/Bishan`, `editp 1 99 l/Bishan`, and `delp 1 0`.<br>
+      Expected: Invalid client/property indexes are rejected without modifying any client or property.
+
+1. Deleting and saving
+
+   1. Enter `delp 1 1`.<br>
+      Expected: The Clementi property is removed; the Toa Payoh property becomes property 1.
+      The client remains in the filtered list.
+
+   1. Exit and relaunch the app, then enter `find p/91009001`.<br>
+      Expected: The single Condominium/Seller/Toa Payoh entry remains, without a price.
+      The client's contact details, Buyer intention and $900,000 budget are retained.
+
 ### Recording a budget
 
 1. Adding a client with a budget
 
-   1. Test case: `add n/Chloe Tan p/91234567 e/chloe@example.com i/Buyer a/12 Clementi Ave b/500000`<br>
+   1. Test case: `add n/Chloe Tan p/91234567 e/chloe@example.com i/Buyer b/500000`<br>
       Expected: Chloe is added. `$500,000` is shown on the right of the card in red.
 
-   1. Test case: `add n/Marcus Lim p/92345678 e/marcus@example.com i/Buyer a/8 Holland Road b/1500000`<br>
+   1. Test case: `add n/Marcus Lim p/92345678 e/marcus@example.com i/Buyer b/1500000`<br>
       Expected: `$1,500,000` is shown in yellow.
 
-   1. Test case: `add n/Ava Ng p/93456789 e/ava@example.com i/Seller a/3 Orchard Road b/3000000`<br>
+   1. Test case: `add n/Ava Ng p/93456789 e/ava@example.com i/Seller b/3000000`<br>
       Expected: `$3,000,000` is shown in green.
 
-   1. Test case: `add n/Ben Ong p/94567890 e/ben@example.com i/Seller a/1 River Valley`<br>
+   1. Test case: `add n/Ben Ong p/94567890 e/ben@example.com i/Seller`<br>
       Expected: Ben is added. The card shows no budget amount.
 
-   1. Test case: `add n/Invalid Budget p/95678901 e/bad@example.com i/Buyer a/1 Road b/800,000`<br>
+   1. Test case: `add n/Invalid Budget p/95678901 e/bad@example.com i/Buyer b/800,000`<br>
       Expected: No client is added. The error states that the budget must be a whole-dollar amount without commas.
 
 1. Editing a budget

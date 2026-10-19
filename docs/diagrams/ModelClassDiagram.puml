@@ -17,6 +17,13 @@ Class Person
 Class Email
 Class Name
 Class Phone
+Class Intention <<enumeration>>
+Class Budget
+Class Remark
+Class Property
+Class PropertyType <<enumeration>>
+Class PropertyLocation
+Class PropertyPrice
 
 Class I #FFFFFF
 }
@@ -34,10 +41,18 @@ ModelManager -right-> "1" UserPrefs
 UserPrefs .up.|> ReadOnlyUserPrefs
 
 AddressBook *--> "1" UniquePersonList
-UniquePersonList --> "~* all" Person
+UniquePersonList --> Person : all clients
 Person *--> Name
 Person *--> Phone
 Person *--> Email
+Person --> Intention
+Person *--> "0..1" Budget
+Person *--> Remark
+Person *--> "0..* ordered" Property
+Property --> PropertyType
+Property --> Intention
+Property *--> PropertyLocation
+Property *--> "0..1" PropertyPrice
 
 Person -[hidden]up--> I
 UniquePersonList -[hidden]right-> I
@@ -45,5 +60,5 @@ UniquePersonList -[hidden]right-> I
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Email
 
-ModelManager --> "~* filtered" Person
+ModelManager --> Person : filtered clients
 @enduml
