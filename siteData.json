@@ -53,6 +53,7 @@
         "implementation": "Implementation",
         "command-reference-help": "Command reference help",
         "find-command": "Find command",
+        "duplicate-client-feedback": "Duplicate client feedback",
         "budget-feature": "Budget feature",
         "client-property-model": "Client property model",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
