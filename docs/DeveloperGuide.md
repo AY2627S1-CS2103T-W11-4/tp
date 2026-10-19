@@ -176,6 +176,15 @@ Intention searches accept exactly one value, `buyer` or `seller`, case-insensiti
 Missing keywords, repeated or mixed prefixes, and unsupported selectors are rejected.
 `FindCommand` replaces the filter on the complete client list without modifying stored clients.
 
+### Duplicate client feedback
+
+`AddCommand` and `EditCommand` search the complete stored client list using `Person#isSamePerson(Person)` when checking for a conflict.
+This keeps the name-and-phone identity rule unchanged and finds conflicting clients outside the current filter.
+An edit that retains the selected client's identity is allowed without treating that client as its own duplicate.
+Both commands use the shared `Messages.MESSAGE_DUPLICATE_PERSON` format to identify the stored client's name and phone number and explain that name matching ignores capitalisation and extra spaces.
+The feedback does not use an index from the unfiltered list, since it could identify a different client in the displayed results.
+Conflicts throw `CommandException` before any model update or save occurs.
+
 ### Budget feature
 
 #### Implementation
@@ -893,7 +902,9 @@ Prerequisite: Use a fresh data folder with no clients named Jordan Lee or Taylor
       Expected: Jordan is added.
 
    1. Test case: `add n/JORDAN   LEE p/91001001 e/other@example.com i/Seller`<br>
-      Expected: The duplicate-client error is shown and no client is added.
+      Expected: The error identifies the existing client as `Jordan Lee (91001001)` and explains that both name and phone match.
+      It also explains that name matching ignores capitalisation and extra spaces.
+      No client is added.
       Capitalisation, spacing, email and intention do not distinguish clients with the same name and phone.
 
    1. Test case: `add n/Jordan Lee p/91001002 e/anotherjordan@example.com i/Seller`<br>
@@ -906,6 +917,7 @@ Prerequisite: Use a fresh data folder with no clients named Jordan Lee or Taylor
 
    1. Test case: `find p/91001002`, followed by `edit 1 p/91001001`<br>
       Expected: The duplicate-client error is shown, even though the first Jordan is outside the search results.
+      It identifies the stored client as `Jordan Lee (91001001)` and explains the name-matching rule.
       The second Jordan keeps phone number `91001002` and the saved data is unchanged.
 
    1. Test case: `edit 1 n/JORDAN   LEE`<br>

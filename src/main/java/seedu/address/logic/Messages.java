@@ -20,6 +20,9 @@ public class Messages {
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d person(s) found!";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
+    public static final String MESSAGE_DUPLICATE_PERSON =
+            "Both name and phone match an existing client: %1$s (%2$s).\n"
+                    + "Name matching ignores capitalisation and extra spaces.";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
