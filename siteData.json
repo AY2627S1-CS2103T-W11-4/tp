@@ -69,6 +69,7 @@
         "launch-and-shutdown": "Launch and shutdown",
         "viewing-command-help": "Viewing command help",
         "detecting-duplicate-clients": "Detecting duplicate clients",
+        "managing-client-properties": "Managing client properties",
         "recording-a-budget": "Recording a budget",
         "deleting-a-person": "Deleting a person",
         "saving-data": "Saving data"
@@ -123,6 +124,10 @@
         "adding-a-client-add": "Adding a client: add",
         "listing-all-clients-list": "Listing all clients: list",
         "editing-a-client-edit": "Editing a client: edit",
+        "managing-a-client-s-properties": "Managing a client's properties",
+        "adding-a-property-addp": "Adding a property: addp",
+        "deleting-a-property-delp": "Deleting a property: delp",
+        "editing-a-property-editp": "Editing a property: editp",
         "locating-persons-by-name-email-phone-or-intention-find": "Locating persons by name, email, phone, or intention: find",
         "deleting-a-client-delete": "Deleting a client: delete",
         "setting-or-removing-a-remark-remark": "Setting or removing a remark: remark",
