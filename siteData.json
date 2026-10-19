@@ -54,6 +54,7 @@
         "command-reference-help": "Command reference help",
         "find-command": "Find command",
         "budget-feature": "Budget feature",
+        "client-property-model": "Client property model",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -66,6 +67,7 @@
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
         "viewing-command-help": "Viewing command help",
+        "detecting-duplicate-clients": "Detecting duplicate clients",
         "recording-a-budget": "Recording a budget",
         "deleting-a-person": "Deleting a person",
         "saving-data": "Saving data"
