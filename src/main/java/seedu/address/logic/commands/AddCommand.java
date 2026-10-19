@@ -7,6 +7,8 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 
+import java.util.Optional;
+
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -35,7 +37,7 @@ public class AddCommand extends Command {
             + PREFIX_BUDGET + "1500000";
 
     public static final String MESSAGE_SUCCESS = "New client added: %1$s";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This client already exists in RESIDEX.";
+    public static final String MESSAGE_DUPLICATE_PERSON = Messages.MESSAGE_DUPLICATE_PERSON;
 
     private final Person toAdd;
 
@@ -51,8 +53,12 @@ public class AddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        if (model.hasPerson(toAdd)) {
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+        Optional<Person> duplicate = model.getAddressBook().getPersonList().stream()
+                .filter(toAdd::isSamePerson).findFirst();
+        if (duplicate.isPresent()) {
+            Person existingClient = duplicate.get();
+            throw new CommandException(String.format(MESSAGE_DUPLICATE_PERSON,
+                    existingClient.getName(), existingClient.getPhone()));
         }
 
         model.addPerson(toAdd);

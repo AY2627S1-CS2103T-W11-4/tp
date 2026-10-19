@@ -90,6 +90,9 @@ For example, `Alice Tan` and `ALICE   TAN` match when their phone numbers are th
 Phone input is trimmed, then compared digit for digit, including leading zeros.
 Clients may share a name if their phone numbers differ, or share a phone number if their names differ.
 Different email addresses, intentions, budgets or remarks do not make an otherwise duplicate client distinct.
+If an add or edit would create a duplicate, the error identifies the existing client's stored name and phone number and explains how names are matched.
+The conflicting client may be outside the current search results.
+A rejected command leaves all client information unchanged.
 
 Intention is required and must be `Buyer` or `Seller` (case-sensitive). For example, use `i/Buyer`.
 Existing `edit` and `remark` commands preserve intention; changing it through `edit` is not supported yet.
