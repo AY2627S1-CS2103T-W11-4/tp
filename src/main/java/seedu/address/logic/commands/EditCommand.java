@@ -45,7 +45,7 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This client already exists in RESIDEX.";
+    public static final String MESSAGE_DUPLICATE_PERSON = Messages.MESSAGE_DUPLICATE_PERSON;
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
@@ -74,8 +74,14 @@ public class EditCommand extends Command {
         Person personToEdit = lastShownList.get(index.getZeroBased());
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
-        if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+        if (!personToEdit.isSamePerson(editedPerson)) {
+            Optional<Person> duplicate = model.getAddressBook().getPersonList().stream()
+                    .filter(editedPerson::isSamePerson).findFirst();
+            if (duplicate.isPresent()) {
+                Person existingClient = duplicate.get();
+                throw new CommandException(String.format(MESSAGE_DUPLICATE_PERSON,
+                        existingClient.getName(), existingClient.getPhone()));
+            }
         }
 
         model.setPerson(personToEdit, editedPerson);

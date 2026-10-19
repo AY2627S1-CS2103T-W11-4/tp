@@ -35,6 +35,10 @@ final class HelpContent {
     private static final String EMAIL_NOTE =
             PREFIX_EMAIL + "EMAIL: enter a valid email address, such as john@example.com.";
     private static final String BUDGET_NOTE = PREFIX_BUDGET + "BUDGET: " + Budget.MESSAGE_CONSTRAINTS + ".";
+    private static final String NAME_MATCHING_NOTE =
+            "Name matching ignores case, outer spaces and repeated spaces between words.";
+    private static final String DUPLICATE_NOTE =
+            "Duplicate errors show the existing client's name and phone, even outside search results.";
     private static final String PROPERTY_INDEX_NOTE =
             "CLIENT_INDEX selects a displayed client; PROPERTY_INDEX selects a numbered property under that client.";
     private static final String PROPERTY_CASE_NOTE =
@@ -49,7 +53,7 @@ final class HelpContent {
                             PREFIX_INTENTION + "INTENTION: use Buyer or Seller (case-sensitive).",
                             BUDGET_NOTE, "Supply each field once, in any order.",
                             "A client with the same name and phone number cannot be added again.",
-                            "Name matching ignores case, outer spaces and repeated spaces between words."),
+                            NAME_MATCHING_NOTE, DUPLICATE_NOTE),
                     List.of(AddCommand.COMMAND_WORD + " " + PREFIX_NAME + "John Doe " + PREFIX_PHONE + "98765432 "
                                     + PREFIX_EMAIL + "john@example.com " + PREFIX_INTENTION + "Buyer "
                                     + PREFIX_BUDGET + "1500000",
@@ -62,6 +66,7 @@ final class HelpContent {
                             NAME_NOTE, PHONE_NOTE, EMAIL_NOTE, BUDGET_NOTE,
                             "Omitted fields are kept. Intention, remark and properties are unchanged.",
                             "The updated name and phone number must not duplicate another client.",
+                            NAME_MATCHING_NOTE, DUPLICATE_NOTE,
                             "Supply each field once, in any order."),
                     List.of(EditCommand.COMMAND_WORD + " 1 " + PREFIX_PHONE + "91234567 "
                                     + PREFIX_EMAIL + "johndoe@example.com",

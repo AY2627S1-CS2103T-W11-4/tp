@@ -89,7 +89,7 @@ public class LogicManagerTest {
         String savedData = Files.readString(dataFile);
 
         assertCommandException("add n/ALICE TAN p/91234567 e/other@example.com i/Seller b/900000",
-                AddCommand.MESSAGE_DUPLICATE_PERSON);
+                String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, "Alice   Tan", "91234567"));
 
         assertEquals(savedData, Files.readString(dataFile));
     }
@@ -118,7 +118,8 @@ public class LogicManagerTest {
         List<Person> savedClients = List.copyOf(model.getAddressBook().getPersonList());
 
         assertThrows(CommandException.class,
-                EditCommand.MESSAGE_DUPLICATE_PERSON, () -> logic.execute("edit 1 p/91234567"));
+                String.format(EditCommand.MESSAGE_DUPLICATE_PERSON, "Alice Tan", "91234567"), () ->
+                logic.execute("edit 1 p/91234567"));
 
         assertEquals(savedClients, model.getAddressBook().getPersonList());
         assertEquals(1, model.getFilteredPersonList().size());
@@ -133,7 +134,8 @@ public class LogicManagerTest {
         Path dataFile = temporaryFolder.resolve("addressBook.json");
         String savedData = Files.readString(dataFile);
 
-        assertCommandException("edit 2 n/ALICE   TAN", EditCommand.MESSAGE_DUPLICATE_PERSON);
+        assertCommandException("edit 2 n/ALICE   TAN",
+                String.format(EditCommand.MESSAGE_DUPLICATE_PERSON, "Alice Tan", "91234567"));
 
         assertEquals(savedData, Files.readString(dataFile));
     }
