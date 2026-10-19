@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -65,6 +67,86 @@ public class LogicManagerTest {
         assertEquals(seller, model.getAddressBook().getPersonList().get(0));
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         assertEquals(seller, storage.readAddressBook().orElseThrow().getPersonList().get(0));
+    }
+
+    @Test
+    public void execute_addSameNameDifferentPhone_savesBothClients() throws Exception {
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
+        logic.execute("add n/Alice Tan p/92345678 e/anotheralice@example.com i/Seller");
+
+        List<Person> clients = model.getAddressBook().getPersonList();
+        assertEquals(2, clients.size());
+        assertEquals("91234567", clients.get(0).getPhone().value);
+        assertEquals("92345678", clients.get(1).getPhone().value);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_addNormalisedDuplicate_doesNotChangeModelOrStorage() throws Exception {
+        logic.execute("add n/Alice   Tan p/91234567 e/alice@example.com i/Buyer b/500000");
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        String savedData = Files.readString(dataFile);
+
+        assertCommandException("add n/ALICE TAN p/91234567 e/other@example.com i/Seller b/900000",
+                AddCommand.MESSAGE_DUPLICATE_PERSON);
+
+        assertEquals(savedData, Files.readString(dataFile));
+    }
+
+    @Test
+    public void execute_editToSameNameDifferentPhone_success() throws Exception {
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
+        logic.execute("add n/Ben Ong p/92345678 e/ben@example.com i/Seller");
+
+        logic.execute("edit 2 n/Alice Tan");
+
+        Person editedClient = model.getAddressBook().getPersonList().get(1);
+        assertEquals("Alice Tan", editedClient.getName().fullName);
+        assertEquals("92345678", editedClient.getPhone().value);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_editPhoneToDuplicateOutsideFilter_doesNotChangeModelOrStorage() throws Exception {
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
+        logic.execute("add n/ALICE   TAN p/92345678 e/anotheralice@example.com i/Seller");
+        logic.execute("find p/92345678");
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        String savedData = Files.readString(dataFile);
+        List<Person> savedClients = List.copyOf(model.getAddressBook().getPersonList());
+
+        assertThrows(CommandException.class,
+                EditCommand.MESSAGE_DUPLICATE_PERSON, () -> logic.execute("edit 1 p/91234567"));
+
+        assertEquals(savedClients, model.getAddressBook().getPersonList());
+        assertEquals(1, model.getFilteredPersonList().size());
+        assertEquals("92345678", model.getFilteredPersonList().get(0).getPhone().value);
+        assertEquals(savedData, Files.readString(dataFile));
+    }
+
+    @Test
+    public void execute_editNameToNormalisedDuplicate_doesNotChangeModelOrStorage() throws Exception {
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
+        logic.execute("add n/Ben Ong p/91234567 e/ben@example.com i/Seller");
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        String savedData = Files.readString(dataFile);
+
+        assertCommandException("edit 2 n/ALICE   TAN", EditCommand.MESSAGE_DUPLICATE_PERSON);
+
+        assertEquals(savedData, Files.readString(dataFile));
+    }
+
+    @Test
+    public void execute_editOwnNameCaseAndSpacing_savesUpdatedName() throws Exception {
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
+
+        logic.execute("edit 1 n/ALICE   TAN");
+
+        assertEquals("ALICE   TAN", model.getAddressBook().getPersonList().get(0).getName().fullName);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
     @Test

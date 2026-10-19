@@ -41,7 +41,8 @@ final class HelpContent {
                             NAME_NOTE, PHONE_NOTE, EMAIL_NOTE,
                             PREFIX_INTENTION + "INTENTION: use Buyer or Seller (case-sensitive).",
                             BUDGET_NOTE, "Supply each field once, in any order.",
-                            "A client with exactly the same name cannot be added again."),
+                            "A client with the same name and phone number cannot be added again.",
+                            "Name matching ignores case, outer spaces and repeated spaces between words."),
                     List.of(AddCommand.COMMAND_WORD + " " + PREFIX_NAME + "John Doe " + PREFIX_PHONE + "98765432 "
                                     + PREFIX_EMAIL + "john@example.com " + PREFIX_INTENTION + "Buyer "
                                     + PREFIX_BUDGET + "1500000",
@@ -53,6 +54,7 @@ final class HelpContent {
                     List.of(INDEX_NOTE, "Supply at least one field. Each supplied field replaces its current value.",
                             NAME_NOTE, PHONE_NOTE, EMAIL_NOTE, BUDGET_NOTE,
                             "Omitted fields are kept. Intention and remark are unchanged.",
+                            "The updated name and phone number must not duplicate another client.",
                             "Supply each field once, in any order."),
                     List.of(EditCommand.COMMAND_WORD + " 1 " + PREFIX_PHONE + "91234567 "
                                     + PREFIX_EMAIL + "johndoe@example.com",

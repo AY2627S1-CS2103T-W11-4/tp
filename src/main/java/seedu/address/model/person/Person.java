@@ -16,9 +16,9 @@ public class Person {
     // Identity fields
     private final Name name;
     private final Phone phone;
-    private final Email email;
 
     // Data fields
+    private final Email email;
     private final Intention intention;
     private final Remark remark;
     private final Budget budget;
@@ -65,7 +65,9 @@ public class Person {
     }
 
     /**
-     * Returns true if both persons have the same name.
+     * Returns true if both persons have the same normalised name and phone number.
+     * Name comparison ignores case, trailing spaces and repeated spaces between words.
+     * Phone numbers contain only digits and are compared exactly.
      * This defines a weaker notion of equality between two persons.
      */
     public boolean isSamePerson(Person otherPerson) {
@@ -74,7 +76,15 @@ public class Person {
         }
 
         return otherPerson != null
-                && otherPerson.getName().equals(getName());
+                && otherPerson.getPhone().equals(getPhone())
+                && normaliseName(otherPerson.getName()).equalsIgnoreCase(normaliseName(getName()));
+    }
+
+    /**
+     * Returns a name with surrounding spaces removed and consecutive spaces replaced by a single space.
+     */
+    private static String normaliseName(Name name) {
+        return name.fullName.trim().replaceAll(" +", " ");
     }
 
     /**

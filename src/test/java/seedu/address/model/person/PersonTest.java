@@ -45,22 +45,44 @@ public class PersonTest {
         // null -> returns false
         assertFalse(ALICE.isSamePerson(null));
 
-        // same name, all other attributes different -> returns true
-        Person editedAlice = new PersonBuilder(ALICE).withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_BOB)
-                .build();
+        // same name and phone, all other attributes different -> returns true
+        Person editedAlice = new PersonBuilder(ALICE).withEmail(VALID_EMAIL_BOB).withIntention(Intention.SELLER)
+                .withRemark("Call next week").withBudget("900000").build();
         assertTrue(ALICE.isSamePerson(editedAlice));
+
+        // same name, different phone -> returns false
+        editedAlice = new PersonBuilder(ALICE).withPhone(VALID_PHONE_BOB).build();
+        assertFalse(ALICE.isSamePerson(editedAlice));
 
         // different name, all other attributes same -> returns false
         editedAlice = new PersonBuilder(ALICE).withName(VALID_NAME_BOB).build();
         assertFalse(ALICE.isSamePerson(editedAlice));
 
-        // name differs in case, all other attributes same -> returns false
+        // name differs in case, same phone -> returns true
         Person editedBob = new PersonBuilder(BOB).withName(VALID_NAME_BOB.toLowerCase()).build();
-        assertFalse(BOB.isSamePerson(editedBob));
+        assertTrue(BOB.isSamePerson(editedBob));
 
-        // name has trailing spaces, all other attributes same -> returns false
+        // name has trailing spaces, same phone -> returns true
         String nameWithTrailingSpaces = VALID_NAME_BOB + " ";
         editedBob = new PersonBuilder(BOB).withName(nameWithTrailingSpaces).build();
+        assertTrue(BOB.isSamePerson(editedBob));
+
+        // name differs in case and spacing, same phone -> returns true in both directions
+        editedBob = new PersonBuilder(BOB).withName("bOb   cHoo  ").build();
+        assertTrue(BOB.isSamePerson(editedBob));
+        assertTrue(editedBob.isSamePerson(BOB));
+        assertFalse(BOB.equals(editedBob));
+
+        // normalised names match, different phones -> returns false
+        editedBob = new PersonBuilder(editedBob).withPhone(ALICE.getPhone().value).build();
+        assertFalse(BOB.isSamePerson(editedBob));
+
+        // names differ beyond case and spacing, same phone -> returns false
+        editedBob = new PersonBuilder(BOB).withName("BobChoo").build();
+        assertFalse(BOB.isSamePerson(editedBob));
+
+        // leading zero in phone number is significant -> returns false
+        editedBob = new PersonBuilder(BOB).withPhone("0" + BOB.getPhone().value).build();
         assertFalse(BOB.isSamePerson(editedBob));
     }
 
