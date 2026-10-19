@@ -84,6 +84,13 @@ Adds a client to RESIDEX.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]`
 
+A client is a duplicate only when both their name and phone number match an existing client.
+Name matching ignores capitalisation, surrounding spaces and repeated spaces between words.
+For example, `Alice Tan` and `ALICE   TAN` match when their phone numbers are the same.
+Phone input is trimmed, then compared digit for digit, including leading zeros.
+Clients may share a name if their phone numbers differ, or share a phone number if their names differ.
+Different email addresses, intentions, budgets or remarks do not make an otherwise duplicate client distinct.
+
 Intention is required and must be `Buyer` or `Seller` (case-sensitive). For example, use `i/Buyer`.
 Existing `edit` and `remark` commands preserve intention; changing it through `edit` is not supported yet.
 
@@ -95,6 +102,8 @@ A saved file that has no budget still opens.
 **Existing data:** Before using this version, back up `data/addressbook.json`. Each person needs an
 `"intention": "Buyer"` or `"intention": "Seller"` property matching their actual intention.
 Files with missing or invalid intentions cannot be loaded. Do not save new changes over an unmigrated file.
+Saved files containing duplicate name-and-phone pairs under the rule above also cannot be loaded.
+Back up the file and resolve these duplicates before opening it with this version.
 
 Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000`
@@ -116,6 +125,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [b/BUDGET]`
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * `b/BUDGET` replaces the client's budget. Leaving `b/` out keeps the existing budget.
+* The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
+  Changing only the capitalisation or spacing of the selected client's own name is allowed.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
