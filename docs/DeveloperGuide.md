@@ -461,6 +461,11 @@ features planned for future iterations; they do not indicate that a feature is a
 
 A client is a buyer or seller. Two clients are duplicates when both their normalised names and
 normalised phone numbers match, following the Add Client feature specification.
+Names are compared case-insensitively after trimming surrounding spaces and replacing consecutive spaces with one space.
+Phone input is trimmed during parsing; valid phone numbers contain only digits and are compared exactly, including leading zeros.
+Email, intention, budget and remark do not affect duplicate detection.
+`Person#isSamePerson(Person)` applies this rule to additions, edits and loading saved data.
+`Person#equals(Object)` still compares all stored fields exactly.
 A client selected for an operation must belong to the currently displayed list. For deletion,
 the client is identified by their index in that list, including when it contains search results.
 
@@ -877,6 +882,39 @@ testers are expected to do more *exploratory* testing.
 
    1. Click **Copy URL** and paste the clipboard contents into a text editor.<br>
       Expected: `https://ay2627s1-cs2103t-w11-4.github.io/tp/UserGuide.html` is pasted.
+
+### Detecting duplicate clients
+
+Prerequisite: Use a fresh data folder with no clients named Jordan Lee or Taylor Lim.
+
+1. Adding clients
+
+   1. Test case: `add n/Jordan Lee p/91001001 e/jordan@example.com i/Buyer`<br>
+      Expected: Jordan is added.
+
+   1. Test case: `add n/JORDAN   LEE p/91001001 e/other@example.com i/Seller`<br>
+      Expected: The duplicate-client error is shown and no client is added.
+      Capitalisation, spacing, email and intention do not distinguish clients with the same name and phone.
+
+   1. Test case: `add n/Jordan Lee p/91001002 e/anotherjordan@example.com i/Seller`<br>
+      Expected: A second Jordan is added because the phone number differs.
+
+   1. Test case: `add n/Taylor Lim p/91001001 e/taylor@example.com i/Buyer`<br>
+      Expected: Taylor is added because the name differs, even though the phone number matches the first Jordan.
+
+1. Editing a client in search results
+
+   1. Test case: `find p/91001002`, followed by `edit 1 p/91001001`<br>
+      Expected: The duplicate-client error is shown, even though the first Jordan is outside the search results.
+      The second Jordan keeps phone number `91001002` and the saved data is unchanged.
+
+   1. Test case: `edit 1 n/JORDAN   LEE`<br>
+      Expected: The selected client's name changes successfully without being treated as a duplicate of itself.
+
+1. Saving clients with the same name
+
+   1. Exit and relaunch the app, then enter `find n/jordan`.<br>
+      Expected: Both Jordan clients remain, with phone numbers `91001001` and `91001002`.
 
 ### Recording a budget
 
