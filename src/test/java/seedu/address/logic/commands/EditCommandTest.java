@@ -13,6 +13,10 @@ import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
+import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
+import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +42,7 @@ public class EditCommandTest {
     @Test
     public void execute_editPhone_preservesOtherFields() throws Exception {
         Person seller = new PersonBuilder().withIntention(Intention.SELLER).withBudget("1500000")
-                .withRemark("Call next week").build();
+                .withRemark("Call next week").withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
         Model sellerModel = new ModelManager(new AddressBook(), new UserPrefs());
         sellerModel.addPerson(seller);
         Person expectedPerson = new PersonBuilder(seller).withPhone(VALID_PHONE_BOB).build();
@@ -49,6 +53,29 @@ public class EditCommandTest {
 
         assertEquals(expectedPerson, sellerModel.getFilteredPersonList().get(0));
         assertEquals(Intention.SELLER, sellerModel.getFilteredPersonList().get(0).getIntention());
+        assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO),
+                sellerModel.getFilteredPersonList().get(0).getProperties());
+    }
+
+    @Test
+    public void execute_editFilteredClient_preservesPropertiesAndOtherClients() {
+        Person original = model.getAddressBook().getPersonList().get(1);
+        Person target = new PersonBuilder(original).withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
+        model.setPerson(original, target);
+        showPersonAtIndex(model, INDEX_SECOND_PERSON);
+
+        Person expectedPerson = new PersonBuilder(target).withName("Updated Client").withPhone(VALID_PHONE_BOB)
+                .withEmail("updated@example.com").withBudget("2000000").build();
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(target, expectedPerson);
+        EditCommand command = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder(expectedPerson).withBudget("2000000").build());
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS,
+                Messages.format(expectedPerson));
+
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO),
+                model.getAddressBook().getPersonList().get(1).getProperties());
     }
 
     @Test

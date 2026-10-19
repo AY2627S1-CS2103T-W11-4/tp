@@ -5,6 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.storage.JsonAdaptedPerson.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalProperties.BUKIT_TIMAH_LANDED;
+import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
+import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +23,7 @@ import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
@@ -32,6 +40,57 @@ public class JsonAdaptedPersonTest {
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(BENSON);
         assertEquals(BENSON, person.toModelType());
+    }
+
+    @Test
+    public void json_propertiesRoundTrip_preservesOrderDuplicatesAndUnrelatedClientFields() throws Exception {
+        Person person = new PersonBuilder(BENSON).withIntention(Intention.SELLER).withBudget("1800000")
+                .withRemark("Call next week")
+                .withProperties(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB, BUKIT_TIMAH_LANDED).build();
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(person));
+        Person reloaded = JsonUtil.fromJsonString(json, JsonAdaptedPerson.class).toModelType();
+        assertEquals(person, reloaded);
+        assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB, BUKIT_TIMAH_LANDED),
+                reloaded.getProperties());
+    }
+
+    @Test
+    public void json_missingNullOrEmptyProperties_returnsEmptyList() throws Exception {
+        for (String propertiesField : new String[]{"", ",\"properties\":null", ",\"properties\":[]"}) {
+            String json = "{\"name\":\"" + VALID_NAME + "\",\"phone\":\"" + VALID_PHONE + "\","
+                    + "\"email\":\"" + VALID_EMAIL + "\",\"intention\":\"" + VALID_INTENTION + "\""
+                    + propertiesField + "}";
+            Person person = JsonUtil.fromJsonString(json, JsonAdaptedPerson.class).toModelType();
+            assertEquals(BENSON, person);
+            assertEquals(List.of(), person.getProperties());
+        }
+    }
+
+    @Test
+    public void constructor_mutableProperties_copiesList() throws Exception {
+        List<JsonAdaptedProperty> input = new ArrayList<>(List.of(new JsonAdaptedProperty(CLEMENTI_HDB)));
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
+                "", null, input);
+        input.clear();
+        assertEquals(List.of(CLEMENTI_HDB), person.toModelType().getProperties());
+    }
+
+    @Test
+    public void toModelType_nullPropertyEntry_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
+                "", null, Arrays.asList(new JsonAdaptedProperty(CLEMENTI_HDB), null));
+        assertThrows(IllegalValueException.class, String.format(JsonAdaptedPerson.MESSAGE_NULL_PROPERTY_FORMAT, 2),
+                person::toModelType);
+    }
+
+    @Test
+    public void toModelType_invalidProperty_reportsItsIndexAndConstraint() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
+                "", null, List.of(new JsonAdaptedProperty(CLEMENTI_HDB),
+                        new JsonAdaptedProperty("flat", "Buyer", "Clementi", null)));
+        String expectedMessage = String.format(JsonAdaptedPerson.MESSAGE_INVALID_PROPERTY_FORMAT, 2,
+                PropertyType.MESSAGE_CONSTRAINTS);
+        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
 
     @Test
