@@ -937,12 +937,12 @@ They are documented for future reference, without committing to their implementa
 * **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 * **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
-* **Property entry**: A record in a client's ordered property list containing a type, intention, location and optional price.
+* **Property entry**: A record in a client's ordered property list that stores information about an associated property.
 * **Property index**: The one-based position of a property entry within a selected client's property list. It is not a permanent identifier: deleting an earlier property shifts subsequent indexes down by one.
 * **Property listing**: A record containing information about a property available for sale or rent
+* **Property location**: Nonblank descriptive text stored on a property entry, such as `Clementi Ave 3`. The `find l/` search checks these locations.
 * **Property price**: An optional, positive whole-dollar amount recorded for a property, separate from the client's budget.
 * **Property type**: The HDB, Condominium or Landed category of a property entry.
-* **Property location**: Nonblank descriptive text stored on a property entry, such as `Clementi Ave 3`. The `find l/` search checks these locations.
 * **Property viewing**: An appointment for a client to inspect a property
 * **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
 * **Remark**: Text recorded for a client using the `remark` command and displayed on the client card.

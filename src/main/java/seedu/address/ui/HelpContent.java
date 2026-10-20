@@ -110,7 +110,7 @@ final class HelpContent {
                     List.of("Choose exactly one short prefix: " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + " or " + PREFIX_INTENTION
                                     + ". Supply at least one keyword.",
-                            "Prefixes and keywords are case-insensitive. Long property aliases are not supported.",
+                            "Prefixes and keywords are case-insensitive. Long search field aliases are not supported.",
                             "Name, email, phone and location use substring matching."
                                     + " Any matching keyword returns a client.",
                             "Location searches check every property of a client."

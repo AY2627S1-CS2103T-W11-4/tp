@@ -31,14 +31,14 @@ public class FindCommand extends Command {
             + "Example: " + COMMAND_WORD + " " + PREFIX_EMAIL + "alexyeoh@example.com";
 
     public static final String MESSAGE_INVALID_INTENTION = "Intention must be buyer or seller (case-insensitive).";
-    public static final String MESSAGE_MISSING_ARGUMENTS = "Client property and search keyword are missing.";
+    public static final String MESSAGE_MISSING_ARGUMENTS = "Search field and search keyword are missing.";
     public static final String MESSAGE_MISSING_PROPERTY =
-            "Client property is missing. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
+            "Search field is missing. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", or " + PREFIX_INTENTION + ".";
     public static final String MESSAGE_INVALID_PROPERTY =
-            "Invalid client property. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
+            "Invalid search field. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", or " + PREFIX_INTENTION + ".";
-    public static final String MESSAGE_MULTIPLE_PROPERTIES = "Specify exactly one client property.";
+    public static final String MESSAGE_MULTIPLE_PROPERTIES = "Specify exactly one search field.";
     public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.";
 
     private final Predicate<Person> predicate;

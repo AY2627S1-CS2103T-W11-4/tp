@@ -87,7 +87,11 @@ public class FindCommandParser implements Parser<FindCommand> {
             return new FindCommand(new LocationContainsKeywordsPredicate(keywords));
         }
 
-        return new FindCommand(new NameContainsKeywordsPredicate(keywords));
+        if (isNameSelector(selector)) {
+            return new FindCommand(new NameContainsKeywordsPredicate(keywords));
+        }
+
+        throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
     }
 
     private boolean isNameSelector(String token) {
