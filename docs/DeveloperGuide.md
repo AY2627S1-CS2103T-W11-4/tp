@@ -438,6 +438,70 @@ _{Explain here how the data archiving feature will be implemented}_
 * [Logging guide](Logging.md)
 * [DevOps guide](DevOps.md)
 
+### Viewing application logs in VS Code or Cursor
+
+These steps use the integrated terminal in VS Code or Cursor.
+IntelliJ IDEA procedures may differ and are not covered here.
+Logging is available throughout RESIDEX through `LogsCenter`; the property commands below are an example.
+
+1. Open the repository root in the editor, where `gradlew` and `build.gradle` are located.
+
+2. Open `src/main/java/seedu/address/commons/core/LogsCenter.java`.
+   The default `LOG_LEVEL` is `Level.INFO`.
+   To see detailed debugging messages, temporarily change it to the following and save the file:
+
+   ```java
+   private static final Level LOG_LEVEL = Level.FINE;
+   ```
+
+3. Select **Terminal > New Terminal** and run the following from the repository root:
+
+   ```bash
+   ./gradlew run --console=plain
+   ```
+
+   On Windows, use `.\gradlew.bat run --console=plain` instead.
+   If the app is already running, close it first and restart it using this command so the new logging level takes effect.
+   Logs appear in the terminal that launches the app.
+
+4. In the app, choose a test client with no properties.
+   The following example assumes the client is displayed at index `1`; replace the client index if needed.
+   Run these commands one at a time:
+
+   ```text
+   addp 1 t/HDB i/Buyer l/Clementi pr/800000
+   editp 1 1 l/Bishan
+   editp 1 1 l/Bishan
+   delp 1 1
+   delp 1 99
+   ```
+
+5. Check the terminal for these `FINE` messages in order:
+
+   ```text
+   Added property 1 to displayed client 1
+   Edited property 1 for displayed client 1
+   Property 1 is unchanged for displayed client 1
+   Deleted property 1 from displayed client 1
+   ```
+
+   The final command has an invalid property index, so it should show an error in the app without a successful deletion log.
+   An `INFO` entry containing `[USER COMMAND]` records an attempt, including commands that fail validation.
+   The property-operation messages record completed model changes or an unchanged edit; they do not confirm that saving to disk succeeded.
+
+6. To review saved output, open `residex.log.0` in the repository root.
+   Logs rotate between `residex.log.*` files, and concurrent app instances may use additional file suffixes.
+   On macOS or Linux, you can also open a second terminal and follow the log live:
+
+   ```bash
+   tail -f residex.log.0
+   ```
+
+   Press **Ctrl+C** in that terminal to stop following the log.
+
+7. After debugging, restore `LOG_LEVEL` to `Level.INFO` and save the file.
+   Check the editor's Source Control view to ensure the temporary logging-level change is removed before committing.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Appendix: Requirements**
