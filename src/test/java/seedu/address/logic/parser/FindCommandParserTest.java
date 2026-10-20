@@ -53,6 +53,13 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_invalidPropertyWithMissingOrMixedKeywords_reportsInvalidProperty() {
+        for (String args : List.of("x/", "x/ \t ", "x/ n/Alice", "x/Alice l/clementi")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+    }
+
+    @Test
     public void parse_unsupportedLaterSelector_throwsParseException() {
         for (String args : List.of("n/Alice phone/9123", "n/Alice x/foo", "e/gmail name/Alice",
                 "p/9123 unknown/foo", "i/buyer phone/9123", "N/Alice PHONE/9123", "E/gmail NAME/Alice",
