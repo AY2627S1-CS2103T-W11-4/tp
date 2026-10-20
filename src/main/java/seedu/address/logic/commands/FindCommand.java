@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
 
 import java.util.function.Predicate;
 
@@ -12,6 +13,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
+import seedu.address.model.property.PropertyStatus;
 
 /**
  * Finds and lists all persons in the address book matching the given predicate.
@@ -26,16 +28,19 @@ public class FindCommand extends Command {
             + "Email search: " + COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"
             + "Phone search: " + COMMAND_WORD + " " + PREFIX_PHONE + "KEYWORD [MORE_KEYWORDS]\n"
             + "Intention search: " + COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller\n"
+            + "Property status search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS
+            + "unspecified|enquiring|viewing|negotiating|closing|completed\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_EMAIL + "alexyeoh@example.com";
 
     public static final String MESSAGE_INVALID_INTENTION = "Intention must be buyer or seller (case-insensitive).";
+    public static final String MESSAGE_INVALID_STATUS = PropertyStatus.MESSAGE_CONSTRAINTS;
     public static final String MESSAGE_MISSING_ARGUMENTS = "Client property and search keyword are missing.";
     public static final String MESSAGE_MISSING_PROPERTY =
             "Client property is missing. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
-                    + PREFIX_PHONE + ", or " + PREFIX_INTENTION + ".";
+                    + PREFIX_PHONE + ", " + PREFIX_INTENTION + ", or " + PREFIX_PROPERTY_STATUS + ".";
     public static final String MESSAGE_INVALID_PROPERTY =
             "Invalid client property. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
-                    + PREFIX_PHONE + ", or " + PREFIX_INTENTION + ".";
+                    + PREFIX_PHONE + ", " + PREFIX_INTENTION + ", or " + PREFIX_PROPERTY_STATUS + ".";
     public static final String MESSAGE_MULTIPLE_PROPERTIES = "Specify exactly one client property.";
     public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.";
 

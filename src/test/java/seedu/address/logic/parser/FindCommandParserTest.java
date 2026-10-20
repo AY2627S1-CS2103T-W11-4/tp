@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,8 @@ import seedu.address.model.person.Intention;
 import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
+import seedu.address.model.person.PropertyStatusMatchesPredicate;
+import seedu.address.model.property.PropertyStatus;
 
 public class FindCommandParserTest {
 
@@ -189,6 +192,51 @@ public class FindCommandParserTest {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
         for (String args : List.of("i/buyer seller", "I/buyer buyer", "i/seller extra")) {
             assertParseFailure(parser, args, expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_statusSelectors_acceptsEveryStatusIgnoringCase() {
+        for (String selector : List.of("s/", "S/")) {
+            for (PropertyStatus status : PropertyStatus.values()) {
+                FindCommand expected = new FindCommand(new PropertyStatusMatchesPredicate(status));
+                assertParseSuccess(parser, selector + status.name(), expected);
+                assertParseSuccess(parser, " \n " + selector + "\t" + status.name().toLowerCase(Locale.ROOT) + " \t ",
+                        expected);
+            }
+        }
+        assertParseSuccess(parser, "s/nEgOtIaTiNg",
+                new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.NEGOTIATING)));
+    }
+
+    @Test
+    public void parse_statusSelectorWithoutValue_throwsParseException() {
+        for (String selector : List.of("s/", "S/")) {
+            assertParseFailure(parser, selector, FindCommand.MESSAGE_MISSING_KEYWORD);
+            assertParseFailure(parser, " \t " + selector + " \n ", FindCommand.MESSAGE_MISSING_KEYWORD);
+        }
+    }
+
+    @Test
+    public void parse_invalidStatus_throwsParseException() {
+        for (String keyword : List.of("not-specified", "Cancelled", "Withdrawn", "view", "viewings", "1")) {
+            assertParseFailure(parser, "s/" + keyword, FindCommand.MESSAGE_INVALID_STATUS);
+        }
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String values : List.of("viewing completed", "VIEWING viewing", "Not specified")) {
+            assertParseFailure(parser, "s/" + values, expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_statusMixedWithAnySelector_throwsParseException() {
+        for (String field : List.of("n/Alice", "e/gmail", "p/9123", "i/buyer", "s/closing", "S/")) {
+            assertParseFailure(parser, "s/viewing " + field, FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+            assertParseFailure(parser, field + " S/viewing", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        }
+        for (String args : List.of("status/viewing", "s/viewing status/closing", "s/viewing l/Clementi",
+                "s/viewing/foo", "s/viewing x/", "n/Alice status/viewing")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
         }
     }
 
