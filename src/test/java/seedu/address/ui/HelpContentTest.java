@@ -30,6 +30,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
 import seedu.address.model.person.Intention;
 import seedu.address.model.person.IntentionMatchesPredicate;
+import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.person.Remark;
@@ -117,6 +118,7 @@ public class HelpContentTest {
                 new FindCommand(new NameContainsKeywordsPredicate(List.of("alex", "david"))),
                 new FindCommand(new EmailContainsKeywordsPredicate(List.of("gmail"))),
                 new FindCommand(new PhoneContainsKeywordsPredicate(List.of("9123"))),
+                new FindCommand(new LocationContainsKeywordsPredicate(List.of("clementi"))),
                 new FindCommand(new IntentionMatchesPredicate(Intention.BUYER)));
 
         assertEquals(expectedCommands.size(), examples.size());
