@@ -838,6 +838,7 @@ They are documented for future reference, without committing to their implementa
 * **Active property listing**: A property listing recorded under a seller's client profile that is currently available for sale.
 * **Associated property**: A property linked to a client's profile, such as a property the client is interested in or is selling.
 * **Budget**: The amount of money a buyer is prepared to spend on a property.
+* **Budget band**: The Low, Middle or High category derived from a client's recorded budget.
 * **Buyer**: A client who wants to purchase a property.
 * **Buying status**: How close a client is to agreeing on a property.
 * **Client**: A buyer or seller whose details a property agent stores in RESIDEX.
@@ -845,6 +846,7 @@ They are documented for future reference, without committing to their implementa
 * **Client profile**: The stored information about a client, including contact details, requirements, buying status, priority and associated properties.
 * **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
 * **Follow-up**: A planned next contact with a client. A follow-up may be upcoming or overdue.
+* **Intention**: A Buyer or Seller value recorded for a client or an associated property. A property's intention is independent of its client's intention.
 * **Internal note**: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
 * **Lead**: A potential client or transaction that the property agent is currently pursuing
 * **Mainstream OS**: Windows, Linux, Unix, or macOS.
@@ -853,9 +855,13 @@ They are documented for future reference, without committing to their implementa
 * **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 * **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
+* **Property index**: The one-based position of a property entry within a selected client's property list.
 * **Property listing**: A record containing information about a property available for sale or rent
+* **Property price**: An optional, positive whole-dollar amount recorded for a property, separate from the client's budget.
+* **Property type**: The HDB, Condominium or Landed category of a property entry.
 * **Property viewing**: An appointment for a client to inspect a property
 * **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
+* **Remark**: Text recorded for a client using the `remark` command and displayed on the client card.
 * **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
 * **Transaction**: The process of completing a property sale or rental
