@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Intention;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyType;
@@ -35,11 +36,14 @@ class JsonAdaptedProperty {
     }
 
     /**
-     * Converts an immutable model property into its saved representation.
+     * Converts an immutable model property into the existing Buyer/Seller saved representation.
      */
     public JsonAdaptedProperty(Property source) {
         type = source.getType().toString();
-        intention = source.getIntention().toString();
+        intention = switch (source.getIntention()) {
+            case BUYING -> Intention.BUYER.toString();
+            case SELLING -> Intention.SELLER.toString();
+        };
         location = source.getLocation().value;
         price = source.getPrice().map(PropertyPrice::toString).orElse(null);
     }
@@ -63,9 +67,12 @@ class JsonAdaptedProperty {
         if (intention == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "intention"));
         }
-        final Intention modelIntention;
+        final PropertyIntention modelIntention;
         try {
-            modelIntention = Intention.parse(intention);
+            modelIntention = switch (Intention.parse(intention)) {
+                case BUYER -> PropertyIntention.BUYING;
+                case SELLER -> PropertyIntention.SELLING;
+            };
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException(Intention.MESSAGE_CONSTRAINTS, e);
         }
