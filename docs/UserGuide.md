@@ -209,7 +209,7 @@ Examples:
 * `editp 1 2 t/Landed i/Seller pr/3200000` changes its type, property intention and price together.
 * `editp 1 2 pr/` removes its price while preserving its location and other fields.
 
-### Locating persons by name, email, phone, or intention: `find`
+### Locating persons by name, email, phone, location, or intention: `find`
 
 Finds contacts using exactly one selected property.
 
@@ -220,6 +220,7 @@ Property | Prefix
 Name | `n/`
 Email | `e/`
 Phone | `p/`
+Property location | `l/`
 Intention | `i/`
 
 * Prefix letters and keywords are case-insensitive; `N/` and `n/` have the same effect.
@@ -227,8 +228,12 @@ Intention | `i/`
   Missing, unknown, repeated, or mixed prefixes are rejected. For example, use `find n/alice`.
   Long property aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
-* Name, email, and phone searches use substring matching; `find n/ali` matches `Alice`.
+* Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
 * Multiple keywords use `OR` matching: a contact is returned if any keyword matches the selected property.
+* Location searches check all property entries attached to each client. A client appears once if any location matches;
+  clients without property entries do not match. Enter keywords without quotation marks.
+* Spaces separate location keywords. A multiword location search matches any of its keywords independently;
+  it does not search for the whole phrase or require an exact address match.
 * Intention searches require exactly one complete value: `buyer` or `seller`, in any capitalization.
 * Only the selected property is searched. Each search filters the entire contact list, replacing any previous filter.
   Use `list` to show all contacts again. Searches do not modify stored contacts.
@@ -239,6 +244,10 @@ Examples:
 * `find n/alex david` returns `Alex Yeoh` and `David Li`.
 * `find e/gmail` finds email addresses containing `gmail`.
 * `find p/9123` finds phone numbers containing `9123`.
+* `find l/clementi` finds clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
+* `find l/clementi woodlands` finds clients with any property location containing `clementi` or `woodlands`.
+* `find l/Clementi Ave 3` searches for `Clementi`, `Ave`, or `3` independently. It matches locations such as
+  `Clementi Ave 3`, `Woodlands Clementi`, `Bedok Ave 1`, and `Tampines Street 3`.
 * `find i/buyer` lists all buyers.
 * `find i/seller` lists all sellers.
 
@@ -330,7 +339,7 @@ Action     | Format, Examples
 **Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`<br> e.g., `addp 1 t/HDB i/Buyer l/Clementi pr/800000`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]`<br> e.g., `editp 1 2 l/Toa Payoh`
-**Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find i/seller`
+**Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`
 **List**   | `list`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
 **Help**   | `help`
