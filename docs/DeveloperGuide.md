@@ -180,12 +180,9 @@ examples parse as the intended commands without executing them or starting JavaF
 
 ### Find command
 
-`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, or `i/`.
+`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, or `i/`.
 For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
-Name, email, phone, and location searches use case-insensitive substring matching with OR semantics across keywords.
-`LocationContainsKeywordsPredicate` checks every entry in `Person#getProperties()` and returns a client once if any
-property location contains any keyword. Clients without properties do not match a location search.
-For example, `find l/clementi` matches clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
+Name, email, and phone searches use substring matching with OR semantics across keywords.
 Intention searches accept exactly one value, `buyer` or `seller`, case-insensitively.
 Missing keywords, repeated or mixed prefixes, and unsupported selectors are rejected.
 `FindCommand` replaces the filter on the complete client list without modifying stored clients.
@@ -620,8 +617,7 @@ delete information, invalid input is rejected without changing that information.
 
 **MSS**
 
-1. Property agent requests to find clients by name, phone number, email, property location or intention,
-   supplying search keywords.
+1. Property agent requests to find clients by name, phone number or email, supplying search keywords.
 2. RESIDEX displays the matching clients and the number of matches.
 
    Use case ends.
@@ -923,26 +919,20 @@ They are documented for future reference, without committing to their implementa
 * **Client information history**: Previously recorded information or changes associated with a client, available for review.
 * **Client profile**: The stored information about a client, including contact details, requirements, buying status, priority and associated properties.
 * **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
-* **Filtered client list**: The clients currently displayed after a search. Each `find` command searches all stored clients and replaces this list; `list` restores all clients.
 * **Follow-up**: A planned next contact with a client. A follow-up may be upcoming or overdue.
 * **Internal note**: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
-* **Keyword**: A search term supplied after a `find` prefix. Whitespace separates keywords, and any matching keyword returns a client.
 * **Lead**: A potential client or transaction that the property agent is currently pursuing
 * **Mainstream OS**: Windows, Linux, Unix, or macOS.
 * **Minimum Viable Product (MVP)**: The initial version of RESIDEX containing the features selected to meet its core user needs.
-* **Prefix**: A field selector such as `n/` for a name or `l/` for a property location. The `find` command accepts exactly one selector.
 * **Priority**: An indication of a client's importance or urgency, assigned by the property agent to help decide whom to attend to first.
 * **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 * **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
-* **Property entry**: A record in a client's ordered property list containing a type, intention, location and optional price.
 * **Property listing**: A record containing information about a property available for sale or rent
-* **Property location**: Nonblank descriptive text stored on a property entry, such as `Clementi Ave 3`. The `find l/` search checks these locations.
 * **Property viewing**: An appointment for a client to inspect a property
 * **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
 * **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
-* **Substring matching**: Matching text that contains a keyword anywhere, ignoring case; for example, `clementi` matches both `Clementi Ave 3` and `Woodlands Clementi`.
 * **Transaction**: The process of completing a property sale or rental
 * **Viewing**: A scheduled visit to a property with a client.
 

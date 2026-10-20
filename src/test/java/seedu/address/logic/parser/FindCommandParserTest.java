@@ -12,7 +12,6 @@ import seedu.address.logic.commands.FindCommand;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
 import seedu.address.model.person.Intention;
 import seedu.address.model.person.IntentionMatchesPredicate;
-import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 
@@ -194,31 +193,6 @@ public class FindCommandParserTest {
     }
 
     @Test
-    public void parse_locationSelectors_returnsLocationFindCommand() {
-        for (String selector : List.of("l/", "L/")) {
-            assertParseSuccess(parser, selector + "clementi",
-                    new FindCommand(new LocationContainsKeywordsPredicate(List.of("clementi"))));
-            assertParseSuccess(parser, " \n " + selector + "\t Clementi   \n woodlands \t ",
-                    new FindCommand(new LocationContainsKeywordsPredicate(List.of("Clementi", "woodlands"))));
-        }
-    }
-
-    @Test
-    public void parse_locationSelectorWithoutKeywords_throwsParseException() {
-        for (String selector : List.of("l/", "L/")) {
-            assertParseFailure(parser, selector, FindCommand.MESSAGE_MISSING_KEYWORD);
-            assertParseFailure(parser, " \t " + selector + " \n ", FindCommand.MESSAGE_MISSING_KEYWORD);
-        }
-    }
-
-    @Test
-    public void parse_locationWithUnsupportedSelector_throwsParseException() {
-        for (String args : List.of("location/clementi", "l/clementi x/foo", "l/clementi/woodlands")) {
-            assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
-        }
-    }
-
-    @Test
     public void parse_repeatedOrMixedSelectors_throwsParseException() {
         String expectedMessage = FindCommand.MESSAGE_MULTIPLE_PROPERTIES;
 
@@ -228,11 +202,6 @@ public class FindCommandParserTest {
                 "p/9123 p/9876",
                 "e/gmail e/yahoo",
                 "i/buyer i/seller",
-                "l/clementi L/woodlands",
-                "l/clementi n/Alice",
-                "n/Alice l/clementi",
-                "i/buyer L/clementi",
-                "l/ l/",
                 "n/Alice p/9123",
                 "n/Alice e/gmail",
                 "e/gmail i/buyer",
