@@ -209,7 +209,7 @@ Examples:
 * `editp 1 2 t/Landed i/Seller pr/3200000` changes its type, property intention and price together.
 * `editp 1 2 pr/` removes its price while preserving its location and other fields.
 
-### Locating persons by name, email, phone, or intention: `find`
+### Locating persons by name, email, phone, location, or intention: `find`
 
 Finds contacts using exactly one selected property.
 
@@ -232,6 +232,8 @@ Intention | `i/`
 * Multiple keywords use `OR` matching: a contact is returned if any keyword matches the selected property.
 * Location searches check all property entries attached to each client. A client appears once if any location matches;
   clients without property entries do not match. Enter keywords without quotation marks.
+* Spaces separate location keywords. A multiword location search matches any of its keywords independently;
+  it does not search for the whole phrase or require an exact address match.
 * Intention searches require exactly one complete value: `buyer` or `seller`, in any capitalization.
 * Only the selected property is searched. Each search filters the entire contact list, replacing any previous filter.
   Use `list` to show all contacts again. Searches do not modify stored contacts.
@@ -244,6 +246,8 @@ Examples:
 * `find p/9123` finds phone numbers containing `9123`.
 * `find l/clementi` finds clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
 * `find l/clementi woodlands` finds clients with any property location containing `clementi` or `woodlands`.
+* `find l/Clementi Ave 3` searches for `Clementi`, `Ave`, or `3` independently. It matches locations such as
+  `Clementi Ave 3`, `Woodlands Clementi`, `Bedok Ave 1`, and `Tampines Street 3`.
 * `find i/buyer` lists all buyers.
 * `find i/seller` lists all sellers.
 

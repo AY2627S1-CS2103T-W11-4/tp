@@ -237,6 +237,31 @@ public class FindCommandTest {
     }
 
     @Test
+    public void execute_multiwordLocation_matchesAnyParsedKeyword() throws ParseException {
+        Person exactLocationClient = new PersonBuilder(ALICE).withProperties(
+                new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Clementi Ave 3"))).build();
+        Person clementiClient = new PersonBuilder(BENSON).withProperties(
+                new Property(PropertyType.HDB, Intention.SELLER, new PropertyLocation("Woodlands Clementi"))).build();
+        Person avenueClient = new PersonBuilder(CARL).withProperties(
+                new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Bedok Ave 1"))).build();
+        Person numberClient = new PersonBuilder(DANIEL).withProperties(
+                new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Tampines Street 3"))).build();
+        Person nonMatchingClient = new PersonBuilder(ELLE).withProperties(
+                new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Jurong East"))).build();
+        model = new ModelManager(new AddressBook(), new UserPrefs());
+        expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
+        for (Person person : List.of(exactLocationClient, clementiClient, avenueClient, numberClient,
+                nonMatchingClient, FIONA)) {
+            model.addPerson(person);
+            expectedModel.addPerson(person);
+        }
+
+        assertParsedFindSuccess("find l/Clementi Ave 3",
+                new LocationContainsKeywordsPredicate(List.of("Clementi", "Ave", "3")),
+                List.of(exactLocationClient, clementiClient, avenueClient, numberClient));
+    }
+
+    @Test
     public void toStringMethod() {
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of("keyword"));
         FindCommand findCommand = new FindCommand(predicate);
