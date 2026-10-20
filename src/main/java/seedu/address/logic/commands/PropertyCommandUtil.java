@@ -1,6 +1,6 @@
 package seedu.address.logic.commands;
 
-import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
@@ -17,7 +17,7 @@ final class PropertyCommandUtil {
     }
 
     static Person getClient(Model model, Index clientIndex) throws CommandException {
-        requireNonNull(model);
+        requireAllNonNull(model, clientIndex);
         if (clientIndex.getZeroBased() >= model.getFilteredPersonList().size()) {
             throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
@@ -25,6 +25,7 @@ final class PropertyCommandUtil {
     }
 
     static Property getProperty(Person client, Index propertyIndex) throws CommandException {
+        requireAllNonNull(client, propertyIndex);
         if (propertyIndex.getZeroBased() >= client.getProperties().size()) {
             throw new CommandException(Messages.MESSAGE_INVALID_PROPERTY_INDEX);
         }

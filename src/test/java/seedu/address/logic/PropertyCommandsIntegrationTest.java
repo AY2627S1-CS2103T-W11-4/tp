@@ -205,6 +205,48 @@ public class PropertyCommandsIntegrationTest {
     }
 
     @Test
+    public void execute_locationFilteredPropertyCommands_useDisplayedIndexAndUpdateMatches() throws Exception {
+        logic.execute("addp 1 t/HDB i/Buying l/Clementi");
+        logic.execute("addp 2 t/HDB i/Selling l/Bishan");
+        Person alice = client(0);
+        logic.execute("find l/missing BISHAN");
+        assertEquals(List.of(client(1)), model.getFilteredPersonList());
+
+        logic.execute("addp 1 t/c i/Buying l/Woodlands");
+        logic.execute("editp 1 1 i/bUyInG");
+
+        Property first = new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Bishan"));
+        Property second = new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
+                new PropertyLocation("Woodlands"));
+        assertEquals(alice, client(0));
+        assertEquals(List.of(first, second), client(1).getProperties());
+        assertEquals(Intention.SELLER, client(1).getIntention());
+        assertEquals(List.of(client(1)), model.getFilteredPersonList());
+        assertSaved();
+
+        logic.execute("editp 1 1 l/Tampines");
+
+        Property moved = new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Tampines"));
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        assertEquals(List.of(moved, second), client(1).getProperties());
+        assertSaved();
+
+        logic.execute("find l/woodlands");
+        assertEquals(List.of(client(1)), model.getFilteredPersonList());
+        logic.execute("delp 1 2");
+
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        assertEquals(List.of(moved), client(1).getProperties());
+        assertEquals(alice, client(0));
+        assertSaved();
+
+        logic.execute("find i/seller");
+        assertEquals(List.of(client(1)), model.getFilteredPersonList());
+        logic.execute("list");
+        assertEquals(List.of(alice, client(1)), model.getFilteredPersonList());
+    }
+
+    @Test
     public void execute_invalidIndexes_leaveModelFilterAndStorageUnchanged() throws Exception {
         logic.execute("addp 1 t/HDB i/Buying l/Clementi");
         for (String command : List.of("addp 3 t/HDB i/Buying l/Bishan", "delp 3 1", "editp 3 1 l/Bishan",
