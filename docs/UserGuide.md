@@ -31,7 +31,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000` : Adds a buyer named `John Doe` with a budget of $1,500,000.
+   * `add n/John Doe p/98765432 e/johnd@example.com b/1500000` : Adds a client named `John Doe` with a budget of $1,500,000 and intention Not specified.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -85,7 +85,7 @@ Format: `help`
 
 Adds a client to RESIDEX.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL [b/BUDGET]`
 
 A client is a duplicate only when both their name and phone number match an existing client.
 Name matching ignores capitalisation, surrounding spaces and repeated spaces between words.
@@ -97,29 +97,45 @@ If an add or edit would create a duplicate, the error identifies the existing cl
 The conflicting client may be outside the current search results.
 A rejected command leaves all client information unchanged.
 
-Intention is required and must be `Buyer` or `Seller` (case-sensitive). For example, use `i/Buyer`.
-Existing `edit` and `remark` commands preserve intention; changing it through `edit` is not supported yet.
+Client intention is calculated from the client's recorded properties and cannot be set directly.
+New clients have no properties, so their intention is **Not specified**.
+Supplying `i/` to client `add` or `edit` is rejected, including `i/Buyer`, `i/Seller` and `i/Both`.
+Use the property commands to change the properties that determine the role.
+
+| Recorded property intentions | Client intention shown |
+| --- | --- |
+| No properties | Not specified |
+| One or more Buyer properties, no Seller properties | Buyer |
+| One or more Seller properties, no Buyer properties | Seller |
+| At least one of each direction | Buyer / Seller |
+
+The role updates automatically after `addp`, `editp` or `delp`.
+Property order and repeated entries do not affect which role is derived.
 
 Budget is optional. It is a whole-dollar amount with no commas and no decimal point, such as `b/1500000`.
 The client card shows that amount on the right.
 $800,000 and below is red, above $800,000 up to $2,500,000 is yellow, and above $2,500,000 is green.
 A saved file that has no budget still opens.
 
-**Existing data:** Before using this version, back up `data/addressbook.json`. Each person needs an
-`"intention": "Buyer"` or `"intention": "Seller"` property matching their actual intention.
-Files with missing or invalid intentions cannot be loaded. Do not save new changes over an unmigrated file.
+**Existing data:** Before using this version, back up `data/addressbook.json`.
+The old client-level `"intention"` field is ignored when loading; properties determine the role.
+A legacy client with no properties becomes Not specified, even if their old role is Buyer or Seller.
+New saves omit the client-level intention field and retain each property's intention.
+Property intentions remain required and must be valid; invalid property data cannot be loaded.
 Saved files containing duplicate name-and-phone pairs under the rule above also cannot be loaded.
 Back up the file and resolve these duplicates before opening it with this version.
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000`
-* `add n/Betsy Crowe e/betsycrowe@example.com i/Seller p/1234567`
+* `add n/John Doe p/98765432 e/johnd@example.com b/1500000`
+* `add n/Betsy Crowe e/betsycrowe@example.com p/1234567`
 
 ### Listing all clients: `list`
 
 Shows a list of all clients in RESIDEX.
 
 Format: `list`
+
+Resets the search and restores the normal stored client order, including after an intention search.
 
 ### Editing a client: `edit`
 
@@ -132,6 +148,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [b/BUDGET]`
 * Existing values will be updated to the input values.
 * Client edits preserve all property entries.
   Use `editp` to change a property.
+* Client intention cannot be edited directly. Any `i/` field is rejected without changing the client.
 * `b/BUDGET` replaces the client's budget. Leaving `b/` out keeps the existing budget.
 * The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
   Changing only the capitalisation or spacing of the selected client's own name is allowed.
@@ -145,11 +162,13 @@ Examples:
 
 Each client can have an ordered list of properties, shown as numbered entries on their client card.
 Each property has one type, one buying or selling intention, one location, and an optional price.
-Property intentions and prices are independent of the client's intention and budget.
+Property intentions determine the client's overall role. Property prices remain separate from the client's budget.
 
 * `CLIENT_INDEX` selects a client in the currently displayed list, including search results.
 * `PROPERTY_INDEX` selects a numbered property under that client, starting from 1.
 * Property commands keep the current client filter.
+  A role change can move a client within intention results or remove them if they no longer match.
+  Check the displayed indexes again after each change.
 * Identical property entries are allowed within one client and across clients.
   Each entry is independent; editing one does not change another client's entry.
 * Property fields can be supplied in any order, once each.
@@ -229,7 +248,15 @@ Intention | `i/`
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
 * Name, email, and phone searches use substring matching; `find n/ali` matches `Alice`.
 * Multiple keywords use `OR` matching: a contact is returned if any keyword matches the selected property.
-* Intention searches require exactly one complete value: `buyer` or `seller`, in any capitalization.
+* Intention searches require exactly one complete value: `buyer`, `seller` or `both`, in any capitalization.
+  `find i/unspecified` is not supported.
+* `find i/buyer` shows Buyer clients first, then Buyer / Seller clients.
+  `find i/seller` shows Seller clients first, then Buyer / Seller clients.
+  `find i/both` shows only Buyer / Seller clients.
+  Each group retains normal client order.
+* Name, email and phone searches restore normal client order. `list` also restores that order.
+  Intention sorting does not change stored order.
+* Commands using client indexes always act on the currently displayed order, including sorted intention results.
 * Only the selected property is searched. Each search filters the entire contact list, replacing any previous filter.
   Use `list` to show all contacts again. Searches do not modify stored contacts.
 
@@ -239,8 +266,9 @@ Examples:
 * `find n/alex david` returns `Alex Yeoh` and `David Li`.
 * `find e/gmail` finds email addresses containing `gmail`.
 * `find p/9123` finds phone numbers containing `9123`.
-* `find i/buyer` lists all buyers.
-* `find i/seller` lists all sellers.
+* `find i/buyer` lists Buyer clients followed by Buyer / Seller clients.
+* `find i/seller` lists Seller clients followed by Buyer / Seller clients.
+* `find i/both` lists Buyer / Seller clients only.
 
 ### Deleting a client: `delete`
 
@@ -316,7 +344,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer b/1500000`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com b/1500000`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`<br> e.g., `addp 1 t/HDB i/Buyer l/Clementi pr/800000`

@@ -126,7 +126,8 @@ The `Model` component,
 
 * stores the client data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
 * stores each client's properties as an ordered, unmodifiable list within `Person`.
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
+* derives each client's `ClientIntention` from the immutable property list without storing a second role field.
+* applies a `FilteredList<Person>` and then a `SortedList<Person>` to the source client list. It exposes one unmodifiable displayed `ObservableList<Person>` to both the UI and index-based commands.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
@@ -172,9 +173,58 @@ examples parse as the intended commands without executing them or starting JavaF
 `FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, or `i/`.
 For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
 Name, email, and phone searches use substring matching with OR semantics across keywords.
-Intention searches accept exactly one value, `buyer` or `seller`, case-insensitively.
+Intention searches accept exactly one value, `buyer`, `seller` or `both`, case-insensitively.
 Missing keywords, repeated or mixed prefixes, and unsupported selectors are rejected.
-`FindCommand` replaces the filter on the complete client list without modifying stored clients.
+`find i/unspecified` is rejected. `IntentionMatchesPredicate` includes `BOTH` in buyer/seller searches and matches
+only `BOTH` for the both query. Its comparator ranks exact-role matches before mixed-role matches.
+
+`ModelManager` maintains the following live list pipeline:
+
+```text
+AddressBook source list -> FilteredList -> SortedList -> unmodifiable displayed list
+```
+
+For intention predicates, `updateFilteredPersonList` applies the role comparator and breaks ties using source-list
+positions. The tie-breaker preserves group order when a property command replaces a client and changes their role.
+For every other predicate, including `list`, it clears the comparator, restoring source order.
+Neither filtering nor sorting reorders the `AddressBook` or saved client list.
+
+`getFilteredPersonList()` returns this single displayed list to `LogicManager` and the UI.
+`EditCommand`, `DeleteCommand`, `RemarkCommand` and `PropertyCommandUtil` resolve client indexes from the same list.
+Property commands preserve the active filter, so a role-changing update can move or remove the client from results.
+`IntentionSearchIntegrationTest` verifies all six indexed operations against sorted results, first/last/invalid
+displayed indexes, live role changes, normal-order restoration and saved source order.
+
+### Derived client intention
+
+`Person#getIntention()` computes a `ClientIntention` from the current property list on demand.
+Properties use the existing `Intention.BUYER`/`Intention.SELLER` values for their direction.
+
+| Buying-direction property present | Selling-direction property present | Derived role | Display |
+| --- | --- | --- | --- |
+| No | No | `UNSPECIFIED` | Not specified |
+| Yes | No | `BUYER` | Buyer |
+| No | Yes | `SELLER` | Seller |
+| Yes | Yes | `BOTH` | Buyer / Seller |
+
+No client intention field or constructor parameter is stored in `Person`.
+Equality and hashing use the properties, so they also reflect everything that determines the role.
+`PersonBuilder` and sample clients without properties produce `UNSPECIFIED`; no placeholder property is inferred.
+All property-copy methods derive the new role automatically while leaving the original `Person` unchanged.
+`copyWithProperties` asserts that the replacement preserves client identity, an internal copy invariant.
+This assertion does not validate user input or perform required work. Gradle tests enable assertions by default.
+
+`AddCommandParser` accepts name, phone, email and optional budget; the client is initially `UNSPECIFIED`.
+Both client add and edit call `ParserUtil.rejectClientIntention` before tokenizing fields.
+This shared check raises `ParseException` for any standalone `i/` field, including mixed case, blank and repeated
+values, preventing it from being absorbed into another field's text. Property commands still accept their own `i/`.
+
+`JsonAdaptedPerson` accepts the legacy JSON `intention` parameter as ignored input and stores no role field.
+New JSON omits client intention; only properties determine the role after loading.
+A missing, null or stale legacy client role does not prevent otherwise valid data from loading.
+For example, legacy Buyer plus an empty property list becomes `UNSPECIFIED`; legacy Buyer plus only Seller
+properties becomes `SELLER`. Property-value validation and indexed storage errors remain unchanged.
+Round-trip tests cover all four roles, and legacy-file tests verify that loading does not rewrite the file.
 
 ### Duplicate client feedback
 
@@ -235,7 +285,8 @@ A client with no budget has no amount on the card.
 ### Client property model
 
 The property model, storage, numbered client-card display and `addp`, `delp` and `editp` commands are implemented.
-Existing client `add` and `edit` commands retain their syntax; property fields belong to the separate property commands.
+Client `add` omits intention, and client `add`/`edit` reject manual intention fields.
+Property fields belong to the separate property commands.
 
 #### Fields and validation
 
@@ -245,7 +296,7 @@ Each entry describes one client's interest in buying or selling a property.
 | Field | Type | Rules |
 | --- | --- | --- |
 | Type | `PropertyType` | Required: `HDB`, `CONDOMINIUM`, or `LANDED`. `parse` accepts full names and `h`, `c`, or `l`, ignoring case and surrounding whitespace. |
-| Intention | `Intention` | Required: `BUYER` or `SELLER`. This belongs to the property and is independent of the client's existing intention. `Intention.parse` accepts exactly `Buyer` or `Seller`. |
+| Intention | `Intention` | Required: `BUYER` or `SELLER`. Property directions determine the client's derived `ClientIntention`. `Intention.parse` accepts exactly `Buyer` or `Seller`. |
 | Location | `PropertyLocation` | Required, nonblank text. Surrounding whitespace is removed; case and internal whitespace are preserved. |
 | Price | `PropertyPrice` | Optional. A supplied price must be a positive whole-dollar SGD amount up to `Long.MAX_VALUE`, without commas, decimals, leading zeros, or surrounding whitespace. |
 
@@ -285,7 +336,7 @@ An empty `pr/` clears the price on edit, while empty required fields are rejecte
 
 `PropertyCommandUtil` resolves the client from `model.getFilteredPersonList()` and validates the property index within that client's list.
 Both indexes use the existing `Index` class and errors are reported through `CommandException`.
-Commands preserve the active client filter and all unrelated fields.
+Commands preserve the active client filter and all unrelated fields; the derived role and displayed position can change.
 `EditPropertyCommand` constructs a replacement using the current values for omitted fields.
 Only after successful validation does it call `model.setPerson` once.
 An equal replacement reports no change and leaves the original `Person` in the model.
@@ -310,7 +361,7 @@ Apply the returned person through `model.setPerson`; calling a method alone does
 
 Existing `EditCommand` and `RemarkCommand` carry the property list into the replacement person so that changing contact
 details or remarks preserves all properties. Future code that reconstructs a `Person` must also preserve the list.
-The original six-argument `Person` constructor creates a client with no properties; the seven-argument constructor
+The five-argument `Person` constructor creates a client with no properties; the six-argument constructor
 accepts the property list as its final argument.
 
 #### Storage and compatibility
@@ -465,7 +516,7 @@ The general user story for updating client information is an epic that is furthe
 |----------|--------------------------------------|------------------------------------------------------------|----------------------------------------------------------------|
 | `* * *`  | property agent who types quickly     | perform client-management actions through a CLI            | complete routine tasks quickly                                |
 | `* * *`  | property agent                       | add a new client                                           | keep track of the people I serve                              |
-| `* * *`  | property agent                       | record whether a client is a buyer or seller               | manage the client according to their property needs           |
+| `* * *`  | property agent                       | identify whether a client buys, sells, both or neither       | manage the client according to their property needs           |
 | `* * *`  | property agent                       | view all the clients I am currently serving                | keep track of my active clients                               |
 | `* * *`  | property agent managing many clients | search for clients by name, phone number, or email         | retrieve their information quickly                            |
 | `* * *`  | property agent                       | filter clients by category, buying status, property requirements, or priority | focus on clients relevant to my current task       |
@@ -495,7 +546,8 @@ For all use cases below, the **System** is `RESIDEX` and the **Actor** is a `pro
 `MSS` stands for Main Success Scenario. These use cases describe product requirements, including
 features planned for future iterations; they do not indicate that a feature is already implemented.
 
-A client is a buyer or seller. Two clients are duplicates when both their normalised names and
+A client can be Buyer, Seller, both or Not specified, derived from their properties.
+Two clients are duplicates when both their normalised names and
 normalised phone numbers match, following the Add Client feature specification.
 Names are compared case-insensitively after trimming surrounding spaces and replacing consecutive spaces with one space.
 Phone input is trimmed during parsing; valid phone numbers contain only digits and are compared exactly, including leading zeros.
@@ -516,9 +568,8 @@ delete information, invalid input is rejected without changing that information.
 
 **MSS**
 
-1. Property agent requests to add a client with their name, phone number, email and purpose
-   (Buyer or Seller).
-2. RESIDEX adds the client and displays the updated client list.
+1. Property agent requests to add a client with their name, phone number, email and optional budget.
+2. RESIDEX adds the client with no properties and intention Not specified, then displays the updated client list.
 
    Use case ends.
 
@@ -542,7 +593,7 @@ delete information, invalid input is rejected without changing that information.
 
 **MSS**
 
-1. Property agent requests to find clients by name, phone number or email, supplying search keywords.
+1. Property agent requests to find clients by name, phone number, email or derived intention, supplying a search value.
 2. RESIDEX displays the matching clients and the number of matches.
 
    Use case ends.
@@ -840,7 +891,8 @@ They are documented for future reference, without committing to their implementa
 * **Budget**: The amount of money a buyer is prepared to spend on a property.
 * **Buyer**: A client who wants to purchase a property.
 * **Buying status**: How close a client is to agreeing on a property.
-* **Client**: A buyer or seller whose details a property agent stores in RESIDEX.
+* **Client**: A person whose details a property agent stores in RESIDEX; their property-derived role can be Buyer, Seller, both or Not specified.
+* **Client intention**: The role derived from the client's property directions; no properties means Not specified, and both directions means Buyer / Seller.
 * **Client information history**: Previously recorded information or changes associated with a client, available for review.
 * **Client profile**: The stored information about a client, including contact details, requirements, buying status, priority and associated properties.
 * **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
@@ -855,7 +907,7 @@ They are documented for future reference, without committing to their implementa
 * **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
 * **Property listing**: A record containing information about a property available for sale or rent
 * **Property viewing**: An appointment for a client to inspect a property
-* **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
+* **Purpose**: A client's buying or selling needs, represented by property intentions and summarised by the derived client role.
 * **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
 * **Transaction**: The process of completing a property sale or rental
@@ -925,19 +977,19 @@ Prerequisite: Use a fresh data folder with no clients named Jordan Lee or Taylor
 
 1. Adding clients
 
-   1. Test case: `add n/Jordan Lee p/91001001 e/jordan@example.com i/Buyer`<br>
+   1. Test case: `add n/Jordan Lee p/91001001 e/jordan@example.com`<br>
       Expected: Jordan is added.
 
-   1. Test case: `add n/JORDAN   LEE p/91001001 e/other@example.com i/Seller`<br>
+   1. Test case: `add n/JORDAN   LEE p/91001001 e/other@example.com`<br>
       Expected: The error identifies the existing client as `Jordan Lee (91001001)` and explains that both name and phone match.
       It also explains that name matching ignores capitalisation and extra spaces.
       No client is added.
-      Capitalisation, spacing, email and intention do not distinguish clients with the same name and phone.
+      Capitalisation, spacing and email do not distinguish clients with the same name and phone.
 
-   1. Test case: `add n/Jordan Lee p/91001002 e/anotherjordan@example.com i/Seller`<br>
+   1. Test case: `add n/Jordan Lee p/91001002 e/anotherjordan@example.com`<br>
       Expected: A second Jordan is added because the phone number differs.
 
-   1. Test case: `add n/Taylor Lim p/91001001 e/taylor@example.com i/Buyer`<br>
+   1. Test case: `add n/Taylor Lim p/91001001 e/taylor@example.com`<br>
       Expected: Taylor is added because the name differs, even though the phone number matches the first Jordan.
 
 1. Editing a client in search results
@@ -962,16 +1014,17 @@ Run these steps in order; client indexes below refer to the filtered list.
 
 1. Adding properties
 
-   1. Enter `add n/Property Test Client p/91009001 e/propertytest@example.com i/Buyer b/900000`, then `find p/91009001`.<br>
+   1. Enter `add n/Property Test Client p/91009001 e/propertytest@example.com b/900000`, then `find p/91009001`.<br>
       Expected: Exactly one client is shown, with displayed index 1.
+      Their intention is Not specified because they have no properties.
 
    1. Enter `ADDP 1 T/h I/buyer L/Clementi Ave 3 PR/800000`.<br>
       Expected: Property 1 appears under this client as HDB, Buyer, Clementi Ave 3, $800,000.
-      The client filter remains active and the client's budget remains $900,000.
+      The client filter remains active, the client's role becomes Buyer and the budget remains $900,000.
 
    1. Enter `addp 1 t/c i/Seller l/Bishan`.<br>
       Expected: Property 2 appears as Condominium, Seller, Bishan with no price.
-      The client's own intention remains Buyer.
+      The client's derived intention becomes Buyer / Seller.
 
 1. Editing and clearing price
 
@@ -997,29 +1050,106 @@ Run these steps in order; client indexes below refer to the filtered list.
 
    1. Enter `delp 1 1`.<br>
       Expected: The Clementi property is removed; the Toa Payoh property becomes property 1.
-      The client remains in the filtered list.
+      The client remains in the phone-filtered list and their role becomes Seller.
 
    1. Exit and relaunch the app, then enter `find p/91009001`.<br>
       Expected: The single Condominium/Seller/Toa Payoh entry remains, without a price.
-      The client's contact details, Buyer intention and $900,000 budget are retained.
+      The client's contact details and $900,000 budget are retained; the role is derived as Seller.
+
+### Deriving and finding client intentions
+
+Prerequisite: Use a fresh data folder without clients named Role Mixed, Role Buyer, Role Seller or Role Empty.
+Run the steps in order; use the displayed indexes after each search.
+
+1. Preparing clients in source order
+
+   1. Enter `add n/Role Mixed p/91008001 e/mixed@example.com`, then `find p/91008001`.<br>
+      Expected: The new client has intention Not specified.
+
+   1. Enter `addp 1 t/HDB i/Buyer l/Clementi`, then `addp 1 t/Condominium i/Seller l/Bishan`.<br>
+      Expected: The role changes to Buyer after the first addition and Buyer / Seller after the second.
+
+   1. Enter `add n/Role Buyer p/91008002 e/buyer@example.com`, then `find p/91008002`,
+      then `addp 1 t/HDB i/Buyer l/Clementi`.<br>
+      Expected: This client's role is Buyer.
+
+   1. Enter `add n/Role Seller p/91008003 e/seller@example.com`, then `find p/91008003`,
+      then `addp 1 t/Condominium i/Seller l/Bishan`.<br>
+      Expected: This client's role is Seller.
+
+   1. Enter `add n/Role Empty p/91008004 e/empty@example.com`, then `find n/Role`.<br>
+      Expected: Role Mixed, Role Buyer, Role Seller and Role Empty appear in that source order.
+
+1. Finding and restoring normal order
+
+   1. Enter `find i/BUYER`.<br>
+      Expected: Role Buyer is displayed first, then Role Mixed. Role Empty is excluded.
+
+   1. Enter `find i/seller`.<br>
+      Expected: Role Seller is displayed first, then Role Mixed.
+
+   1. Enter `find I/bOtH`.<br>
+      Expected: Only Role Mixed appears, once.
+
+   1. Try `find i/unspecified`.<br>
+      Expected: An input error; the previous Role Mixed result is unchanged.
+
+   1. Enter `find n/Role`, then repeat `find i/buyer` followed by `list`.<br>
+      Expected: The ordinary find returns all four Role clients in source order, and list restores the
+      full source order. Intention searches do not change the saved order.
+
+1. Checking displayed-index targeting and automatic updates
+
+   1. Enter `find i/buyer`, then `edit 1 n/Role Buyer Updated`.<br>
+      Expected: The Buyer client is renamed; Role Mixed is untouched even though it is earlier in source order.
+      Client edit returns to the full list, so run the search again before using its indexes.
+
+   1. Enter `find i/buyer`, then `addp 1 t/Condominium i/Seller l/Tampines`.<br>
+      Expected: Role Buyer Updated becomes Buyer / Seller. Role Mixed is now displayed before it because
+      both matches retain source order. Property commands keep the filter active.
+
+   1. Enter `editp 1 1 i/Seller`.<br>
+      Expected: This edits Role Mixed, the currently displayed client 1. That client becomes Seller and
+      disappears from buyer results; Role Buyer Updated remains visible.
+
+   1. Enter `delp 1 2`.<br>
+      Expected: Only Role Buyer Updated's selling property is removed and its role becomes Buyer.
+      Enter `delp 1 1` to remove its final property; it becomes Not specified and leaves buyer results.
+      Enter `find n/Role` to verify that both clients still exist with the expected remaining properties.
+
+1. Rejecting direct client intention and retaining persistence compatibility
+
+   1. Try `edit 1 i/Buyer`, `edit 1 n/Changed i/Both`, and
+      `add n/Rejected Role p/91008005 e/rejected@example.com i/Seller`.<br>
+      Expected: Each command explains that client intention is derived. Names, properties, filter and saved data
+      remain unchanged; no Rejected Role client is added.
+
+   1. Exit and back up `data/addressbook.json`. Add an old client-level `"intention": "Buyer"` field to
+      Role Empty, then relaunch and enter `find p/91008004`.<br>
+      Expected: Role Empty remains Not specified; no property is invented from the old field.
+      The same test with legacy Seller has the same result.
+
+   1. Enter `list`, exit and inspect the saved JSON.<br>
+      Expected: Client-level intention is absent. Property intentions remain present, and property and client
+      order is preserved. Relaunch to verify all roles are derived from the same saved properties.
 
 ### Recording a budget
 
 1. Adding a client with a budget
 
-   1. Test case: `add n/Chloe Tan p/91234567 e/chloe@example.com i/Buyer b/500000`<br>
+   1. Test case: `add n/Chloe Tan p/91234567 e/chloe@example.com b/500000`<br>
       Expected: Chloe is added. `$500,000` is shown on the right of the card in red.
 
-   1. Test case: `add n/Marcus Lim p/92345678 e/marcus@example.com i/Buyer b/1500000`<br>
+   1. Test case: `add n/Marcus Lim p/92345678 e/marcus@example.com b/1500000`<br>
       Expected: `$1,500,000` is shown in yellow.
 
-   1. Test case: `add n/Ava Ng p/93456789 e/ava@example.com i/Seller b/3000000`<br>
+   1. Test case: `add n/Ava Ng p/93456789 e/ava@example.com b/3000000`<br>
       Expected: `$3,000,000` is shown in green.
 
-   1. Test case: `add n/Ben Ong p/94567890 e/ben@example.com i/Seller`<br>
+   1. Test case: `add n/Ben Ong p/94567890 e/ben@example.com`<br>
       Expected: Ben is added. The card shows no budget amount.
 
-   1. Test case: `add n/Invalid Budget p/95678901 e/bad@example.com i/Buyer b/800,000`<br>
+   1. Test case: `add n/Invalid Budget p/95678901 e/bad@example.com b/800,000`<br>
       Expected: No client is added. The error states that the budget must be a whole-dollar amount without commas.
 
 1. Editing a budget
