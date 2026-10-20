@@ -77,7 +77,7 @@ public class MainApp extends Application {
             logger.severe("Data file at " + storage.getAddressBookFilePath() + " could not be loaded: "
                     + StringUtil.getDetails(e));
             ui = primaryStage -> {
-                UiManager.showDataLoadingError(storage.getAddressBookFilePath());
+                UiManager.showDataLoadingError(storage.getAddressBookFilePath(), e);
                 Platform.exit();
             };
             return;

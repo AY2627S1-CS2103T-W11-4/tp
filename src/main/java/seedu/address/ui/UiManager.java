@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
@@ -10,6 +11,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import seedu.address.MainApp;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.Logic;
 
@@ -61,8 +63,13 @@ public class UiManager implements Ui {
     /**
      * Shows recovery instructions when client data cannot be loaded, before the main window is created.
      */
-    public static void showDataLoadingError(Path dataFilePath) {
+    public static void showDataLoadingError(Path dataFilePath, DataLoadingException error) {
+        Throwable cause = error.getCause();
+        String reason = cause instanceof AccessDeniedException
+                ? "Access to the file was denied. Check its permissions."
+                : cause.getMessage().split("\\R", 2)[0];
         String message = "Unable to load client data from:\n" + dataFilePath.toAbsolutePath().normalize()
+                + "\n\nReason: " + reason
                 + "\n\nYour client data file has not been changed. RESIDEX will close to prevent overwriting it."
                 + "\n\nBack up this file, then repair it or replace it with a valid backup and restart RESIDEX."
                 + "\n\nTo start fresh with sample clients, move the file aside before restarting.";
