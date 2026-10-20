@@ -8,6 +8,8 @@ import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
 import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -27,6 +29,7 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -39,6 +42,9 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.Window;
+import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.Model;
@@ -76,6 +82,57 @@ public class ResidexUiTest {
     @AfterAll
     public static void stopToolkit() {
         Platform.exit();
+    }
+
+    @Test
+    public void dataLoadingError_showsFilePathAndRecoveryInstructions() throws Exception {
+        assertDataLoadingError(new IOException("Invalid JSON.\nParser details."), "Invalid JSON.");
+    }
+
+    @Test
+    public void dataLoadingError_duplicateClients_showsValidationMessage() throws Exception {
+        assertDataLoadingError(new IllegalValueException("Persons list contains duplicate person(s)."),
+                "Persons list contains duplicate person(s).");
+    }
+
+    @Test
+    public void dataLoadingError_accessDenied_showsPermissionMessage() throws Exception {
+        assertDataLoadingError(new AccessDeniedException("addressbook.json"),
+                "Access to the file was denied. Check its permissions.");
+    }
+
+    private void assertDataLoadingError(Exception cause, String expectedReason) throws Exception {
+        runOnFxThread(() -> {
+            Path dataFile = temporaryFolder.resolve("addressbook.json");
+            CompletableFuture<Void> checked = new CompletableFuture<>();
+            Platform.runLater(() -> {
+                List<Window> windows = List.copyOf(Window.getWindows());
+                try {
+                    DialogPane dialog = windows.stream().map(Window::getScene)
+                            .map(scene -> scene.lookup("#" + UiManager.ALERT_DIALOG_PANE_FIELD_ID))
+                            .filter(DialogPane.class::isInstance).map(DialogPane.class::cast)
+                            .findFirst().orElseThrow();
+                    assertEquals("RESIDEX could not open your client data", dialog.getHeaderText());
+                    String message = dialog.getContentText();
+                    assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
+                    assertTrue(message.contains("Reason: " + expectedReason));
+                    assertFalse(message.contains("Parser details."));
+                    assertTrue(message.contains("has not been changed"));
+                    assertTrue(message.contains("RESIDEX will close"));
+                    assertTrue(message.contains("repair it or replace it with a valid backup"));
+                    assertTrue(message.contains("move the file aside"));
+                    checked.complete(null);
+                } catch (Throwable e) {
+                    checked.completeExceptionally(e);
+                } finally {
+                    windows.forEach(Window::hide);
+                }
+            });
+
+            UiManager.showDataLoadingError(dataFile, new DataLoadingException(cause));
+
+            checked.get(5, TimeUnit.SECONDS);
+        });
     }
 
     @Test

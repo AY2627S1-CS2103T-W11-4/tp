@@ -153,6 +153,17 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Protecting client data after a failed load
+
+`MainApp#initModelManager()` propagates `DataLoadingException` when an existing client data file cannot
+be loaded. `MainApp#init()` then provides an error UI without creating a model or command logic.
+When the application starts, the error dialog shows the file's absolute path and recovery instructions,
+then the application exits. `stop()` skips saving preferences when no model was initialized.
+
+This prevents command-triggered automatic saving from overwriting the failed file with an empty list.
+The user must repair or replace the file and restart. Moving the file aside explicitly selects the existing
+first-run behavior, which loads sample clients. A valid file containing an empty client list still loads normally.
+
 ### Command reference help
 
 `HelpCommand` returns a `CommandResult` with `showHelp` set to `true`. The existing `MainWindow#handleHelp()`
@@ -1056,8 +1067,25 @@ Run these steps in order; client indexes below refer to the filtered list.
 
 ### Saving data
 
-1. Dealing with missing/corrupted data files
+Use a copy of the application in a separate folder for these tests, and keep a backup of its
+`data/addressbook.json` file. Close RESIDEX before changing the file.
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+1. Failed loading:
+   1. Replace the file contents with `invalid JSON`, then launch RESIDEX.
+      Expected: An error dialog identifies the file, explains that it has not been changed, and gives
+      recovery instructions. Closing the dialog exits RESIDEX without opening the main window.
+   2. Open the file in a text editor.
+      Expected: It still contains `invalid JSON`.
+   3. Repeat with `null`, `{"persons": [null]}`, and a client with an invalid field value.
+      Expected: The same error and file-preservation behavior.
 
-1. _{ more test cases … }_
+2. Recovery:
+   1. Restore the valid backup and restart RESIDEX.
+      Expected: The saved clients appear. Changes made with commands persist after restarting.
+   2. Close RESIDEX, rename the data file to `addressbook.backup.json`, then restart.
+      Expected: Sample clients appear. Run `list`; a new data file is saved while the renamed file stays unchanged.
+
+3. Valid empty data:
+   1. Close RESIDEX and set the data file contents to `{"persons": []}`.
+   2. Restart, then add a client using `add n/Alice p/91234567 e/alice@example.com i/Buyer`.
+      Expected: RESIDEX starts normally with an empty list, and the added client persists after restarting.

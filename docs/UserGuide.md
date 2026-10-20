@@ -107,7 +107,7 @@ A saved file that has no budget still opens.
 
 **Existing data:** Before using this version, back up `data/addressbook.json`. Each person needs an
 `"intention": "Buyer"` or `"intention": "Seller"` property matching their actual intention.
-Files with missing or invalid intentions cannot be loaded. Do not save new changes over an unmigrated file.
+Files with missing or invalid intentions cannot be loaded. RESIDEX will show an error and close until the file is fixed.
 Saved files containing duplicate name-and-phone pairs under the rule above also cannot be loaded.
 Back up the file and resolve these duplicates before opening it with this version.
 
@@ -288,9 +288,17 @@ RESIDEX data is saved automatically as a JSON file `[JAR file location]/data/add
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, RESIDEX starts with an empty client list at the next run. The invalid file remains on disk until you run a command (RESIDEX saves after every command). Still, we recommend backing up the file before editing it.<br>
+If your changes make the data file invalid, RESIDEX shows an error with the file's location and closes without changing the client data file. Back up the file before editing it.<br>
 Furthermore, certain edits can cause RESIDEX to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
+
+### Recovering from a data loading error
+
+If RESIDEX cannot load an existing client data file, it shows an error and closes. Commands and automatic saving are unavailable, so the failed file cannot be overwritten by an empty client list.
+
+1. Locate the file using the path shown in the error dialog and make a backup copy.
+2. Repair the invalid data or replace the file with a valid backup, then restart RESIDEX.
+3. If you want to start fresh instead, move or rename the failed file before restarting. RESIDEX will start with sample clients, as it does when no data file exists. Keep the original file if you want to recover its contents later.
 
 ### Archiving data files `[coming in v2.0]`
 

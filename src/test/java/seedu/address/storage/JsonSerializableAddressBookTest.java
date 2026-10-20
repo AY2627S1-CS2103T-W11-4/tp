@@ -6,6 +6,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,14 @@ public class JsonSerializableAddressBookTest {
 
         assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_DUPLICATE_PERSON,
                 data::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullPerson_reportsPosition() {
+        JsonSerializableAddressBook data = new JsonSerializableAddressBook(
+                Arrays.asList(new JsonAdaptedPerson(ALICE), null));
+
+        assertThrows(IllegalValueException.class, "Client 2 is missing!", data::toModelType);
     }
 
 }

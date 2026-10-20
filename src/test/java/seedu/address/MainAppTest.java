@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
@@ -16,12 +16,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.PersonBuilder;
 
 public class MainAppTest {
     @TempDir
@@ -61,15 +63,80 @@ public class MainAppTest {
     }
 
     @Test
-    public void init_corruptData_startsEmptyWithoutOverwritingFile() throws Exception {
-        String invalidData = "invalid JSON";
-        Files.writeString(dataPath(), invalidData);
-        MainApp app = createApp();
+    public void init_corruptData_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("invalid JSON");
+    }
 
+    @Test
+    public void init_nullData_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("null");
+    }
+
+    @Test
+    public void init_nullClient_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("{\"persons\": [null]}");
+    }
+
+    @Test
+    public void init_invalidClient_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile(Files.readString(Path.of("src", "test", "data",
+                "JsonAddressBookStorageTest", "invalidPersonAddressBook.json")));
+    }
+
+    @Test
+    public void init_invalidProperty_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("""
+                {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                  "intention": "Buyer", "properties": [
+                    {"type": "HDB", "intention": "Buyer", "location": "Clementi", "price": "0"}
+                  ]}]}
+                """);
+    }
+
+    @Test
+    public void init_restoredData_loadsClientsAndAllowsSaving() throws Exception {
+        assertLoadFailurePreservesFile("invalid JSON");
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        MainApp app = createApp();
+        app.init();
+        assertEquals(getTypicalAddressBook(), app.model.getAddressBook());
+
+        app.logic.execute("delete 1");
+
+        AddressBook expected = getTypicalAddressBook();
+        expected.removePerson(expected.getPersonList().get(0));
+        assertEquals(expected, new JsonAddressBookStorage(dataPath()).readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void init_fileMovedAside_usesSampleClientsAndPreservesOriginal() throws Exception {
+        String invalidData = "invalid JSON";
+        assertLoadFailurePreservesFile(invalidData);
+        Path backup = temporaryFolder.resolve("addressbook.invalid.json");
+        Files.move(dataPath(), backup);
+        MainApp app = createApp();
         app.init();
 
-        assertTrue(app.model.getAddressBook().getPersonList().isEmpty());
-        assertEquals(invalidData, Files.readString(dataPath()));
+        app.logic.execute("list");
+
+        assertEquals(SampleDataUtil.getSampleAddressBook(), app.model.getAddressBook());
+        assertEquals(SampleDataUtil.getSampleAddressBook(),
+                new JsonAddressBookStorage(dataPath()).readAddressBook().orElseThrow());
+        assertEquals(invalidData, Files.readString(backup));
+    }
+
+    @Test
+    public void init_validEmptyFile_allowsAddingClients() throws Exception {
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(new AddressBook());
+        MainApp app = createApp();
+        app.init();
+
+        app.logic.execute("add n/Alice p/91234567 e/alice@example.com i/Buyer");
+
+        AddressBook expected = new AddressBook();
+        expected.addPerson(new PersonBuilder().withName("Alice").withPhone("91234567")
+                .withEmail("alice@example.com").build());
+        assertEquals(expected, new JsonAddressBookStorage(dataPath()).readAddressBook().orElseThrow());
     }
 
     @Test
@@ -143,6 +210,19 @@ public class MainAppTest {
 
     private MainApp createApp() {
         return new MainApp(prefsPath(), dataPath());
+    }
+
+    private void assertLoadFailurePreservesFile(String invalidData) throws Exception {
+        Files.writeString(dataPath(), invalidData);
+        MainApp app = createApp();
+
+        app.init();
+
+        assertNull(app.model, "Failed loading must not create an empty replacement model");
+        assertNull(app.logic, "Commands must not be available after failed loading");
+        assertNotNull(app.ui, "Startup must provide an error UI");
+        assertDoesNotThrow(app::stop);
+        assertEquals(invalidData, Files.readString(dataPath()));
     }
 
     private Path prefsPath() {
