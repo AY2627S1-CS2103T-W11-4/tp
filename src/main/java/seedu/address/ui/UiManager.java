@@ -58,6 +58,18 @@ public class UiManager implements Ui {
         return new Image(MainApp.class.getResourceAsStream(imagePath));
     }
 
+    /**
+     * Shows recovery instructions when client data cannot be loaded, before the main window is created.
+     */
+    public static void showDataLoadingError(Path dataFilePath) {
+        String message = "Unable to load client data from:\n" + dataFilePath.toAbsolutePath().normalize()
+                + "\n\nYour client data file has not been changed. RESIDEX will close to prevent overwriting it."
+                + "\n\nBack up this file, then repair it or replace it with a valid backup and restart RESIDEX."
+                + "\n\nTo start fresh with sample clients, move the file aside before restarting.";
+        showAlertDialogAndWait(null, AlertType.ERROR, "Unable to load client data",
+                "RESIDEX could not open your client data", message);
+    }
+
     void showAlertDialogAndWait(Alert.AlertType type, String title, String headerText, String contentText) {
         showAlertDialogAndWait(mainWindow.getPrimaryStage(), type, title, headerText, contentText);
     }
