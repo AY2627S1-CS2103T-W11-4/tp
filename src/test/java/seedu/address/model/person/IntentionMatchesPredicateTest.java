@@ -49,6 +49,26 @@ public class IntentionMatchesPredicateTest {
     }
 
     @Test
+    public void test_buyerAndSeller_includeMixedRolesButExcludeUnspecified() {
+        Person mixed = new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
+        Person unspecified = new PersonBuilder().build();
+        for (ClientIntention intention : List.of(ClientIntention.BUYER, ClientIntention.SELLER)) {
+            IntentionMatchesPredicate predicate = new IntentionMatchesPredicate(intention);
+            assertTrue(predicate.test(mixed));
+            assertFalse(predicate.test(unspecified));
+        }
+    }
+
+    @Test
+    public void test_both_matchesOnlyMixedRoles() {
+        IntentionMatchesPredicate predicate = new IntentionMatchesPredicate(ClientIntention.BOTH);
+        assertTrue(predicate.test(new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build()));
+        assertFalse(predicate.test(new PersonBuilder().withProperties(CLEMENTI_HDB).build()));
+        assertFalse(predicate.test(new PersonBuilder().withProperties(TAMPINES_CONDO).build()));
+        assertFalse(predicate.test(new PersonBuilder().build()));
+    }
+
+    @Test
     public void test_keywordInOtherFields_returnsFalse() {
         IntentionMatchesPredicate predicate = new IntentionMatchesPredicate(ClientIntention.BUYER);
         Person seller = new PersonBuilder().withProperties(TAMPINES_CONDO).withName("Buyer")

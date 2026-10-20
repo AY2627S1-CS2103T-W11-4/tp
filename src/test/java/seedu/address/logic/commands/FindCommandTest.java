@@ -183,6 +183,7 @@ public class FindCommandTest {
         expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
         assertIntentionFindSuccess("find i/buyer", ClientIntention.BUYER, List.of());
         assertIntentionFindSuccess("find i/seller", ClientIntention.SELLER, List.of());
+        assertIntentionFindSuccess("find i/both", ClientIntention.BOTH, List.of());
     }
 
     @Test

@@ -161,6 +161,10 @@ public class FindCommandParserTest {
                 assertParseSuccess(parser, selector + keyword,
                         new FindCommand(new IntentionMatchesPredicate(ClientIntention.SELLER)));
             }
+            for (String keyword : List.of("both", "Both", "BOTH", "bOtH")) {
+                assertParseSuccess(parser, selector + keyword,
+                        new FindCommand(new IntentionMatchesPredicate(ClientIntention.BOTH)));
+            }
         }
         assertParseSuccess(parser, " \n i/\t buyer \n ",
                 new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)));
@@ -178,7 +182,8 @@ public class FindCommandParserTest {
     @Test
     public void parse_invalidIntention_throwsParseException() {
         for (String selector : List.of("i/", "I/")) {
-            for (String keyword : List.of("tenant", "buy", "sell", "buyers", "sellers", "buyer,seller")) {
+            for (String keyword : List.of("tenant", "buy", "sell", "buyers", "sellers", "buyer,seller",
+                    "unspecified", "UNSPECIFIED")) {
                 assertParseFailure(parser, selector + keyword, FindCommand.MESSAGE_INVALID_INTENTION);
             }
         }
@@ -187,7 +192,8 @@ public class FindCommandParserTest {
     @Test
     public void parse_multipleIntentionValues_throwsParseException() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
-        for (String args : List.of("i/buyer seller", "I/buyer buyer", "i/seller extra")) {
+        for (String args : List.of("i/buyer seller", "I/buyer buyer", "i/seller extra", "i/both buyer",
+                "i/not specified")) {
             assertParseFailure(parser, args, expectedMessage);
         }
     }

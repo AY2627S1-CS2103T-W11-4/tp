@@ -104,17 +104,21 @@ final class HelpContent {
                     FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_PHONE + "KEYWORD [MORE_KEYWORDS]\n"
-                            + FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller",
+                            + FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller|both",
                     List.of("Choose exactly one short prefix: " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                                     + PREFIX_PHONE + " or " + PREFIX_INTENTION + ". Supply at least one keyword.",
                             "Prefixes and keywords are case-insensitive. Long property aliases are not supported.",
                             "Name, email and phone use substring matching. Any matching keyword returns a client.",
-                            "Intention requires exactly one complete value: buyer or seller.",
+                            "Intention requires one complete value: buyer, seller or both.",
+                            "Buyer and seller searches include Buyer / Seller clients, after exact-role matches.",
+                            "Both matches Buyer / Seller clients only. Not specified is not a search value.",
+                            "Other searches and list restore normal client order. Indexes follow the displayed list.",
                             "Each search checks all clients and replaces the previous filter. Use list to reset it."),
                     List.of(FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "alex david",
                             FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "gmail",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PHONE + "9123",
-                            FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer")),
+                            FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer",
+                            FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "both")),
             new CommandHelp(ListCommand.COMMAND_WORD, "Show all clients.", ListCommand.COMMAND_WORD,
                     List.of("No parameters are needed. This resets the current search filter."),
                     List.of(ListCommand.COMMAND_WORD)),

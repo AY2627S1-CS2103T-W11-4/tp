@@ -60,11 +60,12 @@ public interface Model {
      */
     void setPerson(Person target, Person editedPerson);
 
-    /** Returns an unmodifiable view of the filtered person list */
+    /** Returns the unmodifiable displayed person list used by the UI and displayed-index commands. */
     ObservableList<Person> getFilteredPersonList();
 
     /**
      * Updates the filter of the filtered person list to filter by the given {@code predicate}.
+     * Intention searches show exact-role matches first; other predicates restore source order.
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);

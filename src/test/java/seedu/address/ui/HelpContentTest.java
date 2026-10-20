@@ -117,7 +117,8 @@ public class HelpContentTest {
                 new FindCommand(new NameContainsKeywordsPredicate(List.of("alex", "david"))),
                 new FindCommand(new EmailContainsKeywordsPredicate(List.of("gmail"))),
                 new FindCommand(new PhoneContainsKeywordsPredicate(List.of("9123"))),
-                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)));
+                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)),
+                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BOTH)));
 
         assertEquals(expectedCommands.size(), examples.size());
         for (int i = 0; i < examples.size(); i++) {

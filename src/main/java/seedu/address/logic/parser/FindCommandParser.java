@@ -65,8 +65,9 @@ public class FindCommandParser implements Parser<FindCommand> {
             }
 
             String intentionKeyword = keywords.get(0);
-            for (ClientIntention intention : List.of(ClientIntention.BUYER, ClientIntention.SELLER)) {
-                if (intention.toString().equalsIgnoreCase(intentionKeyword)) {
+            for (ClientIntention intention : List.of(ClientIntention.BUYER, ClientIntention.SELLER,
+                    ClientIntention.BOTH)) {
+                if (intention.name().equalsIgnoreCase(intentionKeyword)) {
                     return new FindCommand(new IntentionMatchesPredicate(intention));
                 }
             }
