@@ -21,6 +21,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
@@ -33,6 +35,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Intention;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
@@ -71,6 +74,41 @@ public class JsonAddressBookStorageTest {
         for (Person person : loaded.getPersonList()) {
             assertEquals(List.of(), person.getProperties());
         }
+    }
+
+    @Test
+    public void readAndSaveAddressBook_mixedPropertyIntentions_migratesOnlyPropertyValues() throws Exception {
+        Path filePath = testFolder.resolve("mixedPropertyIntentions.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        Person expected = new PersonBuilder(ALICE).withIntention(Intention.SELLER).withBudget("900000")
+                .withRemark("Call next week")
+                .withProperties(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB, TAMPINES_CONDO).build();
+        List<JsonAdaptedProperty> properties = List.of(
+                new JsonAdaptedProperty("HDB", "Buyer", "Clementi Ave 3", "800000"),
+                new JsonAdaptedProperty("Condominium", "Seller", "Tampines", null),
+                new JsonAdaptedProperty("HDB", "Buying", "Clementi Ave 3", "800000"),
+                new JsonAdaptedProperty("Condominium", "Selling", "Tampines", null));
+        JsonAdaptedPerson person = new JsonAdaptedPerson(expected.getName().fullName, expected.getPhone().value,
+                expected.getEmail().value, "Seller", "Call next week", "900000", properties);
+        JsonUtil.saveJsonFile(new JsonSerializableAddressBook(List.of(person)), filePath);
+        String originalContents = Files.readString(filePath);
+
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+
+        assertEquals(List.of(expected), loaded.getPersonList());
+        assertEquals(originalContents, Files.readString(filePath));
+
+        storage.saveAddressBook(loaded);
+
+        JsonNode savedClient = JsonUtil.fromJsonString(Files.readString(filePath), JsonNode.class)
+                .get("persons").get(0);
+        assertEquals("Seller", savedClient.get("intention").asText());
+        assertEquals(4, savedClient.get("properties").size());
+        List<String> expectedIntentions = List.of("Buying", "Selling", "Buying", "Selling");
+        for (int i = 0; i < expectedIntentions.size(); i++) {
+            assertEquals(expectedIntentions.get(i), savedClient.get("properties").get(i).get("intention").asText());
+        }
+        assertEquals(loaded, new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow());
     }
 
     @Test
@@ -183,6 +221,10 @@ public class JsonAddressBookStorageTest {
             new JsonAdaptedProperty("flat", "Buyer", "Clementi", null),
             new JsonAdaptedProperty("HDB", null, "Clementi", null),
             new JsonAdaptedProperty("HDB", "Tenant", "Clementi", null),
+            new JsonAdaptedProperty("HDB", "Both", "Clementi", null),
+            new JsonAdaptedProperty("HDB", "", "Clementi", null),
+            new JsonAdaptedProperty("HDB", "buying", "Clementi", null),
+            new JsonAdaptedProperty("HDB", "Selling ", "Clementi", null),
             new JsonAdaptedProperty("HDB", "Buyer", null, null),
             new JsonAdaptedProperty("HDB", "Buyer", " ", null),
             new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0")};
