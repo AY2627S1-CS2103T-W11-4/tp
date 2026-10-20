@@ -170,6 +170,15 @@ New saves use `Buying` and `Selling` for properties; no manual conversion is nee
 Saved property values must use these exact spellings, including capitalisation, or the legacy `Buyer`/`Seller` spellings.
 The client's own saved intention remains `Buyer` or `Seller`.
 
+<box type="warning" seamless>
+
+**Returning to an older version:** Compatibility is one-way. Automatic saves, including those triggered by
+`list` or `help`, convert legacy property intentions to `Buying` and `Selling`.
+Older releases may reject the migrated file. Before upgrading, back up
+`[JAR file location]/data/addressbook.json` and retain that pre-upgrade backup if you may need to return to an older release.
+
+</box>
+
 ### Adding a property: `addp`
 
 Format: `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`
