@@ -43,6 +43,8 @@ final class HelpContent {
             "CLIENT_INDEX selects a displayed client; PROPERTY_INDEX selects a numbered property under that client.";
     private static final String PROPERTY_CASE_NOTE =
             "Command words, property prefixes, types and property intentions ignore case. Location text is preserved.";
+    private static final String PROPERTY_INTENTION_NOTE =
+            "Property i/ accepts Buying or Selling only. Buyer, Seller and Both are invalid property values.";
 
     private static final List<CommandHelp> COMMANDS = List.of(
             new CommandHelp(AddCommand.COMMAND_WORD, "Add a new client.",
@@ -73,9 +75,9 @@ final class HelpContent {
                             EditCommand.COMMAND_WORD + " 1 " + PREFIX_BUDGET + "900000")),
             new CommandHelp(AddPropertyCommand.COMMAND_WORD, "Add a property to a client.",
                     "addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]",
-                    List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE,
+                    List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE, PROPERTY_INTENTION_NOTE,
                             "Type, property intention and location are required. Price is optional.",
-                            "Types: HDB (h), Condominium (c), Landed (l). Property intentions: Buying or Selling.",
+                            "Types: HDB (h), Condominium (c), Landed (l).",
                             "Location must not be blank. Supply each field once, in any order.",
                             "pr/PRICE is a positive whole-dollar amount without commas, decimals or leading zeros.",
                             "Omit pr/ when adding an unknown price. It does not change the client's budget.",
@@ -92,14 +94,15 @@ final class HelpContent {
                     List.of("delp 1 2")),
             new CommandHelp(EditPropertyCommand.COMMAND_WORD, "Edit selected fields of a client's property.",
                     "editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]",
-                    List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE,
+                    List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE, PROPERTY_INTENTION_NOTE,
                             "Supply at least one field, once each. Omitted fields keep their current values.",
                             "Empty pr/ removes the price. Empty t/, i/ and l/ are rejected.",
                             "Property intention and price are separate from the client's intention and budget.",
                             "Invalid input keeps the original property. An identical edit reports no change.",
                             "The property keeps its position. The current client filter is kept.",
                             "Prefix-like words ending in / are reserved for fields; use t/, i/, l/ and pr/ only."),
-                    List.of("editp 1 2 l/Toa Payoh", "editp 1 2 t/Landed i/Selling pr/3200000", "editp 1 2 pr/")),
+                    List.of("editp 1 2 l/Toa Payoh", "editp 1 2 t/Landed i/Selling pr/3200000", "editp 1 2 pr/",
+                            "editp 1 2 i/Buying")),
             new CommandHelp(FindCommand.COMMAND_WORD, "Find clients by name, email, phone or intention.",
                     FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"

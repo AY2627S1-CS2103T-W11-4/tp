@@ -245,13 +245,18 @@ Each entry describes one client's interest in buying or selling a property.
 | Field | Type | Rules |
 | --- | --- | --- |
 | Type | `PropertyType` | Required: `HDB`, `CONDOMINIUM`, or `LANDED`. `parse` accepts full names and `h`, `c`, or `l`, ignoring case and surrounding whitespace. |
-| Intention | `Intention` | Required: `BUYER` or `SELLER`. This belongs to the property and is independent of the client's existing intention. `Intention.parse` accepts exactly `Buyer` or `Seller`. |
+| Intention | `PropertyIntention` | Required: `BUYING` or `SELLING`. `parse` accepts `Buying` or `Selling`, ignoring case and surrounding whitespace. Client-role values are invalid. |
 | Location | `PropertyLocation` | Required, nonblank text. Surrounding whitespace is removed; case and internal whitespace are preserved. |
 | Price | `PropertyPrice` | Optional. A supplied price must be a positive whole-dollar SGD amount up to `Long.MAX_VALUE`, without commas, decimals, leading zeros, or surrounding whitespace. |
 
 Use the three-argument `Property` constructor when the price is unknown, or pass `null` as the fourth argument.
 `getPrice()` returns `Optional.empty()` for an unknown price. Zero is invalid for a property price.
 The existing client budget remains a separate field with its existing validation.
+
+`PropertyIntention` describes an individual property's buying or selling action.
+It is separate from the client's `Intention.BUYER`/`Intention.SELLER` role.
+Each `Property` has exactly one non-null intention, enforced by its constructor and the two-value enum.
+Changing a property's intention does not change the client intention or how `find i/` matches that client.
 
 #### Ownership and indexes
 
@@ -273,7 +278,9 @@ identity as determined by `isSamePerson()`.
 `PropertyParserUtil` recognises `t/`, `i/`, `l/` and `pr/` case-insensitively without changing field values.
 Unknown and repeated fields are rejected, including repeated prefixes with different capitalisation.
 Whitespace-separated alphabetic words ending in `/` are reserved as prefixes and cannot be used as literal location text.
-Property type aliases and Buyer/Seller values ignore case in property commands; the underlying property intention enum remains unchanged.
+Property type aliases and Buying/Selling values ignore case in property commands.
+`PropertyParserUtil.parseIntention` delegates to `PropertyIntention.parse` and translates invalid values into
+`ParseException`. `Buyer`, `Seller`, `Both` and blank values are rejected; legacy values are accepted only by storage.
 
 `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]` requires a type, intention and nonblank location.
 The parser validates every field before constructing a complete `Property`; an omitted price is unknown.
@@ -295,7 +302,7 @@ The add-property command applies the immutable model update after validating the
 
 ```java
 Property property = new Property(
-        PropertyType.HDB, Intention.BUYER, new PropertyLocation("Clementi Ave 3"));
+        PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi Ave 3"));
 Person original = model.getFilteredPersonList().get(personIndex.getZeroBased());
 Person updated = original.withAddedProperty(property);
 model.setPerson(original, updated);
@@ -319,6 +326,13 @@ Each saved client has a `properties` array. `JsonAdaptedProperty` stores `type`,
 and `price` as a whole-dollar string or `null` when unknown. Property order and duplicate entries survive saving and
 loading. A missing `price` also loads as unknown.
 
+Property intentions are saved canonically as `Buying` or `Selling`.
+The adapter also accepts exact legacy `Buyer` and `Seller` values, mapping them to `BUYING` and `SELLING`.
+This compatibility rule stays in `JsonAdaptedProperty`; it does not broaden command syntax or change the client's
+separately saved `Buyer`/`Seller` field. Mixed old/new property values can be loaded in one file.
+Reading does not rewrite the file; saving writes all property intentions in the new canonical form.
+Unlike CLI input, saved intention values are case-sensitive and do not permit surrounding whitespace.
+
 `JsonAdaptedPerson` treats a missing or null `properties` field as an empty list, so valid v1.3 files load without
 migration. Null property entries, missing required fields, and invalid values are rejected with `IllegalValueException`;
 the error includes the property's one-based index. File loading reports these errors as `DataLoadingException`.
@@ -327,6 +341,9 @@ Invalid entries are not silently discarded.
 The regression tests cover field validation, case-insensitive parsing, price clearing, index changes, independent clients and preservation through client edits and remarks.
 Integration tests execute command strings through the real parser, model and JSON storage, checking unchanged data after rejected operations and persistence after valid operations.
 Old-file compatibility and property-list immutability are also covered.
+Storage tests assert canonical output, legacy read-save-read migration, mixed representations, and preserved order,
+duplicates and client fields. Invalid property intentions retain the indexed `IllegalValueException` error path;
+full-file reads fail without changing the input file.
 
 #### Property display
 
@@ -839,6 +856,7 @@ They are documented for future reference, without committing to their implementa
 * **Associated property**: A property linked to a client's profile, such as a property the client is interested in or is selling.
 * **Budget**: The amount of money a buyer is prepared to spend on a property.
 * **Buyer**: A client who wants to purchase a property.
+* **Buying**: A property intention describing a client's interest in purchasing that property.
 * **Buying status**: How close a client is to agreeing on a property.
 * **Client**: A buyer or seller whose details a property agent stores in RESIDEX.
 * **Client information history**: Previously recorded information or changes associated with a client, available for review.
@@ -853,11 +871,13 @@ They are documented for future reference, without committing to their implementa
 * **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 * **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
+* **Property intention**: The Buying or Selling action recorded for one property, independent of the client's Buyer or Seller role.
 * **Property listing**: A record containing information about a property available for sale or rent
 * **Property viewing**: An appointment for a client to inspect a property
 * **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
 * **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
+* **Selling**: A property intention describing a client's interest in selling that property.
 * **Transaction**: The process of completing a property sale or rental
 * **Viewing**: A scheduled visit to a property with a client.
 
@@ -965,12 +985,12 @@ Run these steps in order; client indexes below refer to the filtered list.
    1. Enter `add n/Property Test Client p/91009001 e/propertytest@example.com i/Buyer b/900000`, then `find p/91009001`.<br>
       Expected: Exactly one client is shown, with displayed index 1.
 
-   1. Enter `ADDP 1 T/h I/buyer L/Clementi Ave 3 PR/800000`.<br>
-      Expected: Property 1 appears under this client as HDB, Buyer, Clementi Ave 3, $800,000.
+   1. Enter `ADDP 1 T/h I/buying L/Clementi Ave 3 PR/800000`.<br>
+      Expected: Property 1 appears under this client as HDB, Buying, Clementi Ave 3, $800,000.
       The client filter remains active and the client's budget remains $900,000.
 
-   1. Enter `addp 1 t/c i/Seller l/Bishan`.<br>
-      Expected: Property 2 appears as Condominium, Seller, Bishan with no price.
+   1. Enter `addp 1 t/c i/Selling l/Bishan`.<br>
+      Expected: Property 2 appears as Condominium, Selling, Bishan with no price.
       The client's own intention remains Buyer.
 
 1. Editing and clearing price
@@ -981,16 +1001,26 @@ Run these steps in order; client indexes below refer to the filtered list.
    1. Enter `editp 1 2 pr/`.<br>
       Expected: Property 2's price is removed; all other fields remain unchanged.
 
+   1. Enter `editp 1 2 i/BUYING`, then `editp 1 2 i/sElLiNg`.<br>
+      Expected: Property 2 changes from Selling to Buying and back to Selling.
+      Its type, Toa Payoh location, unknown price and position remain unchanged.
+      Property 1 and the client's Buyer role and $900,000 budget are retained.
+
    1. Enter `editp 1 2 l/Toa Payoh`.<br>
       Expected: The feedback reports an unchanged property and the original entry is retained.
 
 1. Rejecting invalid requests
 
-   1. Try `editp 1 2 l/`, `editp 1 2 l/Bishan pr/1.5`, `editp 1 2 l/Bishan L/Tampines`, and `addp 1 t/HDB i/Buyer l/Bishan p/800000`.<br>
+   1. Try `addp 1 t/HDB i/Buyer l/Bishan`, `addp 1 t/HDB i/Both l/Bishan`,
+      `editp 1 2 i/Seller`, `editp 1 2 i/`, and `editp 1 2 i/Buying I/Selling`.<br>
+      Expected: Legacy client-role values, blank intentions and duplicate prefixes are rejected.
+      The client list, property entries, active filter and saved file remain unchanged.
+
+   1. Try `editp 1 2 l/`, `editp 1 2 l/Bishan pr/1.5`, `editp 1 2 l/Bishan L/Tampines`, and `addp 1 t/HDB i/Buying l/Bishan p/800000`.<br>
       Expected: Each command reports an input error; no property or saved data is changed.
       Price uses `pr/`, not `p/`.
 
-   1. Try `addp 2 t/HDB i/Buyer l/Bishan`, `editp 1 99 l/Bishan`, and `delp 1 0`.<br>
+   1. Try `addp 2 t/HDB i/Buying l/Bishan`, `editp 1 99 l/Bishan`, and `delp 1 0`.<br>
       Expected: Invalid client/property indexes are rejected without modifying any client or property.
 
 1. Deleting and saving
@@ -1000,8 +1030,26 @@ Run these steps in order; client indexes below refer to the filtered list.
       The client remains in the filtered list.
 
    1. Exit and relaunch the app, then enter `find p/91009001`.<br>
-      Expected: The single Condominium/Seller/Toa Payoh entry remains, without a price.
+      Expected: The single Condominium/Selling/Toa Payoh entry remains, without a price.
       The client's contact details, Buyer intention and $900,000 budget are retained.
+
+1. Loading legacy property intentions
+
+   1. Exit the app and back up its data file. In the remaining property's JSON object, change only
+      its `"intention": "Selling"` field to `"intention": "Seller"`, then relaunch.<br>
+      Expected: The property displays Selling with its other fields unchanged; the client remains Buyer.
+      Leave the client's own intention field unchanged.
+
+   1. After each legacy load, enter `list`, exit and inspect the saved file.<br>
+      Expected: The property's intention uses canonical Selling or Buying respectively.
+      Relaunch and verify that the same property details and client Buyer role are retained.
+      Repeat these two steps with legacy property `"intention": "Buyer"`; expect Buying on display and save.
+
+   1. Exit the app, back up the valid file, and change only the property's intention to `"Both"`.
+      Relaunch and inspect the load error and file before entering any commands.<br>
+      Expected: Loading fails through the normal data-loading error path and the read leaves the file unchanged.
+      Missing, blank or noncanonical property intentions such as `"buying"` must also fail.
+      Close the app without issuing commands and restore the valid backup before continuing.
 
 ### Recording a budget
 

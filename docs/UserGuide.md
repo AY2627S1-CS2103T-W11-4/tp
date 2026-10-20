@@ -97,16 +97,16 @@ If an add or edit would create a duplicate, the error identifies the existing cl
 The conflicting client may be outside the current search results.
 A rejected command leaves all client information unchanged.
 
-Intention is required and must be `Buyer` or `Seller` (case-sensitive). For example, use `i/Buyer`.
-Existing `edit` and `remark` commands preserve intention; changing it through `edit` is not supported yet.
+Client intention is required and must be `Buyer` or `Seller` (case-sensitive). For example, use `i/Buyer`.
+Existing `edit` and `remark` commands preserve client intention; changing it through `edit` is not supported yet.
 
 Budget is optional. It is a whole-dollar amount with no commas and no decimal point, such as `b/1500000`.
 The client card shows that amount on the right.
 $800,000 and below is red, above $800,000 up to $2,500,000 is yellow, and above $2,500,000 is green.
 A saved file that has no budget still opens.
 
-**Existing data:** Before using this version, back up `data/addressbook.json`. Each person needs an
-`"intention": "Buyer"` or `"intention": "Seller"` property matching their actual intention.
+**Existing data:** Before using this version, back up `data/addressbook.json`. Each client needs an
+`"intention": "Buyer"` or `"intention": "Seller"` field matching their actual intention.
 Files with missing or invalid intentions cannot be loaded. Do not save new changes over an unmigrated file.
 Saved files containing duplicate name-and-phone pairs under the rule above also cannot be loaded.
 Back up the file and resolve these duplicates before opening it with this version.
@@ -155,7 +155,8 @@ Property intentions and prices are independent of the client's intention and bud
 * Property fields can be supplied in any order, once each.
   Prefixes, property types and property intentions are case-insensitive.
 * Valid types are `HDB` (`h`), `Condominium` (`c`) and `Landed` (`l`).
-  Valid property intentions are `Buyer` and `Seller`.
+  Valid property intentions are `Buying` and `Selling`.
+  `Buyer`, `Seller` and `Both` are rejected in property commands.
 * Location is nonblank text, for example `Clementi Ave 3`.
   Surrounding whitespace is removed; capitalisation and internal spaces are preserved.
 * `pr/PRICE` is the property's price in whole Singapore dollars, separate from `b/BUDGET` on the client.
@@ -163,6 +164,11 @@ Property intentions and prices are independent of the client's intention and bud
   Use `pr/` rather than `p/` for property prices.
 * Whitespace-separated words ending in `/` are treated as field prefixes in property commands.
   Use only `t/`, `i/`, `l/` and `pr/`; do not include prefix-like text such as `MRT/Exit` in a location.
+
+**Existing property data:** Saved property intentions `Buyer` and `Seller` load automatically as `Buying` and `Selling`.
+New saves use `Buying` and `Selling` for properties; no manual conversion is needed.
+Saved property values must use these exact spellings, including capitalisation, or the legacy `Buyer`/`Seller` spellings.
+The client's own saved intention remains `Buyer` or `Seller`.
 
 ### Adding a property: `addp`
 
@@ -174,9 +180,9 @@ The new property is appended to the selected client's list.
 
 Examples:
 
-* `addp 1 t/HDB i/Buyer l/Clementi pr/800000` adds a property with an $800,000 price to the first displayed client.
-* `addp 1 t/c i/Seller l/Bishan` adds a condominium entry without a price to the same client.
-* `ADDP 1 T/l I/buyer L/Bukit Timah PR/3200000` adds a landed property using mixed-case syntax.
+* `addp 1 t/HDB i/Buying l/Clementi pr/800000` adds a property with an $800,000 price to the first displayed client.
+* `addp 1 t/c i/Selling l/Bishan` adds a condominium entry without a price to the same client.
+* `ADDP 1 T/l I/buying L/Bukit Timah PR/3200000` adds a landed property using mixed-case syntax.
 
 ### Deleting a property: `delp`
 
@@ -206,7 +212,8 @@ Format: `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [
 Examples:
 
 * `editp 1 2 l/Toa Payoh` changes only property 2's location for the first displayed client.
-* `editp 1 2 t/Landed i/Seller pr/3200000` changes its type, property intention and price together.
+* `editp 1 2 i/Buying` changes only its property intention, preserving its type, location, price and position.
+* `editp 1 2 t/Landed i/Selling pr/3200000` changes its type, property intention and price together.
 * `editp 1 2 pr/` removes its price while preserving its location and other fields.
 
 ### Locating persons by name, email, phone, or intention: `find`
@@ -319,7 +326,7 @@ Action     | Format, Examples
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer b/1500000`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`<br> e.g., `addp 1 t/HDB i/Buyer l/Clementi pr/800000`
+**Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]`<br> e.g., `editp 1 2 l/Toa Payoh`
 **Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find i/seller`
