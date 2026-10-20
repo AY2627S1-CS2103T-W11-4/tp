@@ -2,6 +2,9 @@ package seedu.address.logic.commands;
 
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.logging.Logger;
+
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -20,6 +23,7 @@ public class DeletePropertyCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1 2";
     public static final String MESSAGE_SUCCESS = "Deleted property %1$d from %2$s: %3$s";
 
+    private final Logger logger = LogsCenter.getLogger(DeletePropertyCommand.class);
     private final Index clientIndex;
     private final Index propertyIndex;
 
@@ -36,7 +40,12 @@ public class DeletePropertyCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         Person original = PropertyCommandUtil.getClient(model, clientIndex);
         Property removed = PropertyCommandUtil.getProperty(original, propertyIndex);
-        model.setPerson(original, original.withoutProperty(propertyIndex));
+        Person updated = original.withoutProperty(propertyIndex);
+        assert updated.getProperties().size() == original.getProperties().size() - 1
+                : "Deleting a property must decrease the property count by one";
+        model.setPerson(original, updated);
+        logger.fine("Deleted property " + propertyIndex.getOneBased()
+                + " from displayed client " + clientIndex.getOneBased());
         return new CommandResult(String.format(MESSAGE_SUCCESS, propertyIndex.getOneBased(),
                 original.getName(), removed.toDisplay()));
     }
