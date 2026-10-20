@@ -20,6 +20,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.testutil.PersonBuilder;
 
 public class PropertyCommandTest {
@@ -129,6 +130,29 @@ public class PropertyCommandTest {
         assertEquals(CLEMENTI_HDB.getType(), updated.getType());
         assertEquals(CLEMENTI_HDB.getLocation(), updated.getLocation());
         assertEquals(CLEMENTI_HDB.getPrice(), updated.getPrice());
+    }
+
+    @Test
+    public void execute_editExistingFields_preservesRecordedStatus() throws Exception {
+        for (PropertyStatus status : PropertyStatus.values()) {
+            Property recorded = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
+                    CLEMENTI_HDB.getLocation(), CLEMENTI_HDB.getPrice().orElseThrow(), status);
+            Model model = new ModelManager();
+            model.addPerson(new PersonBuilder(ALICE).withProperties(recorded).build());
+            EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+            descriptor.setLocation(new PropertyLocation("Bishan"));
+            descriptor.setPrice(null);
+
+            new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor).execute(model);
+
+            Property updated = model.getFilteredPersonList().get(0).getProperties().get(0);
+            assertEquals(status, updated.getStatus());
+            assertEquals("Bishan", updated.getLocation().value);
+            assertTrue(updated.getPrice().isEmpty());
+            assertEquals(CLEMENTI_HDB.getLocation(), recorded.getLocation());
+            assertEquals(CLEMENTI_HDB.getPrice(), recorded.getPrice());
+            assertEquals(status, recorded.getStatus());
+        }
     }
 
     @Test

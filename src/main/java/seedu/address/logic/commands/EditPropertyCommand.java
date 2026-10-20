@@ -130,7 +130,7 @@ public class EditPropertyCommand extends Command {
             return new Property(type == null ? original.getType() : type,
                     intention == null ? original.getIntention() : intention,
                     location == null ? original.getLocation() : location,
-                    priceEdited ? price : original.getPrice().orElse(null));
+                    priceEdited ? price : original.getPrice().orElse(null), original.getStatus());
         }
 
         @Override

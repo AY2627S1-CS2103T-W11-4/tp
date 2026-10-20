@@ -4,7 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
@@ -12,21 +16,55 @@ import seedu.address.model.person.Intention;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 
 public class JsonAdaptedPropertyTest {
 
     @Test
-    public void json_roundTrip_preservesAllTypesIntentionsAndOptionalPrices() throws Exception {
+    public void json_roundTrip_preservesAllTypesIntentionsPricesAndStatuses() throws Exception {
         for (PropertyType type : PropertyType.values()) {
             for (Intention intention : Intention.values()) {
                 for (String price : new String[]{null, "800000", Long.toString(Long.MAX_VALUE)}) {
-                    Property property = new Property(type, intention, new PropertyLocation("Clementi Ave 3"),
-                            price == null ? null : new PropertyPrice(price));
-                    String json = JsonUtil.toJsonString(new JsonAdaptedProperty(property));
-                    assertEquals(property, JsonUtil.fromJsonString(json, JsonAdaptedProperty.class).toModelType());
+                    for (PropertyStatus status : PropertyStatus.values()) {
+                        Property property = new Property(type, intention, new PropertyLocation("Clementi Ave 3"),
+                                price == null ? null : new PropertyPrice(price), status);
+                        String json = JsonUtil.toJsonString(new JsonAdaptedProperty(property));
+                        JsonNode saved = JsonUtil.fromJsonString(json, JsonNode.class);
+                        assertEquals(status.name(), saved.get("status").asText());
+                        assertEquals(property, JsonUtil.fromJsonString(json, JsonAdaptedProperty.class).toModelType());
+                    }
                 }
             }
+        }
+    }
+
+    @Test
+    public void json_missingOrNullStatus_defaultsToUnspecified() throws Exception {
+        for (String statusField : new String[]{"", ",\"status\":null"}) {
+            String json = "{\"type\":\"HDB\",\"intention\":\"Buyer\",\"location\":\"Clementi\"" + statusField + "}";
+            Property property = JsonUtil.fromJsonString(json, JsonAdaptedProperty.class).toModelType();
+            assertEquals(PropertyStatus.UNSPECIFIED, property.getStatus());
+        }
+        assertEquals(PropertyStatus.UNSPECIFIED,
+                new JsonAdaptedProperty("HDB", "Buyer", "Clementi", null).toModelType().getStatus());
+    }
+
+    @Test
+    public void toModelType_statusTokens_ignoreCaseAndWhitespace() throws Exception {
+        for (PropertyStatus status : PropertyStatus.values()) {
+            JsonAdaptedProperty property = new JsonAdaptedProperty("HDB", "Buyer", "Clementi", null,
+                    " " + status.name().toLowerCase(Locale.ROOT) + " ");
+            assertEquals(status, property.toModelType().getStatus());
+        }
+    }
+
+    @Test
+    public void toModelType_invalidStatus_throwsIllegalValueException() {
+        for (String status : new String[]{"", " ", "Not specified", "not-specified", "Cancelled", "Withdrawn",
+            "viewing completed", "s/viewing"}) {
+            JsonAdaptedProperty property = new JsonAdaptedProperty("HDB", "Buyer", "Clementi", null, status);
+            assertThrows(IllegalValueException.class, PropertyStatus.MESSAGE_CONSTRAINTS, property::toModelType);
         }
     }
 

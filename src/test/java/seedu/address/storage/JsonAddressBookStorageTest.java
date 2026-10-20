@@ -21,6 +21,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
@@ -34,6 +36,10 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyStatus;
+import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.PersonBuilder;
 
 public class JsonAddressBookStorageTest {
@@ -70,6 +76,56 @@ public class JsonAddressBookStorageTest {
         assertEquals(getTypicalAddressBook(), new AddressBook(loaded));
         for (Person person : loaded.getPersonList()) {
             assertEquals(List.of(), person.getProperties());
+        }
+    }
+
+    @Test
+    public void readAndSaveAddressBook_legacyProperty_defaultsStatusWithoutRewritingOnLoad() throws Exception {
+        Path filePath = testFolder.resolve("legacyProperty.json");
+        String legacyJson = "{\"persons\":[{\"name\":\"Alice\",\"phone\":\"91234567\","
+                + "\"email\":\"alice@example.com\",\"intention\":\"Buyer\",\"properties\":["
+                + "{\"type\":\"HDB\",\"intention\":\"Buyer\",\"location\":\"Clementi\"}]}]}";
+        Files.writeString(filePath, legacyJson);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+
+        Property property = loaded.getPersonList().get(0).getProperties().get(0);
+        assertEquals(PropertyStatus.UNSPECIFIED, property.getStatus());
+        assertEquals("Clementi", property.getLocation().value);
+        assertEquals(legacyJson, Files.readString(filePath));
+
+        storage.saveAddressBook(loaded);
+
+        JsonNode saved = JsonUtil.fromJsonString(Files.readString(filePath), JsonNode.class);
+        assertEquals("UNSPECIFIED", saved.get("persons").get(0).get("properties").get(0).get("status").asText());
+        assertEquals(loaded, storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void readAndSaveAddressBook_allStatuses_preservesPropertyAndClientOrder() throws Exception {
+        Path filePath = testFolder.resolve("allPropertyStatuses.json");
+        List<Property> properties = new ArrayList<>();
+        for (PropertyStatus status : PropertyStatus.values()) {
+            properties.add(new Property(PropertyType.HDB, CLEMENTI_HDB.getIntention(),
+                    new PropertyLocation("Clementi"), null, status));
+        }
+        Person first = new PersonBuilder(ALICE).withProperties(properties.toArray(Property[]::new)).build();
+        Person second = new PersonBuilder(HOON).withProperties(CLEMENTI_HDB).build();
+        AddressBook original = new AddressBook();
+        original.setPersons(List.of(first, second));
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        storage.saveAddressBook(original);
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+
+        assertEquals(original, loaded);
+        assertEquals(List.of(first, second), loaded.getPersonList());
+        assertEquals(properties, loaded.getPersonList().get(0).getProperties());
+        JsonNode saved = JsonUtil.fromJsonString(Files.readString(filePath), JsonNode.class);
+        JsonNode savedProperties = saved.get("persons").get(0).get("properties");
+        for (int i = 0; i < properties.size(); i++) {
+            assertEquals(properties.get(i).getStatus().name(), savedProperties.get(i).get("status").asText());
         }
     }
 
@@ -185,7 +241,10 @@ public class JsonAddressBookStorageTest {
             new JsonAdaptedProperty("HDB", "Tenant", "Clementi", null),
             new JsonAdaptedProperty("HDB", "Buyer", null, null),
             new JsonAdaptedProperty("HDB", "Buyer", " ", null),
-            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0")};
+            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0"),
+            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", null, ""),
+            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", null, "Cancelled"),
+            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", null, "not-specified")};
         for (JsonAdaptedProperty invalid : invalidProperties) {
             List<JsonAdaptedProperty> properties = new ArrayList<>(validProperties);
             properties.add(invalid);
