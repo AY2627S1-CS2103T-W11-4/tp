@@ -51,6 +51,7 @@ public class LocationContainsKeywordsPredicateTest {
         LocationContainsKeywordsPredicate predicate = new LocationContainsKeywordsPredicate(List.of("clementi"));
         assertTrue(predicate.equals(predicate));
         assertTrue(predicate.equals(new LocationContainsKeywordsPredicate(List.of("clementi"))));
+        assertTrue(predicate.equals(new LocationContainsKeywordsPredicate(List.of("", "ClEmEnTi", " ", "\t"))));
         assertFalse(predicate.equals(new LocationContainsKeywordsPredicate(List.of("woodlands"))));
         assertFalse(predicate.equals(new NameContainsKeywordsPredicate(List.of("clementi"))));
         assertFalse(predicate.equals(null));
@@ -58,9 +59,10 @@ public class LocationContainsKeywordsPredicateTest {
 
     @Test
     public void toStringMethod() {
-        List<String> keywords = List.of("clementi", "woodlands");
+        List<String> keywords = List.of("", "ClEmEnTi", " ", "WOODLANDS", "\t");
         LocationContainsKeywordsPredicate predicate = new LocationContainsKeywordsPredicate(keywords);
-        String expected = LocationContainsKeywordsPredicate.class.getCanonicalName() + "{keywords=" + keywords + "}";
+        String expected = LocationContainsKeywordsPredicate.class.getCanonicalName()
+                + "{keywords=[clementi, woodlands]}";
         assertEquals(expected, predicate.toString());
     }
 

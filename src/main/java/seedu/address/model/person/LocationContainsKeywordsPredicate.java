@@ -12,8 +12,14 @@ import seedu.address.commons.util.ToStringBuilder;
 public class LocationContainsKeywordsPredicate implements Predicate<Person> {
     private final List<String> keywords;
 
+    /**
+     * Creates a predicate, removing blank keywords and normalizing case once.
+     */
     public LocationContainsKeywordsPredicate(List<String> keywords) {
-        this.keywords = keywords;
+        this.keywords = keywords.stream()
+                .filter(keyword -> !keyword.isBlank())
+                .map(keyword -> keyword.toLowerCase(Locale.ROOT))
+                .toList();
     }
 
     @Override
@@ -21,8 +27,6 @@ public class LocationContainsKeywordsPredicate implements Predicate<Person> {
         return person.getProperties().stream()
                 .map(property -> property.getLocation().value.toLowerCase(Locale.ROOT))
                 .anyMatch(location -> keywords.stream()
-                        .filter(keyword -> !keyword.isBlank())
-                        .map(keyword -> keyword.toLowerCase(Locale.ROOT))
                         .anyMatch(location::contains));
     }
 
