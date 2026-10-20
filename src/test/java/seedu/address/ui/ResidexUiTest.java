@@ -162,7 +162,7 @@ public class ResidexUiTest {
                 assertFalse(properties.isVisible());
                 assertFalse(properties.isManaged());
 
-                command.setText("addp 1 t/HDB i/Buyer l/Clementi Ave 3 pr/800000");
+                command.setText("addp 1 t/HDB i/Buyer l/Clementi Ave 3 pr/800000 s/Viewing");
                 run.fire();
                 root.applyCss();
                 root.layout();
@@ -170,16 +170,16 @@ public class ResidexUiTest {
                 assertTrue(properties.isVisible());
                 assertTrue(properties.isManaged());
                 assertEquals(1, properties.getChildren().size());
-                assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000 | Not specified"),
+                assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000 | Viewing"),
                         propertyTexts(properties));
 
-                command.setText("editp 1 1 l/Bishan pr/");
+                command.setText("editp 1 1 l/Bishan pr/ s/Negotiating");
                 command.fireEvent(new ActionEvent());
                 root.applyCss();
                 root.layout();
                 properties = (VBox) root.lookup("#properties");
                 assertEquals(1, properties.getChildren().size());
-                assertEquals(List.of("1. HDB | Buyer | Bishan | Not specified"), propertyTexts(properties));
+                assertEquals(List.of("1. HDB | Buyer | Bishan | Negotiating"), propertyTexts(properties));
 
                 command.setText("delp 1 1");
                 run.fire();

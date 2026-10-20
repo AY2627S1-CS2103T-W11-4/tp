@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import seedu.address.model.person.Intention;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 
 public class PropertyCommandParserTest {
@@ -40,6 +42,45 @@ public class PropertyCommandParserTest {
                     new PropertyLocation("Bishan"));
             assertEquals(new AddPropertyCommand(Index.fromOneBased(2), expected),
                     parser.parseCommand("addp 2 t/" + alias + " i/buyer l/Bishan"));
+        }
+    }
+
+    @Test
+    public void parse_addStatus_acceptsEveryStageAndCase() throws Exception {
+        for (PropertyStatus status : PropertyStatus.values()) {
+            Property expected = new Property(PropertyType.HDB, Intention.BUYER,
+                    new PropertyLocation("Bishan"), null, status);
+            for (String value : List.of(status.name(), status.name().toLowerCase(Locale.ROOT))) {
+                assertEquals(new AddPropertyCommand(Index.fromOneBased(2), expected),
+                        parser.parseCommand("AdDp 2\tS/ " + value + " t/HDB i/buyer l/Bishan"));
+            }
+        }
+    }
+
+    @Test
+    public void parse_editStatusOnly_acceptsEveryStageAndCase() throws Exception {
+        for (PropertyStatus status : PropertyStatus.values()) {
+            EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+            descriptor.setStatus(status);
+            for (String value : List.of(status.name(), status.name().toLowerCase(Locale.ROOT))) {
+                assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), descriptor),
+                        parser.parseCommand("EdItP 1 2\tS/ " + value));
+            }
+        }
+        EditPropertyDescriptor mixedCase = new EditPropertyDescriptor();
+        mixedCase.setStatus(PropertyStatus.NEGOTIATING);
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), mixedCase),
+                parser.parseCommand("editp 1 2 s/nEgOtIaTiNg"));
+    }
+
+    @Test
+    public void parse_invalidStatuses_throwsParseExceptionWithConstraints() {
+        for (String status : List.of("", " ", "not-specified", "Not specified", "Cancelled", "Withdrawn",
+                "view", "viewing closing", "1")) {
+            assertThrows(ParseException.class, PropertyStatus.MESSAGE_CONSTRAINTS, () -> parser.parseCommand(
+                    "addp 1 t/HDB i/Buyer l/Clementi s/" + status));
+            assertThrows(ParseException.class, PropertyStatus.MESSAGE_CONSTRAINTS, () -> parser.parseCommand(
+                    "editp 1 1 s/" + status));
         }
     }
 
@@ -75,7 +116,7 @@ public class PropertyCommandParserTest {
     @Test
     public void parse_duplicateOrUnknownFields_throwsParseException() {
         for (String suffix : List.of("t/HDB T/c", "i/Buyer I/Seller", "l/A L/B", "pr/1 Pr/2", "p/900000",
-                "x/value", "price/100", "location/Bishan")) {
+                "s/Viewing S/Closing", "x/value", "price/100", "location/Bishan", "status/Viewing")) {
             assertThrows(ParseException.class, () -> parser.parseCommand("editp 1 1 " + suffix));
             assertThrows(ParseException.class, () -> parser.parseCommand(
                     "addp 1 t/HDB i/Buyer l/Clementi " + suffix));
@@ -97,8 +138,9 @@ public class PropertyCommandParserTest {
         descriptor.setIntention(Intention.SELLER);
         descriptor.setLocation(new PropertyLocation("Bishan"));
         descriptor.setPrice(new PropertyPrice("1500000"));
+        descriptor.setStatus(PropertyStatus.CLOSING);
         assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), descriptor),
-                parser.parseCommand("editp 1 2 pr/1500000 l/Bishan i/seller t/C"));
+                parser.parseCommand("editp 1 2 pr/1500000 l/Bishan i/seller t/C s/Closing"));
     }
 
     @Test
