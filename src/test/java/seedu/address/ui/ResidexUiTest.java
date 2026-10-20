@@ -43,7 +43,6 @@ import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -86,7 +85,7 @@ public class ResidexUiTest {
             Color[] colours = {Color.web("#e74c3c"), Color.web("#f1c40f"),
                 Color.web("#f1c40f"), Color.web("#2ecc71")};
             for (int i = 0; i < amounts.length; i++) {
-                Person person = new PersonBuilder().withIntention(Intention.BUYER).withBudget(amounts[i]).build();
+                Person person = new PersonBuilder().withProperties(CLEMENTI_HDB).withBudget(amounts[i]).build();
                 Region card = new PersonCard(person, i + 1).getRoot();
                 styleCard(card);
                 Label budget = label(card, "budget");
@@ -101,7 +100,7 @@ public class ResidexUiTest {
                 assertFalse(label(card, "remark").isManaged());
             }
 
-            Region seller = new PersonCard(new PersonBuilder().withIntention(Intention.SELLER)
+            Region seller = new PersonCard(new PersonBuilder().withProperties(TAMPINES_CONDO)
                     .withRemark("Call after 6 pm").build(), 1).getRoot();
             styleCard(seller);
             assertEquals("Intention: Seller", label(seller, "intention").getText());
@@ -122,6 +121,7 @@ public class ResidexUiTest {
             assertTrue(properties.isVisible());
             assertTrue(properties.isManaged());
             assertEquals(3, properties.getChildren().size());
+            assertEquals("Intention: Buyer / Seller", label(card, "intention").getText());
             assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000",
                     "2. Condominium | Seller | Tampines", "3. HDB | Buyer | Clementi Ave 3 | $800,000"),
                     propertyTexts(properties));
@@ -155,6 +155,7 @@ public class ResidexUiTest {
                 assertTrue(properties.getChildren().isEmpty());
                 assertFalse(properties.isVisible());
                 assertFalse(properties.isManaged());
+                assertEquals("Intention: Not specified", label(root, "intention").getText());
 
                 command.setText("addp 1 t/HDB i/Buyer l/Clementi Ave 3 pr/800000");
                 run.fire();
@@ -164,6 +165,7 @@ public class ResidexUiTest {
                 assertTrue(properties.isVisible());
                 assertTrue(properties.isManaged());
                 assertEquals(1, properties.getChildren().size());
+                assertEquals("Intention: Buyer", label(root, "intention").getText());
                 assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000"), propertyTexts(properties));
 
                 command.setText("editp 1 1 l/Bishan pr/");
@@ -172,6 +174,7 @@ public class ResidexUiTest {
                 root.layout();
                 properties = (VBox) root.lookup("#properties");
                 assertEquals(1, properties.getChildren().size());
+                assertEquals("Intention: Buyer", label(root, "intention").getText());
                 assertEquals(List.of("1. HDB | Buyer | Bishan"), propertyTexts(properties));
 
                 command.setText("delp 1 1");
@@ -182,6 +185,7 @@ public class ResidexUiTest {
                 assertTrue(properties.getChildren().isEmpty());
                 assertFalse(properties.isVisible());
                 assertFalse(properties.isManaged());
+                assertEquals("Intention: Not specified", label(root, "intention").getText());
                 assertTrue(model.getFilteredPersonList().get(0).getProperties().isEmpty());
             } finally {
                 window.getPrimaryStage().close();
@@ -194,7 +198,7 @@ public class ResidexUiTest {
         runOnFxThread(() -> {
             Model model = new ModelManager();
             model.addPerson(new PersonBuilder().withName("Alice Pauline").withBudget("750000").build());
-            model.addPerson(new PersonBuilder().withName("Bob Choo").withIntention(Intention.SELLER).build());
+            model.addPerson(new PersonBuilder().withName("Bob Choo").withProperties(TAMPINES_CONDO).build());
             MainWindow window = createWindow(model);
             Region root = layoutWindow(window, 1100, 900);
             TextField command = (TextField) root.lookup("#commandTextField");
@@ -227,7 +231,7 @@ public class ResidexUiTest {
             assertEquals("1 of 1 clients", label(root, "clientCount").getText());
             assertEquals("All clients", label(root, "clientListHeading").getText());
 
-            command.setText("add n/Carol p/91234567 e/carol@example.com i/Buyer b/900000");
+            command.setText("add n/Carol p/91234567 e/carol@example.com b/900000");
             run.fire();
             assertEquals("2 of 2 clients", label(root, "clientCount").getText());
             command.setText("invalidcommand");
@@ -256,7 +260,7 @@ public class ResidexUiTest {
             for (int i = 0; i < names.length; i++) {
                 model.addPerson(new PersonBuilder().withName(names[i]).withPhone(phones[i])
                         .withEmail(emails[i] + "@example.com")
-                        .withIntention(i % 2 == 0 ? Intention.BUYER : Intention.SELLER)
+                        .withProperties(i % 2 == 0 ? CLEMENTI_HDB : TAMPINES_CONDO)
                         .withBudget(budgets[i]).build());
             }
             MainWindow window = createWindow(model);

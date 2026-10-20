@@ -9,8 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
@@ -155,15 +155,15 @@ public class FindCommandParserTest {
         for (String selector : List.of("i/", "I/")) {
             for (String keyword : List.of("buyer", "Buyer", "BUYER", "bUyEr")) {
                 assertParseSuccess(parser, selector + keyword,
-                        new FindCommand(new IntentionMatchesPredicate(Intention.BUYER)));
+                        new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)));
             }
             for (String keyword : List.of("seller", "Seller", "SELLER", "sElLeR")) {
                 assertParseSuccess(parser, selector + keyword,
-                        new FindCommand(new IntentionMatchesPredicate(Intention.SELLER)));
+                        new FindCommand(new IntentionMatchesPredicate(ClientIntention.SELLER)));
             }
         }
         assertParseSuccess(parser, " \n i/\t buyer \n ",
-                new FindCommand(new IntentionMatchesPredicate(Intention.BUYER)));
+                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)));
     }
 
     @Test

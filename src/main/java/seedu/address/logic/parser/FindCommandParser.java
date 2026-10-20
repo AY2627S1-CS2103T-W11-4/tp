@@ -10,8 +10,8 @@ import java.util.List;
 
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
@@ -65,7 +65,7 @@ public class FindCommandParser implements Parser<FindCommand> {
             }
 
             String intentionKeyword = keywords.get(0);
-            for (Intention intention : Intention.values()) {
+            for (ClientIntention intention : List.of(ClientIntention.BUYER, ClientIntention.SELLER)) {
                 if (intention.toString().equalsIgnoreCase(intentionKeyword)) {
                     return new FindCommand(new IntentionMatchesPredicate(intention));
                 }

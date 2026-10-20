@@ -4,8 +4,6 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.commands.CommandTestUtil.BUDGET_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_BOB;
-import static seedu.address.logic.commands.CommandTestUtil.INTENTION_DESC_BUYER;
-import static seedu.address.logic.commands.CommandTestUtil.INTENTION_DESC_SELLER;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_BUDGET_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_EMAIL_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_NAME_DESC;
@@ -22,7 +20,6 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_BUDGET;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -36,7 +33,6 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
@@ -51,13 +47,12 @@ public class AddCommandParserTest {
 
         // whitespace only preamble
         assertParseSuccess(parser, PREAMBLE_WHITESPACE + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER + BUDGET_DESC_BOB, new AddCommand(expectedPerson));
+                + BUDGET_DESC_BOB, new AddCommand(expectedPerson));
     }
 
     @Test
     public void parse_repeatedValue_failure() {
-        String validExpectedPersonString = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER;
+        String validExpectedPersonString = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB;
 
         // multiple names
         assertParseFailure(parser, NAME_DESC_AMY + validExpectedPersonString,
@@ -75,8 +70,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser,
                 validExpectedPersonString + PHONE_DESC_AMY + EMAIL_DESC_AMY + NAME_DESC_AMY
                         + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME, PREFIX_EMAIL, PREFIX_PHONE,
-                        PREFIX_INTENTION));
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME, PREFIX_EMAIL, PREFIX_PHONE));
 
         // invalid value followed by valid value
 
@@ -108,56 +102,41 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_seller_success() {
-        Person expectedPerson = new PersonBuilder(AMY).withIntention(Intention.SELLER).build();
-        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
-                + INTENTION_DESC_SELLER, new AddCommand(expectedPerson));
+    public void parse_withoutIntention_success() {
+        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY,
+                new AddCommand(new PersonBuilder(AMY).build()));
     }
 
     @Test
-    public void parse_missingIntention_failure() {
-        assertParseFailure(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
-    }
-
-    @Test
-    public void parse_invalidIntention_failure() {
-        String personDetails = NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY;
-        for (String value : new String[] {"", "buyer", "SELLER", "Tenant", "Buyer Seller"}) {
-            assertParseFailure(parser, personDetails + " i/" + value, Intention.MESSAGE_CONSTRAINTS);
+    public void parse_clientIntention_failure() {
+        String details = NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY;
+        for (String value : new String[]{"Buyer", "Seller", "Both", "", "buyer", "invalid"}) {
+            for (String prefix : new String[]{" i/", " I/", "\ti/"}) {
+                assertParseFailure(parser, details + prefix + value, Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
+                assertParseFailure(parser, prefix + value + details, Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
+            }
+            assertParseFailure(parser, NAME_DESC_AMY + " i/" + value + PHONE_DESC_AMY + EMAIL_DESC_AMY,
+                    Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
         }
-    }
-
-    @Test
-    public void parse_repeatedIntention_failure() {
-        String personDetails = NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY;
-        assertParseFailure(parser, personDetails + INTENTION_DESC_BUYER + INTENTION_DESC_SELLER,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_INTENTION));
-        assertParseFailure(parser, personDetails + INTENTION_DESC_BUYER + INTENTION_DESC_BUYER,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_INTENTION));
-        assertParseFailure(parser, personDetails + " i/invalid" + INTENTION_DESC_BUYER,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_INTENTION));
+        assertParseFailure(parser, details + " i/Buyer i/Seller", Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
     }
 
     @Test
     public void parse_optionalBudget_success() {
         Person expectedPerson = new PersonBuilder(AMY).withBudget(VALID_BUDGET_BOB).build();
-        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
-                + INTENTION_DESC_BUYER + BUDGET_DESC_BOB,
+        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY + BUDGET_DESC_BOB,
                 new AddCommand(expectedPerson));
     }
 
     @Test
     public void parse_invalidBudget_failure() {
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER + INVALID_BUDGET_DESC,
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + INVALID_BUDGET_DESC,
                 Budget.MESSAGE_CONSTRAINTS);
     }
 
     @Test
     public void parse_repeatedBudget_failure() {
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER + BUDGET_DESC_BOB + BUDGET_DESC_BOB,
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + BUDGET_DESC_BOB + BUDGET_DESC_BOB,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_BUDGET));
     }
 
@@ -165,8 +144,7 @@ public class AddCommandParserTest {
     public void parse_optionalFieldsMissing_success() {
         // no budget
         Person expectedPerson = new PersonBuilder(AMY).build();
-        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
-                + INTENTION_DESC_BUYER,
+        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY,
                 new AddCommand(expectedPerson));
     }
 
@@ -175,18 +153,15 @@ public class AddCommandParserTest {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
 
         // missing name prefix
-        assertParseFailure(parser, VALID_NAME_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER,
+        assertParseFailure(parser, VALID_NAME_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB,
                 expectedMessage);
 
         // missing phone prefix
-        assertParseFailure(parser, NAME_DESC_BOB + VALID_PHONE_BOB + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER,
+        assertParseFailure(parser, NAME_DESC_BOB + VALID_PHONE_BOB + EMAIL_DESC_BOB,
                 expectedMessage);
 
         // missing email prefix
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_EMAIL_BOB
-                + INTENTION_DESC_BUYER,
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_EMAIL_BOB,
                 expectedMessage);
 
         // all prefixes missing
@@ -197,36 +172,30 @@ public class AddCommandParserTest {
     @Test
     public void parse_invalidValue_failure() {
         // invalid name
-        assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER, Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB, Name.MESSAGE_CONSTRAINTS);
 
         // invalid phone
-        assertParseFailure(parser, NAME_DESC_BOB + INVALID_PHONE_DESC + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER, Phone.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, NAME_DESC_BOB + INVALID_PHONE_DESC + EMAIL_DESC_BOB, Phone.MESSAGE_CONSTRAINTS);
 
         // invalid email
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + INVALID_EMAIL_DESC
-                + INTENTION_DESC_BUYER, Email.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + INVALID_EMAIL_DESC, Email.MESSAGE_CONSTRAINTS);
 
         // two invalid values, only first invalid value reported
-        assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + INVALID_EMAIL_DESC
-                + INTENTION_DESC_BUYER,
+        assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + INVALID_EMAIL_DESC,
                 Name.MESSAGE_CONSTRAINTS);
 
         // non-empty preamble
-        assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER,
+        assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
     }
 
     @Test
     public void parse_tagArguments_failure() {
-        String personDetails = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + INTENTION_DESC_BUYER;
+        String personDetails = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB;
         for (String tags : new String[] {" t/friends", " t/clients", " t/", " t/friends t/clients", " t/#invalid"}) {
             assertParseFailure(parser, tags + personDetails, Messages.MESSAGE_TAGS_NOT_SUPPORTED);
-            assertParseFailure(parser, NAME_DESC_BOB + tags + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                    + INTENTION_DESC_BUYER, Messages.MESSAGE_TAGS_NOT_SUPPORTED);
+            assertParseFailure(parser, NAME_DESC_BOB + tags + PHONE_DESC_BOB + EMAIL_DESC_BOB,
+                    Messages.MESSAGE_TAGS_NOT_SUPPORTED);
             assertParseFailure(parser, personDetails + tags, Messages.MESSAGE_TAGS_NOT_SUPPORTED);
         }
     }

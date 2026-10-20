@@ -18,6 +18,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Intention;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
@@ -45,8 +46,8 @@ public class PropertyCommandsIntegrationTest {
         storage = new JsonAddressBookStorage(temporaryFolder.resolve("clients.json"));
         logic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
-        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer b/900000");
-        logic.execute("add n/Ben Ong p/92345678 e/ben@example.com i/Seller");
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com b/900000");
+        logic.execute("add n/Ben Ong p/92345678 e/ben@example.com");
     }
 
     @Test
@@ -86,7 +87,7 @@ public class PropertyCommandsIntegrationTest {
 
         assertEquals(new Property(PropertyType.CONDOMINIUM, Intention.SELLER,
                 new PropertyLocation("Bishan"), new PropertyPrice("1500000")), client(0).getProperties().get(0));
-        assertEquals(Intention.BUYER, client(0).getIntention());
+        assertEquals(ClientIntention.SELLER, client(0).getIntention());
         assertEquals("900000", client(0).getBudget().orElseThrow().toString());
         assertSaved();
     }
@@ -204,6 +205,36 @@ public class PropertyCommandsIntegrationTest {
 
         assertEquals(properties, client(0).getProperties());
         assertSaved();
+    }
+
+    @Test
+    public void execute_propertyChanges_automaticallyDeriveClientRole() throws Exception {
+        assertEquals(ClientIntention.UNSPECIFIED, client(0).getIntention());
+        logic.execute("addp 1 t/HDB i/Buyer l/Clementi");
+        assertEquals(ClientIntention.BUYER, client(0).getIntention());
+        logic.execute("addp 1 t/Condominium i/Seller l/Bishan");
+        assertEquals(ClientIntention.BOTH, client(0).getIntention());
+        assertSaved();
+
+        logic.execute("editp 1 1 i/Seller");
+        assertEquals(ClientIntention.SELLER, client(0).getIntention());
+        logic.execute("editp 1 1 i/Buyer");
+        logic.execute("delp 1 2");
+        assertEquals(ClientIntention.BUYER, client(0).getIntention());
+        logic.execute("delp 1 1");
+        assertEquals(ClientIntention.UNSPECIFIED, client(0).getIntention());
+        assertSaved();
+    }
+
+    @Test
+    public void execute_manualClientIntention_preservesModelFilterAndSavedData() throws Exception {
+        logic.execute("find n/Alice");
+        for (String value : List.of("Buyer", "Seller", "Both", "", "invalid")) {
+            assertRejectedWithoutChanges("add n/Rejected p/90000001 e/rejected@example.com i/" + value,
+                    ParseException.class);
+            assertRejectedWithoutChanges("edit 1 i/" + value, ParseException.class);
+            assertRejectedWithoutChanges("edit 1 n/Changed i/" + value, ParseException.class);
+        }
     }
 
     private Person client(int index) {

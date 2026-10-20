@@ -47,24 +47,24 @@ final class HelpContent {
     private static final List<CommandHelp> COMMANDS = List.of(
             new CommandHelp(AddCommand.COMMAND_WORD, "Add a new client.",
                     AddCommand.COMMAND_WORD + " " + PREFIX_NAME + "NAME " + PREFIX_PHONE + "PHONE_NUMBER "
-                            + PREFIX_EMAIL + "EMAIL " + PREFIX_INTENTION + "INTENTION [" + PREFIX_BUDGET + "BUDGET]",
-                    List.of("Name, phone, email and intention are required. Budget is optional.",
+                            + PREFIX_EMAIL + "EMAIL [" + PREFIX_BUDGET + "BUDGET]",
+                    List.of("Name, phone and email are required. Budget is optional.",
                             NAME_NOTE, PHONE_NOTE, EMAIL_NOTE,
-                            PREFIX_INTENTION + "INTENTION: use Buyer or Seller (case-sensitive).",
+                            "Client intention is derived from properties; add and edit reject i/.",
                             BUDGET_NOTE, "Supply each field once, in any order.",
                             "A client with the same name and phone number cannot be added again.",
                             NAME_MATCHING_NOTE, DUPLICATE_NOTE),
                     List.of(AddCommand.COMMAND_WORD + " " + PREFIX_NAME + "John Doe " + PREFIX_PHONE + "98765432 "
-                                    + PREFIX_EMAIL + "john@example.com " + PREFIX_INTENTION + "Buyer "
+                                    + PREFIX_EMAIL + "john@example.com "
                                     + PREFIX_BUDGET + "1500000",
                             AddCommand.COMMAND_WORD + " " + PREFIX_NAME + "Jane Lee " + PREFIX_PHONE + "91234567 "
-                                    + PREFIX_EMAIL + "jane@example.com " + PREFIX_INTENTION + "Seller")),
+                                    + PREFIX_EMAIL + "jane@example.com")),
             new CommandHelp(EditCommand.COMMAND_WORD, "Update an existing client's contact details or budget.",
                     EditCommand.COMMAND_WORD + " INDEX [" + PREFIX_NAME + "NAME] [" + PREFIX_PHONE + "PHONE_NUMBER] ["
                             + PREFIX_EMAIL + "EMAIL] [" + PREFIX_BUDGET + "BUDGET]",
                     List.of(INDEX_NOTE, "Supply at least one field. Each supplied field replaces its current value.",
                             NAME_NOTE, PHONE_NOTE, EMAIL_NOTE, BUDGET_NOTE,
-                            "Omitted fields are kept. Intention, remark and properties are unchanged.",
+                            "Omitted fields are kept. Remark and properties are unchanged.",
                             "The updated name and phone number must not duplicate another client.",
                             NAME_MATCHING_NOTE, DUPLICATE_NOTE,
                             "Supply each field once, in any order."),
@@ -95,7 +95,7 @@ final class HelpContent {
                     List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE,
                             "Supply at least one field, once each. Omitted fields keep their current values.",
                             "Empty pr/ removes the price. Empty t/, i/ and l/ are rejected.",
-                            "Property intention and price are separate from the client's intention and budget.",
+                            "Property intentions determine the client role. Price is separate from client budget.",
                             "Invalid input keeps the original property. An identical edit reports no change.",
                             "The property keeps its position. The current client filter is kept.",
                             "Prefix-like words ending in / are reserved for fields; use t/, i/, l/ and pr/ only."),

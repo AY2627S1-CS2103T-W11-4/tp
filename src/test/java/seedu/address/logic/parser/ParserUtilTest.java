@@ -7,9 +7,9 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Email;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 
@@ -25,23 +25,22 @@ public class ParserUtilTest {
     private static final String WHITESPACE = " \t\r\n";
 
     @Test
-    public void parseIntention_null_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> ParserUtil.parseIntention(null));
+    public void rejectClientIntention_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.rejectClientIntention(null));
     }
 
     @Test
-    public void parseIntention_validValues_returnsIntention() throws Exception {
-        assertEquals(Intention.BUYER, ParserUtil.parseIntention("Buyer"));
-        assertEquals(Intention.SELLER, ParserUtil.parseIntention("Seller"));
-        assertEquals(Intention.BUYER, ParserUtil.parseIntention(WHITESPACE + "Buyer" + WHITESPACE));
-        assertEquals(Intention.SELLER, ParserUtil.parseIntention(WHITESPACE + "Seller" + WHITESPACE));
+    public void rejectClientIntention_otherText_acceptsInput() throws Exception {
+        for (String value : new String[]{"", " n/Alice p/12345678", " e/ki/buyer@example.com"}) {
+            ParserUtil.rejectClientIntention(value);
+        }
     }
 
     @Test
-    public void parseIntention_invalidValues_throwsParseException() {
-        for (String value : new String[] {"", WHITESPACE, "buyer", "SELLER", "Tenant", "Buyer Seller"}) {
-            assertThrows(ParseException.class, Intention.MESSAGE_CONSTRAINTS, () ->
-                    ParserUtil.parseIntention(value));
+    public void rejectClientIntention_fieldPrefix_throwsParseException() {
+        for (String value : new String[]{"i/Buyer", " i/Seller", " I/Both", " n/Alice i/", "\ti/invalid"}) {
+            assertThrows(ParseException.class, Messages.MESSAGE_DERIVED_CLIENT_INTENTION, () ->
+                    ParserUtil.rejectClientIntention(value));
         }
     }
 

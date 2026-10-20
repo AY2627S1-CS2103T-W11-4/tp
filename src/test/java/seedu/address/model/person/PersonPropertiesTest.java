@@ -22,13 +22,13 @@ import seedu.address.testutil.PersonBuilder;
 
 public class PersonPropertiesTest {
 
-    private static final Person BASE_PERSON = new PersonBuilder(ALICE).withIntention(Intention.SELLER)
+    private static final Person BASE_PERSON = new PersonBuilder(ALICE)
             .withBudget("1500000").withRemark("Call next week").build();
 
     @Test
     public void constructor_noProperties_defaultsToEmptyList() {
         Person person = new Person(BASE_PERSON.getName(), BASE_PERSON.getPhone(), BASE_PERSON.getEmail(),
-                BASE_PERSON.getIntention(), BASE_PERSON.getRemark(), BASE_PERSON.getBudget().orElse(null));
+                BASE_PERSON.getRemark(), BASE_PERSON.getBudget().orElse(null));
         assertEquals(List.of(), person.getProperties());
         assertEquals(person, personWithProperties(List.of()));
         assertEquals(person.hashCode(), personWithProperties(List.of()).hashCode());
@@ -196,14 +196,13 @@ public class PersonPropertiesTest {
 
     private static Person personWithProperties(List<Property> properties) {
         return new Person(BASE_PERSON.getName(), BASE_PERSON.getPhone(), BASE_PERSON.getEmail(),
-                BASE_PERSON.getIntention(), BASE_PERSON.getRemark(), BASE_PERSON.getBudget().orElse(null), properties);
+                BASE_PERSON.getRemark(), BASE_PERSON.getBudget().orElse(null), properties);
     }
 
     private static void assertOtherFieldsUnchanged(Person expected, Person actual) {
         assertEquals(expected.getName(), actual.getName());
         assertEquals(expected.getPhone(), actual.getPhone());
         assertEquals(expected.getEmail(), actual.getEmail());
-        assertEquals(expected.getIntention(), actual.getIntention());
         assertEquals(expected.getRemark(), actual.getRemark());
         assertEquals(expected.getBudget(), actual.getBudget());
     }

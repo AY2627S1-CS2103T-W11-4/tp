@@ -10,9 +10,9 @@ import seedu.address.commons.util.ToStringBuilder;
  * Tests that a {@code Person}'s intention matches the given intention.
  */
 public class IntentionMatchesPredicate implements Predicate<Person> {
-    private final Intention intention;
+    private final ClientIntention intention;
 
-    public IntentionMatchesPredicate(Intention intention) {
+    public IntentionMatchesPredicate(ClientIntention intention) {
         this.intention = requireNonNull(intention);
     }
 

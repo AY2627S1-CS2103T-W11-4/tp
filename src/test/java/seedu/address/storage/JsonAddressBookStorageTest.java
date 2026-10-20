@@ -150,7 +150,7 @@ public class JsonAddressBookStorageTest {
 
         assertThrows(CommandException.class,
                 String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, first.getName(), first.getPhone()), () ->
-                logic.execute("add n/alice tan p/91234567 e/duplicate@example.com i/Buyer"));
+                logic.execute("add n/alice tan p/91234567 e/duplicate@example.com"));
         assertEquals(original, model.getAddressBook());
         assertEquals(savedData, Files.readString(filePath));
 

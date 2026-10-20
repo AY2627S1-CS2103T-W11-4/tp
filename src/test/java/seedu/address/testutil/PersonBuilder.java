@@ -4,7 +4,6 @@ import java.util.List;
 
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
@@ -20,12 +19,10 @@ public class PersonBuilder {
     public static final String DEFAULT_PHONE = "85355255";
     public static final String DEFAULT_EMAIL = "amy@gmail.com";
     public static final String DEFAULT_REMARK = "";
-    public static final Intention DEFAULT_INTENTION = Intention.BUYER;
 
     private Name name;
     private Phone phone;
     private Email email;
-    private Intention intention;
     private Remark remark;
     private Budget budget;
     private List<Property> properties;
@@ -37,7 +34,6 @@ public class PersonBuilder {
         name = new Name(DEFAULT_NAME);
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
-        intention = DEFAULT_INTENTION;
         remark = new Remark(DEFAULT_REMARK);
         budget = null;
         properties = List.of();
@@ -50,7 +46,6 @@ public class PersonBuilder {
         name = personToCopy.getName();
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
-        intention = personToCopy.getIntention();
         remark = personToCopy.getRemark();
         budget = personToCopy.getBudget().orElse(null);
         properties = personToCopy.getProperties();
@@ -97,14 +92,6 @@ public class PersonBuilder {
     }
 
     /**
-     * Sets the intention of the person being built.
-     */
-    public PersonBuilder withIntention(Intention intention) {
-        this.intention = intention;
-        return this;
-    }
-
-    /**
      * Sets the properties in the supplied order, allowing an empty list or equal entries.
      */
     public PersonBuilder withProperties(Property... properties) {
@@ -113,7 +100,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, intention, remark, budget, properties);
+        return new Person(name, phone, email, remark, budget, properties);
     }
 
 }
