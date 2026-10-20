@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditPropertyCommand.EditPropertyDescriptor;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
@@ -72,6 +73,21 @@ public class PropertyCommandDefensiveTest {
     }
 
     @Test
+    public void execute_editWithIgnoredUpdate_rejectsBeforeChangingModel() {
+        Person original = new PersonWithBrokenPropertyUpdates() {
+            @Override
+            public Person withUpdatedProperty(Index propertyIndex, Property replacement) {
+                return this;
+            }
+        };
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setLocation(TAMPINES_CONDO.getLocation());
+
+        assertInvalidUpdateRejected(new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor),
+                "Editing a property must apply the replacement at the selected index", original);
+    }
+
+    @Test
     public void execute_logsCompletedOperationsAndUnchangedEdit_withoutLoggingRejectedOperation() throws Exception {
         Logger logger = LogsCenter.getLogger(AddPropertyCommand.class).getParent();
         Level previousLevel = logger.getLevel();
@@ -88,6 +104,14 @@ public class PropertyCommandDefensiveTest {
             EditPropertyCommand edit = new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor);
             edit.execute(model);
             edit.execute(model);
+
+            DeletePropertyCommand invalidDelete = new DeletePropertyCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON);
+            EditPropertyCommand invalidEdit = new EditPropertyCommand(
+                    INDEX_FIRST_PERSON, INDEX_SECOND_PERSON, descriptor);
+            assertThrows(CommandException.class,
+                    Messages.MESSAGE_INVALID_PROPERTY_INDEX, () -> invalidDelete.execute(model));
+            assertThrows(CommandException.class,
+                    Messages.MESSAGE_INVALID_PROPERTY_INDEX, () -> invalidEdit.execute(model));
             new DeletePropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON).execute(model);
 
             assertThrows(CommandException.class, () -> new AddPropertyCommand(INDEX_SECOND_PERSON, CLEMENTI_HDB)
@@ -103,8 +127,11 @@ public class PropertyCommandDefensiveTest {
     }
 
     private static void assertInvalidUpdateRejected(Command command, String message) {
+        assertInvalidUpdateRejected(command, message, new PersonWithBrokenPropertyUpdates());
+    }
+
+    private static void assertInvalidUpdateRejected(Command command, String message, Person original) {
         Model model = new ModelManager();
-        Person original = new PersonWithBrokenPropertyUpdates();
         model.addPerson(original);
 
         assertThrows(AssertionError.class, message, () -> command.execute(model));

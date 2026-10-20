@@ -63,6 +63,8 @@ public class EditPropertyCommand extends Command {
         Person updated = original.withUpdatedProperty(propertyIndex, replacement);
         assert updated.getProperties().size() == original.getProperties().size()
                 : "Editing a property must preserve the property count";
+        assert updated.getProperties().get(propertyIndex.getZeroBased()).equals(replacement)
+                : "Editing a property must apply the replacement at the selected index";
         model.setPerson(original, updated);
         logger.fine("Edited property " + propertyIndex.getOneBased()
                 + " for displayed client " + clientIndex.getOneBased());
