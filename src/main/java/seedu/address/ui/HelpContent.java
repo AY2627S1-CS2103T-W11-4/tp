@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.property.PropertyStatus;
 
 /**
  * Command-reference content for the help window. Update this content alongside changes to command syntax and the guide.
@@ -42,7 +44,10 @@ final class HelpContent {
     private static final String PROPERTY_INDEX_NOTE =
             "CLIENT_INDEX selects a displayed client; PROPERTY_INDEX selects a numbered property under that client.";
     private static final String PROPERTY_CASE_NOTE =
-            "Command words, property prefixes, types and property intentions ignore case. Location text is preserved.";
+            "Command words, property prefixes, types, intentions and statuses ignore case. Location text is preserved.";
+    private static final String PROPERTY_STATUS_NOTE = PropertyStatus.MESSAGE_CONSTRAINTS;
+    private static final String PROPERTY_FILTER_NOTE =
+            "The client filter is kept. A property change may remove a client from results. Recheck indexes.";
 
     private static final List<CommandHelp> COMMANDS = List.of(
             new CommandHelp(AddCommand.COMMAND_WORD, "Add a new client.",
@@ -72,49 +77,63 @@ final class HelpContent {
                                     + PREFIX_EMAIL + "johndoe@example.com",
                             EditCommand.COMMAND_WORD + " 1 " + PREFIX_BUDGET + "900000")),
             new CommandHelp(AddPropertyCommand.COMMAND_WORD, "Add a property to a client.",
-                    "addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]",
+                    "addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]",
                     List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE,
-                            "Type, property intention and location are required. Price is optional.",
+                            "Type, property intention and location are required. Price and status are optional.",
                             "Types: HDB (h), Condominium (c), Landed (l). Property intentions: Buyer or Seller.",
+                            PROPERTY_STATUS_NOTE,
+                            "Omit s/ for Not specified. Empty s/ is rejected; use s/unspecified explicitly.",
                             "Location must not be blank. Supply each field once, in any order.",
                             "pr/PRICE is a positive whole-dollar amount without commas, decimals or leading zeros.",
                             "Omit pr/ when adding an unknown price. It does not change the client's budget.",
                             "Identical entries are allowed and are independent, including across clients.",
                             "The property is appended. The current client filter is kept."),
                     List.of("addp 1 t/HDB i/Buyer l/Clementi pr/800000",
-                            "addp 1 t/Condominium i/Seller l/Bishan")),
+                            "addp 1 t/Condominium i/Seller l/Bishan",
+                            "addp 1 t/HDB i/Buyer l/Clementi s/Viewing")),
             new CommandHelp(DeletePropertyCommand.COMMAND_WORD, "Delete one property from a client.",
                     "delp CLIENT_INDEX PROPERTY_INDEX",
                     List.of(PROPERTY_INDEX_NOTE,
                             "Deletes the whole selected property. Location cannot be removed on its own.",
                             "Later properties shift down by one index. Other clients' properties are unchanged.",
-                            "The current client filter is kept. There is no undo command."),
+                            PROPERTY_FILTER_NOTE, "There is no undo command."),
                     List.of("delp 1 2")),
             new CommandHelp(EditPropertyCommand.COMMAND_WORD, "Edit selected fields of a client's property.",
-                    "editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]",
+                    "editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]",
                     List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE,
                             "Supply at least one field, once each. Omitted fields keep their current values.",
-                            "Empty pr/ removes the price. Empty t/, i/ and l/ are rejected.",
+                            "Empty pr/ removes the price. Empty t/, i/, l/ and s/ are rejected.",
+                            PROPERTY_STATUS_NOTE, "Use s/unspecified to reset the property's stage.",
+                            "Stages may move backward. Completed stays editable and does not remove any record.",
                             "Property intention and price are separate from the client's intention and budget.",
                             "Invalid input keeps the original property. An identical edit reports no change.",
-                            "The property keeps its position. The current client filter is kept.",
-                            "Prefix-like words ending in / are reserved for fields; use t/, i/, l/ and pr/ only."),
-                    List.of("editp 1 2 l/Toa Payoh", "editp 1 2 t/Landed i/Seller pr/3200000", "editp 1 2 pr/")),
-            new CommandHelp(FindCommand.COMMAND_WORD, "Find clients by name, email, phone or intention.",
+                            "The property keeps its position.", PROPERTY_FILTER_NOTE,
+                            "Prefix-like words ending in / are reserved for fields; use t/, i/, l/, pr/ and s/ only."),
+                    List.of("editp 1 2 l/Toa Payoh", "editp 1 2 t/Landed i/Seller pr/3200000", "editp 1 2 pr/",
+                            "editp 1 2 s/Negotiating", "editp 1 2 s/unspecified")),
+            new CommandHelp(FindCommand.COMMAND_WORD,
+                    "Find clients by name, email, phone, intention or property stage.",
                     FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_PHONE + "KEYWORD [MORE_KEYWORDS]\n"
-                            + FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller",
+                            + FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller\n"
+                            + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS + "STATUS",
                     List.of("Choose exactly one short prefix: " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
-                                    + PREFIX_PHONE + " or " + PREFIX_INTENTION + ". Supply at least one keyword.",
+                                    + PREFIX_PHONE + ", " + PREFIX_INTENTION + " or " + PREFIX_PROPERTY_STATUS + ".",
+                            "Supply at least one keyword. Status and intention each require one complete value.",
                             "Prefixes and keywords are case-insensitive. Long property aliases are not supported.",
                             "Name, email and phone use substring matching. Any matching keyword returns a client.",
                             "Intention requires exactly one complete value: buyer or seller.",
+                            PROPERTY_STATUS_NOTE,
+                            "Status matches any recorded property; each client appears once, in normal order.",
+                            "Clients with no properties do not match s/unspecified.",
                             "Each search checks all clients and replaces the previous filter. Use list to reset it."),
                     List.of(FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "alex david",
                             FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "gmail",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PHONE + "9123",
-                            FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer")),
+                            FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer",
+                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS + "viewing",
+                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS + "unspecified")),
             new CommandHelp(ListCommand.COMMAND_WORD, "Show all clients.", ListCommand.COMMAND_WORD,
                     List.of("No parameters are needed. This resets the current search filter."),
                     List.of(ListCommand.COMMAND_WORD)),
