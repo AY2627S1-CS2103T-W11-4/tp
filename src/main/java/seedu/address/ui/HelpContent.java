@@ -5,7 +5,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 
 import java.util.List;
@@ -101,26 +100,20 @@ final class HelpContent {
                             "The property keeps its position. The current client filter is kept.",
                             "Prefix-like words ending in / are reserved for fields; use t/, i/, l/ and pr/ only."),
                     List.of("editp 1 2 l/Toa Payoh", "editp 1 2 t/Landed i/Seller pr/3200000", "editp 1 2 pr/")),
-            new CommandHelp(FindCommand.COMMAND_WORD, "Find clients by name, email, phone, location or intention.",
+            new CommandHelp(FindCommand.COMMAND_WORD, "Find clients by name, email, phone or intention.",
                     FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_PHONE + "KEYWORD [MORE_KEYWORDS]\n"
-                            + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_LOCATION + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller",
                     List.of("Choose exactly one short prefix: " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
-                                    + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + " or " + PREFIX_INTENTION
-                                    + ". Supply at least one keyword.",
+                                    + PREFIX_PHONE + " or " + PREFIX_INTENTION + ". Supply at least one keyword.",
                             "Prefixes and keywords are case-insensitive. Long property aliases are not supported.",
-                            "Name, email, phone and location use substring matching."
-                                    + " Any matching keyword returns a client.",
-                            "Location searches check every property of a client."
-                                    + " Clients without properties do not match.",
+                            "Name, email and phone use substring matching. Any matching keyword returns a client.",
                             "Intention requires exactly one complete value: buyer or seller.",
                             "Each search checks all clients and replaces the previous filter. Use list to reset it."),
                     List.of(FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "alex david",
                             FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "gmail",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PHONE + "9123",
-                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_LOCATION + "clementi",
                             FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer")),
             new CommandHelp(ListCommand.COMMAND_WORD, "Show all clients.", ListCommand.COMMAND_WORD,
                     List.of("No parameters are needed. This resets the current search filter."),
