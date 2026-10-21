@@ -18,7 +18,12 @@ Class Person
 Class Email
 Class Name
 Class Phone
-Class Intention <<enumeration>>
+Class ClientIntention <<enumeration>> {
+  BUYER
+  SELLER
+  BOTH
+  UNSPECIFIED
+}
 Class Budget
 Class Remark
 Class Property
@@ -36,6 +41,7 @@ Class I #FFFFFF
 Class HiddenOutside #FFFFFF
 HiddenOutside ..> Model
 
+show ClientIntention members
 show PropertyIntention members
 
 AddressBook .up.|> ReadOnlyAddressBook
@@ -52,7 +58,7 @@ UniquePersonList --> Person : all clients
 Person *--> Name
 Person *--> Phone
 Person *--> Email
-Person --> Intention
+Person ..> ClientIntention : derives from properties
 Person *--> "0..1" Budget
 Person *--> Remark
 Person *--> "0..* ordered" Property
@@ -67,5 +73,5 @@ UniquePersonList -[hidden]right-> I
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Email
 
-ModelManager --> Person : filtered clients
+ModelManager --> Person : displayed clients
 @enduml

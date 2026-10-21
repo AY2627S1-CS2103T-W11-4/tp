@@ -54,6 +54,7 @@
         "protecting-client-data-after-a-failed-load": "Protecting client data after a failed load",
         "command-reference-help": "Command reference help",
         "find-command": "Find command",
+        "derived-client-intention": "Derived client intention",
         "duplicate-client-feedback": "Duplicate client feedback",
         "budget-feature": "Budget feature",
         "client-property-model": "Client property model",
@@ -72,6 +73,7 @@
         "viewing-command-help": "Viewing command help",
         "detecting-duplicate-clients": "Detecting duplicate clients",
         "managing-client-properties": "Managing client properties",
+        "deriving-and-finding-client-intentions": "Deriving and finding client intentions",
         "recording-a-budget": "Recording a budget",
         "deleting-a-person": "Deleting a person",
         "saving-data": "Saving data"
