@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.property.Property;
@@ -73,6 +76,21 @@ public class PropertyStatusMatchesPredicateTest {
             assertFalse(predicate.equals(status));
             assertFalse(predicate.equals(new IntentionMatchesPredicate(Intention.BUYER)));
         }
+    }
+
+    @Test
+    public void hashCode_equalStatusesBehaveAsSetKeys() {
+        Set<PropertyStatusMatchesPredicate> predicates = new HashSet<>();
+        for (PropertyStatus status : PropertyStatus.values()) {
+            PropertyStatusMatchesPredicate first = new PropertyStatusMatchesPredicate(status);
+            PropertyStatusMatchesPredicate equal = new PropertyStatusMatchesPredicate(status);
+            assertEquals(first, equal);
+            assertEquals(first.hashCode(), equal.hashCode());
+            predicates.add(first);
+            assertTrue(predicates.contains(equal));
+            assertFalse(predicates.add(equal));
+        }
+        assertEquals(PropertyStatus.values().length, predicates.size());
     }
 
     @Test

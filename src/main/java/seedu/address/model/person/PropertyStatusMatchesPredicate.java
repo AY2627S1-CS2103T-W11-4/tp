@@ -31,6 +31,11 @@ public class PropertyStatusMatchesPredicate implements Predicate<Person> {
     }
 
     @Override
+    public int hashCode() {
+        return status.hashCode();
+    }
+
+    @Override
     public String toString() {
         return new ToStringBuilder(this).add("status", status).toString();
     }

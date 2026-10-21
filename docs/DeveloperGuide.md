@@ -177,6 +177,7 @@ Status searches accept exactly one `PropertyStatus` token, ignoring case.
 `PropertyStatusMatchesPredicate` matches a client if any existing property has the requested status.
 The predicate returns false for an empty property list, including when searching for `UNSPECIFIED`.
 Multiple matching properties still produce one client result.
+The predicate bases both equality and hashing on the requested status.
 Missing keywords, repeated or mixed prefixes, and unsupported selectors are rejected.
 `FindCommand` replaces the filter on the complete client list without modifying stored clients.
 Status results retain source order through the existing `FilteredList`; no status comparator is applied.
