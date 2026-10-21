@@ -66,22 +66,22 @@ public class Person {
      * Derives the client's role from the current properties without storing a second source of truth.
      */
     public ClientIntention getIntention() {
-        boolean buying = false;
-        boolean selling = false;
+        boolean hasBuyingProperty = false;
+        boolean hasSellingProperty = false;
         for (Property property : properties) {
             switch (property.getIntention()) {
-                case BUYER -> buying = true;
-                case SELLER -> selling = true;
+                case BUYER -> hasBuyingProperty = true;
+                case SELLER -> hasSellingProperty = true;
                 default -> throw new IllegalStateException("Unsupported property intention");
             }
-            if (buying && selling) {
+            if (hasBuyingProperty && hasSellingProperty) {
                 return ClientIntention.BOTH;
             }
         }
-        if (buying) {
+        if (hasBuyingProperty) {
             return ClientIntention.BUYER;
         }
-        return selling ? ClientIntention.SELLER : ClientIntention.UNSPECIFIED;
+        return hasSellingProperty ? ClientIntention.SELLER : ClientIntention.UNSPECIFIED;
     }
 
     /**
