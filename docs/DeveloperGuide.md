@@ -210,6 +210,9 @@ Properties use the existing `Intention.BUYER`/`Intention.SELLER` values for thei
 No client intention field or constructor parameter is stored in `Person`.
 Equality and hashing use the properties, so they also reflect everything that determines the role.
 `PersonBuilder` and sample clients without properties produce `UNSPECIFIED`; no placeholder property is inferred.
+Fresh sample data gives Alex buying properties, Bernice selling properties and Charlotte both directions,
+while David, Irfan and Roy have no properties. This demonstrates every derived role and intention-search ordering
+without changing how real saved clients are loaded.
 All property-copy methods derive the new role automatically while leaving the original `Person` unchanged.
 `copyWithProperties` asserts that the replacement preserves client identity, an internal copy invariant.
 This assertion does not validate user input or perform required work. Gradle tests enable assertions by default.
