@@ -56,8 +56,9 @@
         "find-command": "Find command",
         "derived-client-intention": "Derived client intention",
         "duplicate-client-feedback": "Duplicate client feedback",
-        "budget-feature": "Budget feature",
+        "client-fields-and-property-amounts": "Client fields and property amounts",
         "client-property-model": "Client property model",
+        "viewing-complete-client-details": "Viewing complete client details",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -71,11 +72,12 @@
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
         "viewing-command-help": "Viewing command help",
+        "viewing-complete-client-details-2": "Viewing complete client details",
         "detecting-duplicate-clients": "Detecting duplicate clients",
         "managing-client-properties": "Managing client properties",
         "deriving-and-finding-client-intentions": "Deriving and finding client intentions",
         "recording-and-finding-property-transaction-stages": "Recording and finding property transaction stages",
-        "recording-a-budget": "Recording a budget",
+        "rejecting-removed-client-budgets": "Rejecting removed client budgets",
         "deleting-a-person": "Deleting a person",
         "saving-data": "Saving data"
       },
@@ -86,7 +88,8 @@
       "title": "Documentation guide",
       "headings": {
         "documentation-guide": "Documentation Guide",
-        "building-locally": "Building locally"
+        "building-locally": "Building locally",
+        "refreshing-ui-screenshots": "Refreshing UI screenshots"
       },
       "headingKeywords": {}
     },
@@ -124,9 +127,11 @@
       "headings": {
         "residex-user-guide": "RESIDEX User Guide",
         "quick-start": "Quick start",
+        "reading-the-interface": "Reading the interface",
         "features": "Features",
         "viewing-help-help": "Viewing help: help",
         "adding-a-client-add": "Adding a client: add",
+        "viewing-a-client-s-full-details-view": "Viewing a client's full details: view",
         "listing-all-clients-list": "Listing all clients: list",
         "editing-a-client-edit": "Editing a client: edit",
         "managing-a-client-s-properties": "Managing a client's properties",
