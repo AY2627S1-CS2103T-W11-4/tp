@@ -118,8 +118,7 @@ public class ModelManagerIntentionOrderTest {
         private final AtomicInteger equalityCalls;
 
         CountingPerson(Person source, AtomicInteger equalityCalls) {
-            super(source.getName(), source.getPhone(), source.getEmail(), source.getRemark(),
-                    source.getBudget().orElse(null), source.getProperties());
+            super(source.getName(), source.getPhone(), source.getEmail(), source.getRemark(), source.getProperties());
             this.equalityCalls = equalityCalls;
         }
 

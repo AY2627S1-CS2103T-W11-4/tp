@@ -24,7 +24,6 @@ Class ClientIntention <<enumeration>> {
   BOTH
   UNSPECIFIED
 }
-Class Budget
 Class Remark
 Class Property
 Class PropertyIntention <<enumeration>> {
@@ -68,7 +67,6 @@ Person *--> Name
 Person *--> Phone
 Person *--> Email
 Person ..> ClientIntention : derives from properties
-Person *--> "0..1" Budget
 Person *--> Remark
 Person *--> "0..* ordered" Property
 Property --> PropertyType

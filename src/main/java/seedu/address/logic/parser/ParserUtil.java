@@ -8,7 +8,6 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
@@ -21,6 +20,7 @@ public class ParserUtil {
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
     private static final Pattern CLIENT_INTENTION_PREFIX = Pattern.compile("(?i)(?<!\\S)i/");
+    private static final Pattern CLIENT_BUDGET_PREFIX = Pattern.compile("(?i)(?<!\\S)b/");
 
     /**
      * Rejects a manual client intention before it can be consumed as another field's text.
@@ -31,6 +31,18 @@ public class ParserUtil {
         requireNonNull(args);
         if (CLIENT_INTENTION_PREFIX.matcher(args).find()) {
             throw new ParseException(Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
+        }
+    }
+
+    /**
+     * Rejects the removed client budget prefix before it can be consumed as another field's text.
+     *
+     * @throws ParseException if a b/ field is supplied, regardless of its value or case.
+     */
+    public static void rejectClientBudget(String args) throws ParseException {
+        requireNonNull(args);
+        if (CLIENT_BUDGET_PREFIX.matcher(args).find()) {
+            throw new ParseException(Messages.MESSAGE_CLIENT_BUDGET_NOT_SUPPORTED);
         }
     }
 
@@ -75,21 +87,6 @@ public class ParserUtil {
             throw new ParseException(Phone.MESSAGE_CONSTRAINTS);
         }
         return new Phone(trimmedPhone);
-    }
-
-    /**
-     * Parses a {@code String budget} into a {@code Budget}.
-     * Leading and trailing whitespaces will be trimmed.
-     *
-     * @throws ParseException if the given {@code budget} is invalid.
-     */
-    public static Budget parseBudget(String budget) throws ParseException {
-        requireNonNull(budget);
-        String trimmedBudget = budget.trim();
-        if (!Budget.isValidBudget(trimmedBudget)) {
-            throw new ParseException(Budget.MESSAGE_CONSTRAINTS);
-        }
-        return new Budget(trimmedBudget);
     }
 
     /**

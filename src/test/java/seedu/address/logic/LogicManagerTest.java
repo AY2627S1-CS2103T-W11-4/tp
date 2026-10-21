@@ -58,8 +58,8 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_addWithoutIntention_savesUnspecifiedClientAndBudget() throws Exception {
-        Person client = new PersonBuilder(AMY).withBudget("1500000").build();
+    public void execute_addWithoutIntention_savesUnspecifiedClient() throws Exception {
+        Person client = new PersonBuilder(AMY).build();
 
         logic.execute(PersonUtil.getAddCommand(client));
 
@@ -84,11 +84,11 @@ public class LogicManagerTest {
 
     @Test
     public void execute_addNormalisedDuplicate_doesNotChangeModelOrStorage() throws Exception {
-        logic.execute("add n/Alice   Tan p/91234567 e/alice@example.com b/500000");
+        logic.execute("add n/Alice   Tan p/91234567 e/alice@example.com");
         Path dataFile = temporaryFolder.resolve("addressBook.json");
         String savedData = Files.readString(dataFile);
 
-        assertCommandException("add n/ALICE TAN p/91234567 e/other@example.com b/900000",
+        assertCommandException("add n/ALICE TAN p/91234567 e/other@example.com",
                 String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, "Alice   Tan", "91234567"));
 
         assertEquals(savedData, Files.readString(dataFile));

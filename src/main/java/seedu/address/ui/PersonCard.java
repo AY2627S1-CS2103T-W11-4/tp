@@ -5,8 +5,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import seedu.address.model.person.Budget;
-import seedu.address.model.person.BudgetBand;
 import seedu.address.model.person.Person;
 
 /**
@@ -41,8 +39,6 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label intention;
     @FXML
-    private Label budget;
-    @FXML
     private VBox properties;
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -58,7 +54,6 @@ public class PersonCard extends UiPart<Region> {
         remark.setText(person.getRemark().value);
         remark.setVisible(!person.getRemark().value.isEmpty());
         remark.setManaged(remark.isVisible());
-        person.getBudget().ifPresentOrElse(this::showBudget, this::hideBudget);
         for (int i = 0; i < person.getProperties().size(); i++) {
             Label property = new Label((i + 1) + ". " + person.getProperties().get(i).toDisplay());
             property.getStyleClass().add("property-detail");
@@ -71,27 +66,4 @@ public class PersonCard extends UiPart<Region> {
         properties.setManaged(properties.isVisible());
     }
 
-    /**
-     * Shows {@code clientBudget} below the intention, coloured by its price band.
-     */
-    private void showBudget(Budget clientBudget) {
-        budget.setText(clientBudget.toDisplay());
-        budget.getStyleClass().add(styleClassFor(clientBudget.getBand()));
-        budget.setVisible(true);
-        budget.setManaged(true);
-    }
-
-    private void hideBudget() {
-        budget.setText("");
-        budget.setVisible(false);
-        budget.setManaged(false);
-    }
-
-    private static String styleClassFor(BudgetBand band) {
-        return switch (band) {
-            case LOW -> "budget-low";
-            case MIDDLE -> "budget-middle";
-            case HIGH -> "budget-high";
-        };
-    }
 }

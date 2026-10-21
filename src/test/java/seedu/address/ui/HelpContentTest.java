@@ -26,6 +26,7 @@ import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.ClientIntention;
@@ -57,6 +58,7 @@ public class HelpContentTest {
             Map.entry(EditPropertyCommand.COMMAND_WORD, EditPropertyCommand.class),
             Map.entry(FindCommand.COMMAND_WORD, FindCommand.class),
             Map.entry(ListCommand.COMMAND_WORD, ListCommand.class),
+            Map.entry(ViewCommand.COMMAND_WORD, ViewCommand.class),
             Map.entry(DeleteCommand.COMMAND_WORD, DeleteCommand.class),
             Map.entry(RemarkCommand.COMMAND_WORD, RemarkCommand.class),
             Map.entry(HelpCommand.COMMAND_WORD, HelpCommand.class),
@@ -100,21 +102,21 @@ public class HelpContentTest {
     }
 
     @Test
-    public void addExamples_recordClientsWithAndWithoutBudget() throws ParseException {
+    public void addExamples_recordClients() throws ParseException {
         List<String> examples = getExamples(AddCommand.COMMAND_WORD);
-        AddCommand withBudget = new AddCommand(new PersonBuilder().withName("John Doe").withPhone("98765432")
-                .withEmail("john@example.com").withBudget("1500000").build());
-        AddCommand withoutBudget = new AddCommand(new PersonBuilder().withName("Jane Lee").withPhone("91234567")
+        AddCommand firstClient = new AddCommand(new PersonBuilder().withName("John Doe").withPhone("98765432")
+                .withEmail("john@example.com").build());
+        AddCommand secondClient = new AddCommand(new PersonBuilder().withName("Jane Lee").withPhone("91234567")
                 .withEmail("jane@example.com").build());
 
-        assertEquals(withBudget, parser.parseCommand(examples.get(0)));
-        assertEquals(withoutBudget, parser.parseCommand(examples.get(1)));
+        assertEquals(firstClient, parser.parseCommand(examples.get(0)));
+        assertEquals(secondClient, parser.parseCommand(examples.get(1)));
     }
 
     @Test
-    public void editBudgetExample_updatesOnlyBudget() throws ParseException {
+    public void editNameExample_updatesOnlyName() throws ParseException {
         EditCommand expectedCommand = new EditCommand(Index.fromOneBased(1),
-                new EditPersonDescriptorBuilder().withBudget("900000").build());
+                new EditPersonDescriptorBuilder().withName("John Tan").build());
 
         assertEquals(expectedCommand, parser.parseCommand(getExamples(EditCommand.COMMAND_WORD).get(1)));
     }

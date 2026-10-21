@@ -2,7 +2,6 @@ package seedu.address.testutil;
 
 import java.util.List;
 
-import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -24,7 +23,6 @@ public class PersonBuilder {
     private Phone phone;
     private Email email;
     private Remark remark;
-    private Budget budget;
     private List<Property> properties;
 
     /**
@@ -35,7 +33,6 @@ public class PersonBuilder {
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
         remark = new Remark(DEFAULT_REMARK);
-        budget = null;
         properties = List.of();
     }
 
@@ -47,7 +44,6 @@ public class PersonBuilder {
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         remark = personToCopy.getRemark();
-        budget = personToCopy.getBudget().orElse(null);
         properties = personToCopy.getProperties();
     }
 
@@ -76,14 +72,6 @@ public class PersonBuilder {
     }
 
     /**
-     * Sets the {@code Budget} of the {@code Person} that we are building.
-     */
-    public PersonBuilder withBudget(String budget) {
-        this.budget = new Budget(budget);
-        return this;
-    }
-
-    /**
      * Sets the {@code Email} of the {@code Person} that we are building.
      */
     public PersonBuilder withEmail(String email) {
@@ -100,7 +88,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, remark, budget, properties);
+        return new Person(name, phone, email, remark, properties);
     }
 
 }

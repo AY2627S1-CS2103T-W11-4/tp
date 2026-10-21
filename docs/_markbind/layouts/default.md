@@ -42,6 +42,7 @@
 * [Home]({{ baseUrl }}/index.html)
 * [User Guide]({{ baseUrl }}/UserGuide.html) :expanded:
   * [Quick Start]({{ baseUrl }}/UserGuide.html#quick-start)
+  * [Reading the Interface]({{ baseUrl }}/UserGuide.html#reading-the-interface)
   * [Features]({{ baseUrl }}/UserGuide.html#features)
   * [FAQ]({{ baseUrl }}/UserGuide.html#faq)
   * [Command Summary]({{ baseUrl }}/UserGuide.html#command-summary)
@@ -50,7 +51,7 @@
   * [Setting Up]({{ baseUrl }}/DeveloperGuide.html#setting-up-getting-started)
   * [Design]({{ baseUrl }}/DeveloperGuide.html#design)
   * [Implementation]({{ baseUrl }}/DeveloperGuide.html#implementation)
-  * [Documentation, logging, testing, configuration, dev-ops]({{ baseUrl }}/DeveloperGuide.html#documentation-logging-testing-configuration-dev-ops)
+  * [Documentation, logging, testing, dev-ops]({{ baseUrl }}/DeveloperGuide.html#documentation-logging-testing-dev-ops)
   * [Appendix: Requirements]({{ baseUrl }}/DeveloperGuide.html#appendix-requirements)
   * [Appendix: Instructions for manual testing]({{ baseUrl }}/DeveloperGuide.html#appendix-instructions-for-manual-testing)
 * [About Us]({{ baseUrl }}/AboutUs.html)

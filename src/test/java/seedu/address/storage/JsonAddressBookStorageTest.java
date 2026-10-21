@@ -127,9 +127,9 @@ public class JsonAddressBookStorageTest {
         Path filePath = testFolder.resolve("legacyClientRoles.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
         JsonAdaptedPerson empty = new JsonAdaptedPerson(ALICE.getName().fullName, ALICE.getPhone().value,
-                ALICE.getEmail().value, "Buyer", "", null);
+                ALICE.getEmail().value, "Buyer", "");
         JsonAdaptedPerson seller = new JsonAdaptedPerson(HOON.getName().fullName, HOON.getPhone().value,
-                HOON.getEmail().value, "Buyer", "", null, List.of(new JsonAdaptedProperty(TAMPINES_CONDO)));
+                HOON.getEmail().value, "Buyer", "", List.of(new JsonAdaptedProperty(TAMPINES_CONDO)));
         // The adapter omits obsolete roles on write, so add the legacy metadata to the actual JSON fixture.
         String savedData = JsonUtil.toJsonString(new JsonSerializableAddressBook(List.of(empty, seller)));
         ObjectNode legacyData = JsonUtil.fromJsonString(savedData, ObjectNode.class);
@@ -161,7 +161,7 @@ public class JsonAddressBookStorageTest {
     public void readAndSaveAddressBook_mixedPropertyIntentions_migratesOnlyPropertyValues() throws Exception {
         Path filePath = testFolder.resolve("mixedPropertyIntentions.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
-        Person expected = new PersonBuilder(ALICE).withBudget("900000")
+        Person expected = new PersonBuilder(ALICE)
                 .withRemark("Call next week")
                 .withProperties(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB, TAMPINES_CONDO).build();
         List<JsonAdaptedProperty> properties = List.of(
@@ -170,7 +170,7 @@ public class JsonAddressBookStorageTest {
                 new JsonAdaptedProperty("HDB", "Buying", "Clementi Ave 3", "800000"),
                 new JsonAdaptedProperty("Condominium", "Selling", "Tampines", null));
         JsonAdaptedPerson person = new JsonAdaptedPerson(expected.getName().fullName, expected.getPhone().value,
-                expected.getEmail().value, "Seller", "Call next week", "900000", properties);
+                expected.getEmail().value, "Seller", "Call next week", properties);
         JsonUtil.saveJsonFile(new JsonSerializableAddressBook(List.of(person)), filePath);
         String originalContents = Files.readString(filePath);
 
@@ -316,7 +316,7 @@ public class JsonAddressBookStorageTest {
             List<JsonAdaptedProperty> properties = new ArrayList<>(validProperties);
             properties.add(invalid);
             JsonAdaptedPerson person = new JsonAdaptedPerson("Alice", "91234567", "alice@example.com", "Buyer",
-                    "", null, properties);
+                    "", properties);
             JsonSerializableAddressBook data = new JsonSerializableAddressBook(List.of(person));
             JsonUtil.saveJsonFile(data, filePath);
             String originalContents = Files.readString(filePath);

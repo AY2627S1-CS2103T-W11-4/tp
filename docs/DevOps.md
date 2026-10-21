@@ -35,6 +35,9 @@ The following commands perform common Gradle tasks.
   * `./gradlew test`: Runs all tests.
   * `./gradlew clean test`: Cleans the project before running all tests
 
+* **`captureDocumentationScreenshots`**: Captures the current UI with sample clients into `docs/images/`.<br>
+  Requires a graphical desktop or Xvfb. See [Refreshing UI screenshots](Documentation.html#refreshing-ui-screenshots).
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Continuous integration (CI)

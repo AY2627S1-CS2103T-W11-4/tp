@@ -132,23 +132,6 @@
     -fx-text-fill: #010504;
 }
 
-.list-cell .budget-amount {
-    -fx-font-family: "Segoe UI Semibold";
-    -fx-font-size: 16px;
-}
-
-.list-cell .budget-low {
-    -fx-text-fill: #e74c3c;
-}
-
-.list-cell .budget-middle {
-    -fx-text-fill: #f1c40f;
-}
-
-.list-cell .budget-high {
-    -fx-text-fill: #2ecc71;
-}
-
 .stack-pane {
      -fx-background-color: derive(#1d1d1d, 20%);
 }

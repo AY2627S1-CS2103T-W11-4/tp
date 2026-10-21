@@ -1,6 +1,5 @@
 package seedu.address.ui;
 
-import static seedu.address.logic.parser.CliSyntax.PREFIX_BUDGET;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
@@ -22,7 +21,7 @@ import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
-import seedu.address.model.person.Budget;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.property.PropertyStatus;
@@ -37,7 +36,6 @@ final class HelpContent {
     private static final String PHONE_NOTE = PREFIX_PHONE + "PHONE_NUMBER: " + Phone.MESSAGE_CONSTRAINTS + ".";
     private static final String EMAIL_NOTE =
             PREFIX_EMAIL + "EMAIL: enter a valid email address, such as john@example.com.";
-    private static final String BUDGET_NOTE = PREFIX_BUDGET + "BUDGET: " + Budget.MESSAGE_CONSTRAINTS + ".";
     private static final String NAME_MATCHING_NOTE =
             "Name matching ignores case, outer spaces and repeated spaces between words.";
     private static final String DUPLICATE_NOTE =
@@ -57,24 +55,23 @@ final class HelpContent {
     private static final List<CommandHelp> COMMANDS = List.of(
             new CommandHelp(AddCommand.COMMAND_WORD, "Add a new client.",
                     AddCommand.COMMAND_WORD + " " + PREFIX_NAME + "NAME " + PREFIX_PHONE + "PHONE_NUMBER "
-                            + PREFIX_EMAIL + "EMAIL [" + PREFIX_BUDGET + "BUDGET]",
-                    List.of("Name, phone and email are required. Budget is optional.",
+                            + PREFIX_EMAIL + "EMAIL",
+                    List.of("Name, phone and email are required.",
                             NAME_NOTE, PHONE_NOTE, EMAIL_NOTE,
                             "Client intention is derived from properties; add and edit reject i/.",
                             "New clients have intention Not specified until a property is recorded.",
-                            BUDGET_NOTE, "Supply each field once, in any order.",
+                            "Supply each field once, in any order.",
                             "A client with the same name and phone number cannot be added again.",
                             NAME_MATCHING_NOTE, DUPLICATE_NOTE),
                     List.of(AddCommand.COMMAND_WORD + " " + PREFIX_NAME + "John Doe " + PREFIX_PHONE + "98765432 "
-                                    + PREFIX_EMAIL + "john@example.com "
-                                    + PREFIX_BUDGET + "1500000",
+                                    + PREFIX_EMAIL + "john@example.com",
                             AddCommand.COMMAND_WORD + " " + PREFIX_NAME + "Jane Lee " + PREFIX_PHONE + "91234567 "
                                     + PREFIX_EMAIL + "jane@example.com")),
-            new CommandHelp(EditCommand.COMMAND_WORD, "Update an existing client's contact details or budget.",
+            new CommandHelp(EditCommand.COMMAND_WORD, "Update an existing client's contact details.",
                     EditCommand.COMMAND_WORD + " INDEX [" + PREFIX_NAME + "NAME] [" + PREFIX_PHONE + "PHONE_NUMBER] ["
-                            + PREFIX_EMAIL + "EMAIL] [" + PREFIX_BUDGET + "BUDGET]",
+                            + PREFIX_EMAIL + "EMAIL]",
                     List.of(INDEX_NOTE, "Supply at least one field. Each supplied field replaces its current value.",
-                            NAME_NOTE, PHONE_NOTE, EMAIL_NOTE, BUDGET_NOTE,
+                            NAME_NOTE, PHONE_NOTE, EMAIL_NOTE,
                             "Omitted fields are kept. Remark and properties are unchanged.",
                             "Client intention is derived. Use property commands to change it; client i/ is rejected.",
                             "The updated name and phone number must not duplicate another client.",
@@ -82,7 +79,7 @@ final class HelpContent {
                             "Supply each field once, in any order."),
                     List.of(EditCommand.COMMAND_WORD + " 1 " + PREFIX_PHONE + "91234567 "
                                     + PREFIX_EMAIL + "johndoe@example.com",
-                            EditCommand.COMMAND_WORD + " 1 " + PREFIX_BUDGET + "900000")),
+                            EditCommand.COMMAND_WORD + " 1 " + PREFIX_NAME + "John Tan")),
             new CommandHelp(AddPropertyCommand.COMMAND_WORD, "Add a property to a client.",
                     "addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]",
                     List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE, PROPERTY_INTENTION_NOTE,
@@ -92,7 +89,7 @@ final class HelpContent {
                             "Omit s/ for Not specified. Empty s/ is rejected; use s/unspecified explicitly.",
                             "Location must not be blank. Supply each field once, in any order.",
                             "pr/PRICE is a positive whole-dollar amount without commas, decimals or leading zeros.",
-                            "Omit pr/ when adding an unknown price. It does not change the client's budget.",
+                            "Omit pr/ when adding an unknown price.",
                             "Identical entries are allowed and are independent, including across clients.",
                             "The property is appended. The current client filter is kept."),
                     List.of("addp 1 t/HDB i/Buying l/Clementi pr/800000",
@@ -114,7 +111,7 @@ final class HelpContent {
                             PROPERTY_STATUS_NOTE, "Use s/unspecified to reset the property's stage.",
                             "Stages may move backward. Completed stays editable and does not remove any record.",
                             "Status does not affect the derived client role.",
-                            "Property intentions determine the client role. Price is separate from client budget.",
+                            "Property intentions determine the client role. Prices belong to properties.",
                             "A role change can move or remove a client in search results. Check the indexes again.",
                             "Invalid input keeps the original property. An identical edit reports no change.",
                             "The property keeps its position.", PROPERTY_FILTER_NOTE,
@@ -122,6 +119,13 @@ final class HelpContent {
                     List.of("editp 1 2 l/Toa Payoh", "editp 1 2 t/Landed i/Selling pr/3200000", "editp 1 2 pr/",
                             "editp 1 2 i/Buying", "editp 1 2 s/Negotiating",
                             "editp 1 2 s/unspecified")),
+            new CommandHelp(ViewCommand.COMMAND_WORD, "Show all fields of one client.", "view INDEX",
+                    List.of(INDEX_NOTE, "Only the selected client is displayed, now at index 1.",
+                            "Shows name, phone, email, intention, remark and every property field,"
+                                    + " including transaction status.",
+                            "Missing optional values are shown as Not recorded.",
+                            "Type list to return to all clients, including after viewing a search result."),
+                    List.of("view 1", "view 2")),
             new CommandHelp(FindCommand.COMMAND_WORD,
                     "Find clients by name, email, phone, location, intention or property stage.",
                     FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "KEYWORD [MORE_KEYWORDS]\n"
@@ -166,7 +170,7 @@ final class HelpContent {
                     RemarkCommand.COMMAND_WORD + " INDEX " + PREFIX_REMARK + "[REMARK]",
                     List.of(INDEX_NOTE, "The supplied remark replaces the existing one.",
                             "Enter " + PREFIX_REMARK + " with no text to remove the remark.",
-                            "Contact details, intention, budget and properties are kept."),
+                            "Contact details, intention and properties are kept."),
                     List.of(RemarkCommand.COMMAND_WORD + " 1 " + PREFIX_REMARK + "Call next week",
                             RemarkCommand.COMMAND_WORD + " 1 " + PREFIX_REMARK)),
             new CommandHelp(HelpCommand.COMMAND_WORD, "Show the command reference.", HelpCommand.COMMAND_WORD,

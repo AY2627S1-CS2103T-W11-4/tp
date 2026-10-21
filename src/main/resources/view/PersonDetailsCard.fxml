@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="personDetailsCard" styleClass="client-card" spacing="20" minWidth="0"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <Label fx:id="name" styleClass="client-name" wrapText="true" minWidth="0" maxWidth="Infinity" />
+  <VBox fx:id="clientDetails" minWidth="0" />
+  <Label text="Properties" styleClass="section-heading" />
+  <VBox fx:id="properties" spacing="16" minWidth="0" />
+</VBox>

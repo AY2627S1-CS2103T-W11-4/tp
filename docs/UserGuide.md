@@ -24,14 +24,18 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar Residex.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
-   ![Ui](images/Ui.png)
+   ![RESIDEX client list with contact details, derived roles and property summaries](images/Ui.png)
+
+   This screenshot uses the bundled sample clients with example remarks and property statuses.
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com b/1500000` : Adds a client named `John Doe` with a budget of $1,500,000 and intention Not specified.
+   * `view 1` : Shows all fields of the first displayed client. Use `list` to return to all clients.
+
+   * `add n/John Doe p/98765432 e/johnd@example.com` : Adds a client named `John Doe` with intention Not specified.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -40,6 +44,20 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 1. Refer to the [Features](#features) section below for details of each command.
 
 --------------------------------------------------------------------------------------------------------------------
+
+## Reading the interface
+
+* **Command:** Type a command and press Enter or click **Run**. The feedback box below shows its result or an input error.
+* **Client list:** The heading is **All clients**, **Filtered clients** or **Client details**.
+  The count shows how many clients are displayed out of all stored clients.
+* **Client cards:** Each card shows its displayed index, name, phone, email, derived intention,
+  any remark and numbered property summaries. A property summary shows type, intention, location,
+  optional price and transaction status. Clients without properties have intention **Not specified**.
+* **Prices:** Monetary amounts belong to property entries. There is no client budget amount on the right of a card;
+  the badge on the right shows the derived intention.
+* **Full details:** `view INDEX` replaces the list with the selected client's details and a reminder to enter `list`.
+  Long values wrap, and the list area scrolls when needed.
+* **Data location:** The footer shows where the client data file is stored.
 
 ## Features
 
@@ -54,7 +72,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
 * Items in square brackets are optional.<br>
-  For example, `n/NAME [b/BUDGET]` can be used as `n/John Doe b/1500000` or as `n/John Doe`.
+  For example, `addp 1 t/HDB i/Buying l/Clementi [pr/PRICE]` can include `pr/800000` or omit the price.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
@@ -76,7 +94,7 @@ Format: `help`
 
 * Scroll through the cards using the mouse wheel or scrollbar. Resize the window for more space.
 * Examples are for reference only. Enter commands in the main application's command box to run them.
-* You can also open help by pressing `F1` or selecting **Help > Help**. Opening help again focuses the existing window.
+* You can also open help by pressing `F1`. Opening help again focuses the existing window.
 * Click **Copy URL** in the footer to copy the RESIDEX User Guide link for further information.
   Opening the online guide requires an internet connection.
 
@@ -85,14 +103,14 @@ Format: `help`
 
 Adds a client to RESIDEX.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL [b/BUDGET]`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL`
 
 A client is a duplicate only when both their name and phone number match an existing client.
 Name matching ignores capitalisation, surrounding spaces and repeated spaces between words.
 For example, `Alice Tan` and `ALICE   TAN` match when their phone numbers are the same.
 Phone input is trimmed, then compared digit for digit, including leading zeros.
 Clients may share a name if their phone numbers differ, or share a phone number if their names differ.
-Different email addresses, intentions, budgets or remarks do not make an otherwise duplicate client distinct.
+Different email addresses, intentions or remarks do not make an otherwise duplicate client distinct.
 If an add or edit would create a duplicate, the error identifies the existing client's stored name and phone number and explains how names are matched.
 The conflicting client may be outside the current search results.
 A rejected command leaves all client information unchanged.
@@ -112,10 +130,10 @@ Use the property commands to change the properties that determine the role.
 The role updates automatically after `addp`, `editp` or `delp`.
 Property order and repeated entries do not affect which role is derived.
 
-Budget is optional. It is a whole-dollar amount with no commas and no decimal point, such as `b/1500000`.
-The client card shows that amount on the right.
-$800,000 and below is red, above $800,000 up to $2,500,000 is yellow, and above $2,500,000 is green.
-A saved file that has no budget still opens.
+Client budgets are no longer stored. Both `add` and `edit` reject the removed `b/` option,
+including uppercase `B/`. Record property amounts with `pr/` on `addp` or `editp`.
+Existing saved client `budget` fields are ignored when loading and omitted on the next save;
+property prices and transaction statuses are preserved.
 
 **Existing data:** Before using this version, back up `data/addressbook.json`.
 The old client-level `"intention"` field is ignored when loading; properties determine the role.
@@ -127,8 +145,40 @@ Saved files containing duplicate name-and-phone pairs under the rule above also 
 Back up the file and resolve these duplicates before opening it with this version.
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com b/1500000`
+* `add n/John Doe p/98765432 e/johnd@example.com`
 * `add n/Betsy Crowe e/betsycrowe@example.com p/1234567`
+
+### Viewing a client's full details: `view`
+
+Shows only the selected client, with their name as the heading and labelled phone, email, intention and remark fields.
+Every property is numbered in its stored order and shows its type, intention, location, transaction status and price separately.
+Long values wrap onto additional lines; scroll down to see details that do not fit in the window.
+
+Format: `view INDEX`
+
+![Full details for Charlotte Oliveiro, with a name heading and separate property prices and statuses](images/clientDetails.png)
+
+This example shows `view 3` from the sample list above. The selected client is now displayed at index 1.
+
+* `INDEX` must be a positive integer referring to the **currently displayed** client list, including search results.
+  Supply exactly one index, with no prefixes or extra arguments.
+* Other clients are hidden. The selected client is now the only displayed client, at index **1**;
+  subsequent commands that take a client index use this displayed index.
+* A missing remark or property price is shown as `Not recorded`.
+  A client without properties shows `No properties recorded`.
+* A line above the details says `Type list to return to the original list`.
+  `list` restores **all stored clients** in their original order, even if you ran `view` from search results.
+  To repeat the earlier search instead, enter the same `find` command again.
+* Viewing does not change stored client information. An invalid or out-of-range index displays an error
+  and keeps the current display unchanged.
+* Other successful client commands return to the usual client card layout and follow their own filtering rules.
+  `help` keeps the detail view open.
+
+Examples:
+
+* `list`, then `view 2`: displays all fields of the second client and hides the other clients.
+* `find n/Betsy`, then `view 1`: displays the first client from those search results.
+* `view 1`, then `list`: returns to the complete client list.
 
 ### Listing all clients: `list`
 
@@ -142,7 +192,7 @@ Resets the search and restores the normal stored client order, including after a
 
 Edits an existing client in RESIDEX.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [b/BUDGET]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -150,20 +200,18 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [b/BUDGET]`
 * Client edits preserve all property entries.
   Use `editp` to change a property.
 * Client intention cannot be edited directly. Any `i/` field is rejected without changing the client.
-* `b/BUDGET` replaces the client's budget. Leaving `b/` out keeps the existing budget.
 * The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
   Changing only the capitalisation or spacing of the selected client's own name is allowed.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 1 b/900000` Sets the 1st person's budget to $900,000, shown in yellow.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
 
 ### Managing a client's properties
 
 Each client can have an ordered list of properties, shown as numbered entries on their client card.
 Each property has one type, one buying or selling intention, one location, one transaction status, and an optional price.
-Property intentions determine the client's overall role. Property prices remain separate from the client's budget.
+Property intentions determine the client's overall role. Amounts are recorded on individual properties.
 Status is independent of the derived client role.
 
 * `CLIENT_INDEX` selects a client in the currently displayed list, including search results.
@@ -182,7 +230,7 @@ Status is independent of the derived client role.
   `Buyer`, `Seller` and `Both` are rejected in property commands.
 * Location is nonblank text, for example `Clementi Ave 3`.
   Surrounding whitespace is removed; capitalisation and internal spaces are preserved.
-* `pr/PRICE` is the property's price in whole Singapore dollars, separate from `b/BUDGET` on the client.
+* `pr/PRICE` is the property's price in whole Singapore dollars, recorded on that property.
   For a Buying property, it records the asking or current listing price; for a Seller property, the client's asking price.
   A supplied price must be positive, no greater than `9223372036854775807`, and contain no commas, decimals or leading zeros.
   Use `pr/` rather than `p/` for property prices.
@@ -268,7 +316,7 @@ Format: `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [
 * All supplied values and both indexes are checked before anything changes.
   Invalid input leaves the original property unchanged.
 * An edit that produces the same stored values reports that the property is unchanged.
-* Editing a property keeps its position and does not change other properties, client details or the client's budget.
+* Editing a property keeps its position and does not change other properties, client details.
 
 Examples:
 
@@ -338,6 +386,10 @@ Examples:
 * `find s/viewing` lists clients with at least one property at Viewing.
 * `find S/UNSPECIFIED` lists clients with at least one property whose stage is Not specified.
 
+The following example shows `find n/Alex David` using the sample clients:
+
+![Search results for Alex and David, numbered within the filtered list](images/findAlexDavidResult.png)
+
 ### Deleting a client: `delete`
 
 Deletes the specified client from RESIDEX.
@@ -360,7 +412,7 @@ Format: `remark INDEX r/[REMARK]`
 
 * `INDEX` is a positive integer referring to the client in the currently displayed list, including search results.
 * The supplied remark replaces the existing remark. Enter `r/` without text to remove it.
-* Contact details, intention, budget and properties are kept.
+* Contact details, intention and properties are kept.
 
 Examples:
 
@@ -412,7 +464,7 @@ _Details coming soon ..._
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+2. **If you minimize the Help Window** and then run the `help` command (or use the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -420,13 +472,14 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com b/1500000`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]`<br> e.g., `editp 1 2 l/Toa Payoh`
 **Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`
 **List**   | `list`
+**View**   | `view INDEX`<br> e.g., `view 2`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
 **Help**   | `help`

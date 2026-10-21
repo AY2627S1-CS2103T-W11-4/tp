@@ -37,7 +37,7 @@ public class LocationContainsKeywordsPredicateTest {
     @Test
     public void test_noMatchingLocation_returnsFalse() {
         Person person = new PersonBuilder().withName("Clementi Client").withEmail("clementi@example.com")
-                .withRemark("Clementi").withPhone("91234567").withBudget("800000")
+                .withRemark("Clementi").withPhone("91234567")
                 .withProperties(propertyAt("Tampines")).build();
         assertFalse(new LocationContainsKeywordsPredicate(List.of("Clementi", "9123", "800000", "HDB", "Buyer"))
                 .test(person));
