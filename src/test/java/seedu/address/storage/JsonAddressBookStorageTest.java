@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -35,7 +36,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.Intention;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
@@ -66,21 +67,57 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
-    public void readAddressBook_v13FileWithoutProperties_loadsUnchanged() throws Exception {
+    public void readAddressBook_v13FileWithoutProperties_loadsUnspecifiedClients() throws Exception {
         Path legacyFile = TEST_DATA_FOLDER.resolveSibling("JsonSerializableAddressBookTest")
                 .resolve("typicalPersonsAddressBook.json");
         ReadOnlyAddressBook loaded = new JsonAddressBookStorage(legacyFile).readAddressBook().orElseThrow();
         assertEquals(getTypicalAddressBook(), new AddressBook(loaded));
         for (Person person : loaded.getPersonList()) {
             assertEquals(List.of(), person.getProperties());
+            assertEquals(ClientIntention.UNSPECIFIED, person.getIntention());
         }
+    }
+
+    @Test
+    public void readAndSaveAddressBook_legacyRoles_derivesFromPropertiesAndOmitsClientRole() throws Exception {
+        Path filePath = testFolder.resolve("legacyClientRoles.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        JsonAdaptedPerson empty = new JsonAdaptedPerson(ALICE.getName().fullName, ALICE.getPhone().value,
+                ALICE.getEmail().value, "Buyer", "", null);
+        JsonAdaptedPerson seller = new JsonAdaptedPerson(HOON.getName().fullName, HOON.getPhone().value,
+                HOON.getEmail().value, "Buyer", "", null, List.of(new JsonAdaptedProperty(TAMPINES_CONDO)));
+        // The adapter omits obsolete roles on write, so add the legacy metadata to the actual JSON fixture.
+        String savedData = JsonUtil.toJsonString(new JsonSerializableAddressBook(List.of(empty, seller)));
+        ObjectNode legacyData = JsonUtil.fromJsonString(savedData, ObjectNode.class);
+        for (JsonNode client : legacyData.get("persons")) {
+            ObjectNode legacyClient = (ObjectNode) client;
+            legacyClient.put("intention", "Buyer");
+        }
+        String json = JsonUtil.toJsonString(legacyData);
+        Files.writeString(filePath, json);
+
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+
+        Person expectedSeller = new PersonBuilder(HOON).withProperties(TAMPINES_CONDO).build();
+        assertEquals(List.of(ALICE, expectedSeller), loaded.getPersonList());
+        assertEquals(ClientIntention.UNSPECIFIED, loaded.getPersonList().get(0).getIntention());
+        assertEquals(ClientIntention.SELLER, loaded.getPersonList().get(1).getIntention());
+        assertEquals(json, Files.readString(filePath));
+
+        storage.saveAddressBook(loaded);
+
+        JsonNode saved = JsonUtil.fromJsonString(Files.readString(filePath), JsonNode.class).get("persons");
+        assertFalse(saved.get(0).has("intention"));
+        assertFalse(saved.get(1).has("intention"));
+        assertEquals("Selling", saved.get(1).get("properties").get(0).get("intention").asText());
+        assertEquals(loaded, new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow());
     }
 
     @Test
     public void readAndSaveAddressBook_mixedPropertyIntentions_migratesOnlyPropertyValues() throws Exception {
         Path filePath = testFolder.resolve("mixedPropertyIntentions.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
-        Person expected = new PersonBuilder(ALICE).withIntention(Intention.SELLER).withBudget("900000")
+        Person expected = new PersonBuilder(ALICE).withBudget("900000")
                 .withRemark("Call next week")
                 .withProperties(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB, TAMPINES_CONDO).build();
         List<JsonAdaptedProperty> properties = List.of(
@@ -102,7 +139,8 @@ public class JsonAddressBookStorageTest {
 
         JsonNode savedClient = JsonUtil.fromJsonString(Files.readString(filePath), JsonNode.class)
                 .get("persons").get(0);
-        assertEquals("Seller", savedClient.get("intention").asText());
+        assertFalse(savedClient.has("intention"));
+        assertEquals(ClientIntention.BOTH, loaded.getPersonList().get(0).getIntention());
         assertEquals(4, savedClient.get("properties").size());
         List<String> expectedIntentions = List.of("Buying", "Selling", "Buying", "Selling");
         for (int i = 0; i < expectedIntentions.size(); i++) {
@@ -188,7 +226,7 @@ public class JsonAddressBookStorageTest {
 
         assertThrows(CommandException.class,
                 String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, first.getName(), first.getPhone()), () ->
-                logic.execute("add n/alice tan p/91234567 e/duplicate@example.com i/Buyer"));
+                logic.execute("add n/alice tan p/91234567 e/duplicate@example.com"));
         assertEquals(original, model.getAddressBook());
         assertEquals(savedData, Files.readString(filePath));
 

@@ -143,7 +143,7 @@ public class MainAppTest {
         MainApp app = createApp();
         app.init();
 
-        app.logic.execute("add n/Alice p/91234567 e/alice@example.com i/Buyer");
+        app.logic.execute("add n/Alice p/91234567 e/alice@example.com");
 
         AddressBook expected = new AddressBook();
         expected.addPerson(new PersonBuilder().withName("Alice").withPhone("91234567")

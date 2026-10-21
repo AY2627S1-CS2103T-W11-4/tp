@@ -5,7 +5,6 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDE
 import static seedu.address.logic.Messages.MESSAGE_TAGS_NOT_SUPPORTED;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
-import static seedu.address.logic.commands.CommandTestUtil.INTENTION_DESC_BUYER;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -31,7 +30,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.Intention;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -59,20 +58,21 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_addSeller_savesIntentionAndBudget() throws Exception {
-        Person seller = new PersonBuilder(AMY).withIntention(Intention.SELLER).withBudget("1500000").build();
+    public void execute_addWithoutIntention_savesUnspecifiedClientAndBudget() throws Exception {
+        Person client = new PersonBuilder(AMY).withBudget("1500000").build();
 
-        logic.execute(PersonUtil.getAddCommand(seller));
+        logic.execute(PersonUtil.getAddCommand(client));
 
-        assertEquals(seller, model.getAddressBook().getPersonList().get(0));
+        assertEquals(client, model.getAddressBook().getPersonList().get(0));
+        assertEquals(ClientIntention.UNSPECIFIED, client.getIntention());
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
-        assertEquals(seller, storage.readAddressBook().orElseThrow().getPersonList().get(0));
+        assertEquals(client, storage.readAddressBook().orElseThrow().getPersonList().get(0));
     }
 
     @Test
     public void execute_addSameNameDifferentPhone_savesBothClients() throws Exception {
-        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
-        logic.execute("add n/Alice Tan p/92345678 e/anotheralice@example.com i/Seller");
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+        logic.execute("add n/Alice Tan p/92345678 e/anotheralice@example.com");
 
         List<Person> clients = model.getAddressBook().getPersonList();
         assertEquals(2, clients.size());
@@ -84,11 +84,11 @@ public class LogicManagerTest {
 
     @Test
     public void execute_addNormalisedDuplicate_doesNotChangeModelOrStorage() throws Exception {
-        logic.execute("add n/Alice   Tan p/91234567 e/alice@example.com i/Buyer b/500000");
+        logic.execute("add n/Alice   Tan p/91234567 e/alice@example.com b/500000");
         Path dataFile = temporaryFolder.resolve("addressBook.json");
         String savedData = Files.readString(dataFile);
 
-        assertCommandException("add n/ALICE TAN p/91234567 e/other@example.com i/Seller b/900000",
+        assertCommandException("add n/ALICE TAN p/91234567 e/other@example.com b/900000",
                 String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, "Alice   Tan", "91234567"));
 
         assertEquals(savedData, Files.readString(dataFile));
@@ -96,8 +96,8 @@ public class LogicManagerTest {
 
     @Test
     public void execute_editToSameNameDifferentPhone_success() throws Exception {
-        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
-        logic.execute("add n/Ben Ong p/92345678 e/ben@example.com i/Seller");
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+        logic.execute("add n/Ben Ong p/92345678 e/ben@example.com");
 
         logic.execute("edit 2 n/Alice Tan");
 
@@ -110,8 +110,8 @@ public class LogicManagerTest {
 
     @Test
     public void execute_editPhoneToDuplicateOutsideFilter_doesNotChangeModelOrStorage() throws Exception {
-        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
-        logic.execute("add n/ALICE   TAN p/92345678 e/anotheralice@example.com i/Seller");
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+        logic.execute("add n/ALICE   TAN p/92345678 e/anotheralice@example.com");
         logic.execute("find p/92345678");
         Path dataFile = temporaryFolder.resolve("addressBook.json");
         String savedData = Files.readString(dataFile);
@@ -129,8 +129,8 @@ public class LogicManagerTest {
 
     @Test
     public void execute_editNameToNormalisedDuplicate_doesNotChangeModelOrStorage() throws Exception {
-        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
-        logic.execute("add n/Ben Ong p/91234567 e/ben@example.com i/Seller");
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+        logic.execute("add n/Ben Ong p/91234567 e/ben@example.com");
         Path dataFile = temporaryFolder.resolve("addressBook.json");
         String savedData = Files.readString(dataFile);
 
@@ -142,7 +142,7 @@ public class LogicManagerTest {
 
     @Test
     public void execute_editOwnNameCaseAndSpacing_savesUpdatedName() throws Exception {
-        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
 
         logic.execute("edit 1 n/ALICE   TAN");
 
@@ -278,7 +278,7 @@ public class LogicManagerTest {
 
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
-                + EMAIL_DESC_AMY + INTENTION_DESC_BUYER;
+                + EMAIL_DESC_AMY;
         Person expectedPerson = new PersonBuilder(AMY).build();
         ModelManager expectedModel = new ModelManager();
         expectedModel.addPerson(expectedPerson);

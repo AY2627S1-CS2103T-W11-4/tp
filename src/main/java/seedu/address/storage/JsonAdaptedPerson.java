@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
@@ -28,7 +27,6 @@ class JsonAdaptedPerson {
     private final String name;
     private final String phone;
     private final String email;
-    private final String intention;
     private final String remark;
     private final String budget;
     private final List<JsonAdaptedProperty> properties;
@@ -36,24 +34,24 @@ class JsonAdaptedPerson {
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
      */
-    public JsonAdaptedPerson(String name, String phone, String email, String intention,
+    public JsonAdaptedPerson(String name, String phone, String email, String legacyIntention,
             String remark, String budget) {
-        this(name, phone, email, intention, remark, budget, List.of());
+        this(name, phone, email, legacyIntention, remark, budget, List.of());
     }
 
     /**
      * Constructs an adapted person with properties in index order.
      * Missing or null properties are treated as an empty list for compatibility with older files.
+     * The legacy intention parameter is ignored: only properties determine the client role.
      */
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
-            @JsonProperty("email") String email, @JsonProperty("intention") String intention,
+            @JsonProperty("email") String email, @JsonProperty("intention") String legacyIntention,
             @JsonProperty("remark") String remark, @JsonProperty("budget") String budget,
             @JsonProperty("properties") List<JsonAdaptedProperty> properties) {
         this.name = name;
         this.phone = phone;
         this.email = email;
-        this.intention = intention;
         this.remark = remark;
         this.budget = budget;
         this.properties = properties == null ? List.of() : new ArrayList<>(properties);
@@ -62,8 +60,8 @@ class JsonAdaptedPerson {
     /**
      * Constructs a {@code JsonAdaptedPerson} without a remark, used by tests.
      */
-    public JsonAdaptedPerson(String name, String phone, String email, String intention) {
-        this(name, phone, email, intention, "", null);
+    public JsonAdaptedPerson(String name, String phone, String email, String legacyIntention) {
+        this(name, phone, email, legacyIntention, "", null);
     }
 
     /**
@@ -73,7 +71,6 @@ class JsonAdaptedPerson {
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().value;
-        intention = source.getIntention().toString();
         remark = source.getRemark().value;
         budget = source.getBudget().map(Budget::toString).orElse(null);
         properties = source.getProperties().stream().map(JsonAdaptedProperty::new).toList();
@@ -109,17 +106,6 @@ class JsonAdaptedPerson {
         }
         final Email modelEmail = new Email(email);
 
-        if (intention == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
-                    Intention.class.getSimpleName()));
-        }
-        final Intention modelIntention;
-        try {
-            modelIntention = Intention.parse(intention);
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalValueException(Intention.MESSAGE_CONSTRAINTS);
-        }
-
         final Remark modelRemark = new Remark(remark == null ? "" : remark);
 
         final Budget modelBudget;
@@ -145,7 +131,7 @@ class JsonAdaptedPerson {
             }
         }
 
-        return new Person(modelName, modelPhone, modelEmail, modelIntention, modelRemark, modelBudget, modelProperties);
+        return new Person(modelName, modelPhone, modelEmail, modelRemark, modelBudget, modelProperties);
     }
 
 }

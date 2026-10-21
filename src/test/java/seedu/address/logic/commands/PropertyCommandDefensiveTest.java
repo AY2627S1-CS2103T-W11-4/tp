@@ -146,7 +146,7 @@ public class PropertyCommandDefensiveTest {
      */
     private static class PersonWithBrokenPropertyUpdates extends Person {
         PersonWithBrokenPropertyUpdates() {
-            super(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getIntention(), ALICE.getRemark(),
+            super(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getRemark(),
                     ALICE.getBudget().orElse(null), List.of(CLEMENTI_HDB));
         }
 

@@ -12,6 +12,8 @@ import seedu.address.model.person.Person;
  */
 public class Messages {
 
+    public static final String MESSAGE_DERIVED_CLIENT_INTENTION =
+            "Client intention is derived from property intentions and cannot be set directly. Remove i/.";
     public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
     public static final String MESSAGE_TAGS_NOT_SUPPORTED =
             "Tags are no longer supported. Remove all t/ arguments and try again.";

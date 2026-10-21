@@ -28,8 +28,8 @@ import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
@@ -98,15 +98,15 @@ public class HelpContentTest {
     }
 
     @Test
-    public void addExamples_recordBuyerWithBudgetAndSellerWithoutBudget() throws ParseException {
+    public void addExamples_recordClientsWithAndWithoutBudget() throws ParseException {
         List<String> examples = getExamples(AddCommand.COMMAND_WORD);
-        AddCommand buyer = new AddCommand(new PersonBuilder().withName("John Doe").withPhone("98765432")
-                .withEmail("john@example.com").withIntention(Intention.BUYER).withBudget("1500000").build());
-        AddCommand seller = new AddCommand(new PersonBuilder().withName("Jane Lee").withPhone("91234567")
-                .withEmail("jane@example.com").withIntention(Intention.SELLER).build());
+        AddCommand withBudget = new AddCommand(new PersonBuilder().withName("John Doe").withPhone("98765432")
+                .withEmail("john@example.com").withBudget("1500000").build());
+        AddCommand withoutBudget = new AddCommand(new PersonBuilder().withName("Jane Lee").withPhone("91234567")
+                .withEmail("jane@example.com").build());
 
-        assertEquals(buyer, parser.parseCommand(examples.get(0)));
-        assertEquals(seller, parser.parseCommand(examples.get(1)));
+        assertEquals(withBudget, parser.parseCommand(examples.get(0)));
+        assertEquals(withoutBudget, parser.parseCommand(examples.get(1)));
     }
 
     @Test
@@ -143,7 +143,8 @@ public class HelpContentTest {
                 new FindCommand(new EmailContainsKeywordsPredicate(List.of("gmail"))),
                 new FindCommand(new PhoneContainsKeywordsPredicate(List.of("9123"))),
                 new FindCommand(new LocationContainsKeywordsPredicate(List.of("clementi"))),
-                new FindCommand(new IntentionMatchesPredicate(Intention.BUYER)));
+                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)),
+                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BOTH)));
 
         assertEquals(expectedCommands.size(), examples.size());
         for (int i = 0; i < examples.size(); i++) {

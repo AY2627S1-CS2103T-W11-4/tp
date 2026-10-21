@@ -9,8 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
@@ -163,15 +163,19 @@ public class FindCommandParserTest {
         for (String selector : List.of("i/", "I/")) {
             for (String keyword : List.of("buyer", "Buyer", "BUYER", "bUyEr")) {
                 assertParseSuccess(parser, selector + keyword,
-                        new FindCommand(new IntentionMatchesPredicate(Intention.BUYER)));
+                        new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)));
             }
             for (String keyword : List.of("seller", "Seller", "SELLER", "sElLeR")) {
                 assertParseSuccess(parser, selector + keyword,
-                        new FindCommand(new IntentionMatchesPredicate(Intention.SELLER)));
+                        new FindCommand(new IntentionMatchesPredicate(ClientIntention.SELLER)));
+            }
+            for (String keyword : List.of("both", "Both", "BOTH", "bOtH")) {
+                assertParseSuccess(parser, selector + keyword,
+                        new FindCommand(new IntentionMatchesPredicate(ClientIntention.BOTH)));
             }
         }
         assertParseSuccess(parser, " \n i/\t buyer \n ",
-                new FindCommand(new IntentionMatchesPredicate(Intention.BUYER)));
+                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)));
     }
 
     @Test
@@ -186,7 +190,8 @@ public class FindCommandParserTest {
     @Test
     public void parse_invalidIntention_throwsParseException() {
         for (String selector : List.of("i/", "I/")) {
-            for (String keyword : List.of("tenant", "buy", "sell", "buyers", "sellers", "buyer,seller")) {
+            for (String keyword : List.of("tenant", "buy", "sell", "buyers", "sellers", "buyer,seller",
+                    "unspecified", "UNSPECIFIED")) {
                 assertParseFailure(parser, selector + keyword, FindCommand.MESSAGE_INVALID_INTENTION);
             }
         }
@@ -195,7 +200,8 @@ public class FindCommandParserTest {
     @Test
     public void parse_multipleIntentionValues_throwsParseException() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
-        for (String args : List.of("i/buyer seller", "I/buyer buyer", "i/seller extra")) {
+        for (String args : List.of("i/buyer seller", "I/buyer buyer", "i/seller extra", "i/both buyer",
+                "i/not specified")) {
             assertParseFailure(parser, args, expectedMessage);
         }
     }
@@ -223,6 +229,24 @@ public class FindCommandParserTest {
         for (String args : List.of("location/clementi", "l/clementi x/foo", "l/clementi/woodlands")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
         }
+    }
+
+    @Test
+    public void parse_locationAndDerivedIntentionErrors_preserveValidationPrecedence() {
+        for (String args : List.of("x/", "x/ i/both", "x/ l/Clementi")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+        for (String args : List.of("i/", "l/")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_MISSING_KEYWORD);
+        }
+        for (String args : List.of("i/invalid l/Clementi", "i/both l/", "l/ i/both")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        }
+        for (String args : List.of("i/both x/", "l/Clementi x/")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+        assertParseFailure(parser, "i/both extra",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
     }
 
     @Test

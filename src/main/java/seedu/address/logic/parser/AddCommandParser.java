@@ -4,7 +4,6 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_TAGS_NOT_SUPPORTED;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_BUDGET;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
@@ -15,7 +14,6 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
@@ -32,29 +30,29 @@ public class AddCommandParser implements Parser<AddCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public AddCommand parse(String args) throws ParseException {
+        ParserUtil.rejectClientIntention(args);
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                        PREFIX_INTENTION, PREFIX_BUDGET, PREFIX_TAG);
+                        PREFIX_BUDGET, PREFIX_TAG);
 
         if (!argMultimap.getAllValues(PREFIX_TAG).isEmpty()) {
             throw new ParseException(MESSAGE_TAGS_NOT_SUPPORTED);
         }
 
-        if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_INTENTION)
+        if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL)
                 || !argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                PREFIX_INTENTION, PREFIX_BUDGET);
+                PREFIX_BUDGET);
         Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
         Phone phone = ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get());
         Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
-        Intention intention = ParserUtil.parseIntention(argMultimap.getValue(PREFIX_INTENTION).get());
         Budget budget = argMultimap.getValue(PREFIX_BUDGET).isPresent()
                 ? ParserUtil.parseBudget(argMultimap.getValue(PREFIX_BUDGET).get())
                 : null;
-        Person person = new Person(name, phone, email, intention, new Remark(""), budget);
+        Person person = new Person(name, phone, email, new Remark(""), budget);
 
         return new AddCommand(person);
     }

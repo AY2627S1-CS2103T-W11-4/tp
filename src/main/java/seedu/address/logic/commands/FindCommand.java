@@ -27,10 +27,11 @@ public class FindCommand extends Command {
             + "Email search: " + COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"
             + "Phone search: " + COMMAND_WORD + " " + PREFIX_PHONE + "KEYWORD [MORE_KEYWORDS]\n"
             + "Location search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_LOCATION + "KEYWORD [MORE_KEYWORDS]\n"
-            + "Intention search: " + COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller\n"
+            + "Intention search: " + COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller|both\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_EMAIL + "alexyeoh@example.com";
 
-    public static final String MESSAGE_INVALID_INTENTION = "Intention must be buyer or seller (case-insensitive).";
+    public static final String MESSAGE_INVALID_INTENTION =
+            "Intention must be buyer, seller or both (case-insensitive).";
     public static final String MESSAGE_MISSING_ARGUMENTS = "Search field and search keyword are missing.";
     public static final String MESSAGE_MISSING_PROPERTY =
             "Search field is missing. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "

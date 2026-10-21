@@ -27,7 +27,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.Intention;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -41,20 +41,20 @@ public class EditCommandTest {
 
     @Test
     public void execute_editPhone_preservesOtherFields() throws Exception {
-        Person seller = new PersonBuilder().withIntention(Intention.SELLER).withBudget("1500000")
+        Person client = new PersonBuilder().withBudget("1500000")
                 .withRemark("Call next week").withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
-        Model sellerModel = new ModelManager(new AddressBook(), new UserPrefs());
-        sellerModel.addPerson(seller);
-        Person expectedPerson = new PersonBuilder(seller).withPhone(VALID_PHONE_BOB).build();
+        Model clientModel = new ModelManager(new AddressBook(), new UserPrefs());
+        clientModel.addPerson(client);
+        Person expectedPerson = new PersonBuilder(client).withPhone(VALID_PHONE_BOB).build();
 
         EditCommand command = new EditCommand(INDEX_FIRST_PERSON,
                 new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
-        command.execute(sellerModel);
+        command.execute(clientModel);
 
-        assertEquals(expectedPerson, sellerModel.getFilteredPersonList().get(0));
-        assertEquals(Intention.SELLER, sellerModel.getFilteredPersonList().get(0).getIntention());
+        assertEquals(expectedPerson, clientModel.getFilteredPersonList().get(0));
+        assertEquals(ClientIntention.BOTH, clientModel.getFilteredPersonList().get(0).getIntention());
         assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO),
-                sellerModel.getFilteredPersonList().get(0).getProperties());
+                clientModel.getFilteredPersonList().get(0).getProperties());
     }
 
     @Test

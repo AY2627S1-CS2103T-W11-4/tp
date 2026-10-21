@@ -67,7 +67,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 some random string", MESSAGE_INVALID_FORMAT);
 
         // invalid prefix being parsed as preamble
-        assertParseFailure(parser, "1 i/ string", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 x/ string", MESSAGE_INVALID_FORMAT);
     }
 
     @Test
@@ -181,4 +181,15 @@ public class EditCommandParserTest {
             assertParseFailure(parser, "1" + PHONE_DESC_AMY + tags, Messages.MESSAGE_TAGS_NOT_SUPPORTED);
         }
     }
+    @Test
+    public void parse_manualClientIntention_failure() {
+        for (String value : new String[]{"Buyer", "Seller", "Both", "", "invalid"}) {
+            assertParseFailure(parser, "1 i/" + value, Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
+            assertParseFailure(parser, "1 n/Changed i/" + value, Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
+            assertParseFailure(parser, "1 I/" + value + " n/Changed", Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
+            assertParseFailure(parser, "1\ti/" + value, Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
+        }
+        assertParseFailure(parser, "1 i/Buyer i/Seller", Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
+    }
+
 }
