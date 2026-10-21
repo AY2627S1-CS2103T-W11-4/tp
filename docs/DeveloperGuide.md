@@ -186,6 +186,10 @@ AddressBook source list -> FilteredList -> SortedList -> unmodifiable displayed 
 
 For intention predicates, `updateFilteredPersonList` applies the role comparator and breaks ties using source-list
 positions. The tie-breaker preserves group order when a property command replaces a client and changes their role.
+An identity-based source-position lookup replaces repeated linear scans in the comparator. A source-list
+invalidation clears the lookup before changes reach the transformation lists; the next tie comparison rebuilds it
+in one pass. Later comparisons use constant-time lookups until the source changes again. This also releases old
+replacement instances and handles additions, deletions and complete address-book resets without stale positions.
 For every other predicate, including `list`, it clears the comparator, restoring source order.
 Neither filtering nor sorting reorders the `AddressBook` or saved client list.
 
@@ -194,6 +198,8 @@ Neither filtering nor sorting reorders the `AddressBook` or saved client list.
 Property commands preserve the active filter, so a role-changing update can move or remove the client from results.
 `IntentionSearchIntegrationTest` verifies all six indexed operations against sorted results, first/last/invalid
 displayed indexes, live role changes, normal-order restoration and saved source order.
+`ModelManagerIntentionOrderTest` additionally checks replacements, source resets and 1,000 clients without
+timing assertions: intention sorting must not scan clients using `Person#equals()` to resolve ties.
 
 ### Derived client intention
 

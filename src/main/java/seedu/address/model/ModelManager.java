@@ -3,9 +3,12 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
+import javafx.beans.InvalidationListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -26,6 +29,7 @@ public class ModelManager implements Model {
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
     private final ObservableList<Person> displayedPersons;
+    private final Map<Person, Integer> sourcePositions = new IdentityHashMap<>();
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -37,6 +41,8 @@ public class ModelManager implements Model {
 
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
+        // Invalidation precedes transformation change events, so sorting sees current source positions.
+        this.addressBook.getPersonList().addListener((InvalidationListener) observable -> sourcePositions.clear());
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
         sortedPersons = new SortedList<>(filteredPersons);
         displayedPersons = FXCollections.unmodifiableObservableList(sortedPersons);
@@ -117,7 +123,21 @@ public class ModelManager implements Model {
         filteredPersons.setPredicate(predicate);
         // Replacements can disturb SortedList ties, so resolve equal ranks using the source positions.
         sortedPersons.setComparator(predicate instanceof IntentionMatchesPredicate intentionPredicate
-                ? intentionPredicate.getComparator().thenComparingInt(addressBook.getPersonList()::indexOf) : null);
+                ? intentionPredicate.getComparator().thenComparingInt(this::getSourcePosition) : null);
+    }
+
+    /**
+     * Builds the lookup once on demand after a source change, then resolves each tie in constant time.
+     * Identity keys avoid comparing clients' fields and keep distinct replacement instances separate.
+     */
+    private int getSourcePosition(Person person) {
+        if (sourcePositions.isEmpty()) {
+            ObservableList<Person> source = addressBook.getPersonList();
+            for (int i = 0; i < source.size(); i++) {
+                sourcePositions.put(source.get(i), i);
+            }
+        }
+        return sourcePositions.get(person);
     }
 
     @Override
