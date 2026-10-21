@@ -11,9 +11,9 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyType;
@@ -94,7 +94,7 @@ public class EditPropertyCommand extends Command {
      */
     public static class EditPropertyDescriptor {
         private PropertyType type;
-        private Intention intention;
+        private PropertyIntention intention;
         private PropertyLocation location;
         private PropertyPrice price;
         private boolean priceEdited;
@@ -118,7 +118,7 @@ public class EditPropertyCommand extends Command {
             this.type = requireNonNull(type);
         }
 
-        public void setIntention(Intention intention) {
+        public void setIntention(PropertyIntention intention) {
             this.intention = requireNonNull(intention);
         }
 

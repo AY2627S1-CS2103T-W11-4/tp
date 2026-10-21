@@ -33,6 +33,7 @@ import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.PersonBuilder;
@@ -208,12 +209,14 @@ public class FindCommandTest {
     @Test
     public void execute_locationSelectors_matchAnyPropertyAndKeyword() throws ParseException {
         Person clementiClient = new PersonBuilder(ALICE).withProperties(
-                new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Clementi Ave 3")),
-                new Property(PropertyType.CONDOMINIUM, Intention.SELLER, new PropertyLocation("Clementi Ave 5")))
+                new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi Ave 3")),
+                new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
+                        new PropertyLocation("Clementi Ave 5")))
                 .build();
         Person woodlandsClient = new PersonBuilder(BENSON).withProperties(
-                new Property(PropertyType.HDB, Intention.SELLER, new PropertyLocation("Tampines")),
-                new Property(PropertyType.CONDOMINIUM, Intention.BUYER, new PropertyLocation("Woodlands Clementi")))
+                new Property(PropertyType.HDB, PropertyIntention.SELLING, new PropertyLocation("Tampines")),
+                new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
+                        new PropertyLocation("Woodlands Clementi")))
                 .build();
         model.setPerson(ALICE, clementiClient);
         model.setPerson(BENSON, woodlandsClient);
@@ -239,15 +242,18 @@ public class FindCommandTest {
     @Test
     public void execute_multiwordLocation_matchesAnyParsedKeyword() throws ParseException {
         Person exactLocationClient = new PersonBuilder(ALICE).withProperties(
-                new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Clementi Ave 3"))).build();
+                new Property(PropertyType.HDB, PropertyIntention.BUYING,
+                        new PropertyLocation("Clementi Ave 3"))).build();
         Person clementiClient = new PersonBuilder(BENSON).withProperties(
-                new Property(PropertyType.HDB, Intention.SELLER, new PropertyLocation("Woodlands Clementi"))).build();
+                new Property(PropertyType.HDB, PropertyIntention.SELLING,
+                        new PropertyLocation("Woodlands Clementi"))).build();
         Person avenueClient = new PersonBuilder(CARL).withProperties(
-                new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Bedok Ave 1"))).build();
+                new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Bedok Ave 1"))).build();
         Person numberClient = new PersonBuilder(DANIEL).withProperties(
-                new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Tampines Street 3"))).build();
+                new Property(PropertyType.HDB, PropertyIntention.BUYING,
+                        new PropertyLocation("Tampines Street 3"))).build();
         Person nonMatchingClient = new PersonBuilder(ELLE).withProperties(
-                new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Jurong East"))).build();
+                new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Jurong East"))).build();
         model = new ModelManager(new AddressBook(), new UserPrefs());
         expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
         for (Person person : List.of(exactLocationClient, clementiClient, avenueClient, numberClient,

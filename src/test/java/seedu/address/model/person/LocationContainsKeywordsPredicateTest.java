@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.PersonBuilder;
@@ -67,6 +68,6 @@ public class LocationContainsKeywordsPredicateTest {
     }
 
     private Property propertyAt(String location) {
-        return new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation(location));
+        return new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation(location));
     }
 }

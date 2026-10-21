@@ -179,8 +179,8 @@ public class ResidexUiTest {
             assertTrue(properties.isVisible());
             assertTrue(properties.isManaged());
             assertEquals(3, properties.getChildren().size());
-            assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000",
-                    "2. Condominium | Seller | Tampines", "3. HDB | Buyer | Clementi Ave 3 | $800,000"),
+            assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000",
+                    "2. Condominium | Selling | Tampines", "3. HDB | Buying | Clementi Ave 3 | $800,000"),
                     propertyTexts(properties));
             for (Node node : properties.getChildren()) {
                 Label property = (Label) node;
@@ -194,7 +194,7 @@ public class ResidexUiTest {
             styleCard(otherClient);
             VBox otherProperties = (VBox) otherClient.lookup("#properties");
             assertEquals(1, otherProperties.getChildren().size());
-            assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000"), propertyTexts(otherProperties));
+            assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000"), propertyTexts(otherProperties));
         });
     }
 
@@ -213,7 +213,7 @@ public class ResidexUiTest {
                 assertFalse(properties.isVisible());
                 assertFalse(properties.isManaged());
 
-                command.setText("addp 1 t/HDB i/Buyer l/Clementi Ave 3 pr/800000");
+                command.setText("addp 1 t/HDB i/Buying l/Clementi Ave 3 pr/800000");
                 run.fire();
                 root.applyCss();
                 root.layout();
@@ -221,7 +221,7 @@ public class ResidexUiTest {
                 assertTrue(properties.isVisible());
                 assertTrue(properties.isManaged());
                 assertEquals(1, properties.getChildren().size());
-                assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000"), propertyTexts(properties));
+                assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000"), propertyTexts(properties));
 
                 command.setText("editp 1 1 l/Bishan pr/");
                 command.fireEvent(new ActionEvent());
@@ -229,7 +229,7 @@ public class ResidexUiTest {
                 root.layout();
                 properties = (VBox) root.lookup("#properties");
                 assertEquals(1, properties.getChildren().size());
-                assertEquals(List.of("1. HDB | Buyer | Bishan"), propertyTexts(properties));
+                assertEquals(List.of("1. HDB | Buying | Bishan"), propertyTexts(properties));
 
                 command.setText("delp 1 1");
                 run.fire();

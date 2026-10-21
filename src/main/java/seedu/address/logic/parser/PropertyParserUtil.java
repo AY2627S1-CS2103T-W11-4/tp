@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.person.Intention;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyType;
@@ -78,13 +78,12 @@ final class PropertyParserUtil {
         }
     }
 
-    static Intention parseIntention(String value) throws ParseException {
-        for (Intention intention : Intention.values()) {
-            if (intention.toString().equalsIgnoreCase(value.strip())) {
-                return intention;
-            }
+    static PropertyIntention parseIntention(String value) throws ParseException {
+        try {
+            return PropertyIntention.parse(value);
+        } catch (IllegalArgumentException e) {
+            throw new ParseException(PropertyIntention.MESSAGE_CONSTRAINTS, e);
         }
-        throw new ParseException("Property intention must be Buyer or Seller (case-insensitive).");
     }
 
     static PropertyLocation parseLocation(String value) throws ParseException {

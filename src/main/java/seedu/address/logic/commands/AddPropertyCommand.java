@@ -20,7 +20,7 @@ public class AddPropertyCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Adds a property to the displayed client.\n"
             + "Parameters: CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]\n"
-            + "Example: " + COMMAND_WORD + " 1 t/HDB i/Buyer l/Clementi pr/500000";
+            + "Example: " + COMMAND_WORD + " 1 t/HDB i/Buying l/Clementi pr/500000";
     public static final String MESSAGE_SUCCESS = "Added property %1$d to %2$s: %3$s";
 
     private final Logger logger = LogsCenter.getLogger(AddPropertyCommand.class);

@@ -94,6 +94,18 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_invalidPropertyIntention_preventsCommandsAndPreservesFile() throws Exception {
+        for (String intention : new String[]{"Both", "buying", "Selling "}) {
+            assertLoadFailurePreservesFile("""
+                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                      "intention": "Buyer", "properties": [
+                        {"type": "HDB", "intention": "%s", "location": "Clementi"}
+                      ]}]}
+                    """.formatted(intention));
+        }
+    }
+
+    @Test
     public void init_restoredData_loadsClientsAndAllowsSaving() throws Exception {
         assertLoadFailurePreservesFile("invalid JSON");
         new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
