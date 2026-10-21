@@ -74,6 +74,7 @@
         "detecting-duplicate-clients": "Detecting duplicate clients",
         "managing-client-properties": "Managing client properties",
         "deriving-and-finding-client-intentions": "Deriving and finding client intentions",
+        "recording-and-finding-property-transaction-stages": "Recording and finding property transaction stages",
         "recording-a-budget": "Recording a budget",
         "deleting-a-person": "Deleting a person",
         "saving-data": "Saving data"
@@ -132,7 +133,7 @@
         "adding-a-property-addp": "Adding a property: addp",
         "deleting-a-property-delp": "Deleting a property: delp",
         "editing-a-property-editp": "Editing a property: editp",
-        "locating-persons-by-name-email-phone-location-or-intention-find": "Locating persons by name, email, phone, location, or intention: find",
+        "locating-persons-by-name-email-phone-location-intention-or-property-status-find": "Locating persons by name, email, phone, location, intention or property status: find",
         "deleting-a-client-delete": "Deleting a client: delete",
         "setting-or-removing-a-remark-remark": "Setting or removing a remark: remark",
         "exiting-the-program-exit": "Exiting the program: exit",
