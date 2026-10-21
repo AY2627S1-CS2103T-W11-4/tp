@@ -34,6 +34,14 @@ Class PropertyIntention <<enumeration>> {
 Class PropertyType <<enumeration>>
 Class PropertyLocation
 Class PropertyPrice
+Class PropertyStatus <<enumeration>> {
+  UNSPECIFIED
+  ENQUIRING
+  VIEWING
+  NEGOTIATING
+  CLOSING
+  COMPLETED
+}
 
 Class I #FFFFFF
 }
@@ -43,6 +51,7 @@ HiddenOutside ..> Model
 
 show ClientIntention members
 show PropertyIntention members
+show PropertyStatus members
 
 AddressBook .up.|> ReadOnlyAddressBook
 
@@ -66,6 +75,7 @@ Property --> PropertyType
 Property --> "1" PropertyIntention
 Property *--> PropertyLocation
 Property *--> "0..1" PropertyPrice
+Property --> "1" PropertyStatus
 
 Person -[hidden]up--> I
 UniquePersonList -[hidden]right-> I

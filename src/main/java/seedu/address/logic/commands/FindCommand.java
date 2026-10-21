@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
 
 import java.util.function.Predicate;
 
@@ -13,6 +14,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
+import seedu.address.model.property.PropertyStatus;
 
 /**
  * Finds and lists all persons in the address book matching the given predicate.
@@ -28,17 +30,22 @@ public class FindCommand extends Command {
             + "Phone search: " + COMMAND_WORD + " " + PREFIX_PHONE + "KEYWORD [MORE_KEYWORDS]\n"
             + "Location search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_LOCATION + "KEYWORD [MORE_KEYWORDS]\n"
             + "Intention search: " + COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller|both\n"
+            + "Property status search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS
+            + "unspecified|enquiring|viewing|negotiating|closing|completed\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_EMAIL + "alexyeoh@example.com";
 
     public static final String MESSAGE_INVALID_INTENTION =
             "Intention must be buyer, seller or both (case-insensitive).";
+    public static final String MESSAGE_INVALID_STATUS = PropertyStatus.MESSAGE_CONSTRAINTS;
     public static final String MESSAGE_MISSING_ARGUMENTS = "Search field and search keyword are missing.";
     public static final String MESSAGE_MISSING_PROPERTY =
             "Search field is missing. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
-                    + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", or " + PREFIX_INTENTION + ".";
+                    + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", " + PREFIX_INTENTION
+                    + ", or " + PREFIX_PROPERTY_STATUS + ".";
     public static final String MESSAGE_INVALID_PROPERTY =
             "Invalid search field. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
-                    + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", or " + PREFIX_INTENTION + ".";
+                    + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", " + PREFIX_INTENTION
+                    + ", or " + PREFIX_PROPERTY_STATUS + ".";
     public static final String MESSAGE_MULTIPLE_PROPERTIES = "Specify exactly one search field.";
     public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.";
 

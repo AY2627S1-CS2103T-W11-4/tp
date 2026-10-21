@@ -38,6 +38,11 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Person;
+import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
+import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyStatus;
+import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.PersonBuilder;
 
 public class JsonAddressBookStorageTest {
@@ -53,6 +58,45 @@ public class JsonAddressBookStorageTest {
 
     private java.util.Optional<ReadOnlyAddressBook> readAddressBook(String filePath) throws Exception {
         return new JsonAddressBookStorage(Paths.get(filePath)).readAddressBook(addToTestDataPathIfNotNull(filePath));
+    }
+
+    @Test
+    public void readAndSaveAddressBook_mixedLegacyIntentionsAndStatuses_migratesBothIndependently() throws Exception {
+        Path filePath = testFolder.resolve("mixedLegacyProperties.json");
+        String original = """
+                {"persons": [{"name": "Mixed", "phone": "91234567", "email": "mixed@example.com",
+                  "intention": "Buyer", "properties": [
+                    {"type": "HDB", "intention": "Buyer", "location": "A"},
+                    {"type": "HDB", "intention": "Seller", "location": "B", "status": null},
+                    {"type": "HDB", "intention": "Buying", "location": "C", "status": "VIEWING"},
+                    {"type": "HDB", "intention": "Selling", "location": "D", "status": "COMPLETED"}
+                  ]}]}
+                """;
+        Files.writeString(filePath, original);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+        Person person = loaded.getPersonList().get(0);
+        assertEquals(ClientIntention.BOTH, person.getIntention());
+        assertEquals(List.of(PropertyStatus.UNSPECIFIED, PropertyStatus.UNSPECIFIED,
+                PropertyStatus.VIEWING, PropertyStatus.COMPLETED), person.getProperties().stream()
+                        .map(Property::getStatus).toList());
+        assertEquals(List.of(PropertyIntention.BUYING, PropertyIntention.SELLING,
+                PropertyIntention.BUYING, PropertyIntention.SELLING), person.getProperties().stream()
+                        .map(Property::getIntention).toList());
+        assertEquals(original, Files.readString(filePath));
+
+        storage.saveAddressBook(loaded);
+
+        JsonNode savedPerson = JsonUtil.fromJsonString(Files.readString(filePath), JsonNode.class)
+                .get("persons").get(0);
+        assertFalse(savedPerson.has("intention"));
+        for (int i = 0; i < person.getProperties().size(); i++) {
+            Property property = person.getProperties().get(i);
+            JsonNode savedProperty = savedPerson.get("properties").get(i);
+            assertEquals(property.getIntention().toString(), savedProperty.get("intention").asText());
+            assertEquals(property.getStatus().name(), savedProperty.get("status").asText());
+        }
+        assertEquals(loaded, storage.readAddressBook().orElseThrow());
     }
 
     private Path addToTestDataPathIfNotNull(String prefsFileInTestDataFolder) {
@@ -265,7 +309,9 @@ public class JsonAddressBookStorageTest {
             new JsonAdaptedProperty("HDB", "Selling ", "Clementi", null),
             new JsonAdaptedProperty("HDB", "Buyer", null, null),
             new JsonAdaptedProperty("HDB", "Buyer", " ", null),
-            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0")};
+            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0"),
+            new JsonAdaptedProperty("HDB", "Buying", "Clementi", null, ""),
+            new JsonAdaptedProperty("HDB", "Seller", "Clementi", null, "Cancelled")};
         for (JsonAdaptedProperty invalid : invalidProperties) {
             List<JsonAdaptedProperty> properties = new ArrayList<>(validProperties);
             properties.add(invalid);
@@ -352,5 +398,55 @@ public class JsonAddressBookStorageTest {
     @Test
     public void saveAddressBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> saveAddressBook(new AddressBook(), null));
+    }
+
+    @Test
+    public void readAndSaveAddressBook_legacyProperty_defaultsStatusWithoutRewritingOnLoad() throws Exception {
+        Path filePath = testFolder.resolve("legacyProperty.json");
+        String legacyJson = "{\"persons\":[{\"name\":\"Alice\",\"phone\":\"91234567\","
+                + "\"email\":\"alice@example.com\",\"intention\":\"Buyer\",\"properties\":["
+                + "{\"type\":\"HDB\",\"intention\":\"Buyer\",\"location\":\"Clementi\"}]}]}";
+        Files.writeString(filePath, legacyJson);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+
+        Property property = loaded.getPersonList().get(0).getProperties().get(0);
+        assertEquals(PropertyStatus.UNSPECIFIED, property.getStatus());
+        assertEquals("Clementi", property.getLocation().value);
+        assertEquals(legacyJson, Files.readString(filePath));
+
+        storage.saveAddressBook(loaded);
+
+        JsonNode saved = JsonUtil.fromJsonString(Files.readString(filePath), JsonNode.class);
+        assertEquals("UNSPECIFIED", saved.get("persons").get(0).get("properties").get(0).get("status").asText());
+        assertEquals(loaded, storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void readAndSaveAddressBook_allStatuses_preservesPropertyAndClientOrder() throws Exception {
+        Path filePath = testFolder.resolve("allPropertyStatuses.json");
+        List<Property> properties = new ArrayList<>();
+        for (PropertyStatus status : PropertyStatus.values()) {
+            properties.add(new Property(PropertyType.HDB, CLEMENTI_HDB.getIntention(),
+                    new PropertyLocation("Clementi"), null, status));
+        }
+        Person first = new PersonBuilder(ALICE).withProperties(properties.toArray(Property[]::new)).build();
+        Person second = new PersonBuilder(HOON).withProperties(CLEMENTI_HDB).build();
+        AddressBook original = new AddressBook();
+        original.setPersons(List.of(first, second));
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        storage.saveAddressBook(original);
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+
+        assertEquals(original, loaded);
+        assertEquals(List.of(first, second), loaded.getPersonList());
+        assertEquals(properties, loaded.getPersonList().get(0).getProperties());
+        JsonNode saved = JsonUtil.fromJsonString(Files.readString(filePath), JsonNode.class);
+        JsonNode savedProperties = saved.get("persons").get(0).get("properties");
+        for (int i = 0; i < properties.size(); i++) {
+            assertEquals(properties.get(i).getStatus().name(), savedProperties.get(i).get("status").asText());
+        }
     }
 }

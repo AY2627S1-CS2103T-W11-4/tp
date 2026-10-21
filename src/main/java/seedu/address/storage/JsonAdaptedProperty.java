@@ -8,6 +8,7 @@ import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 
 /**
@@ -23,17 +24,27 @@ class JsonAdaptedProperty {
     private final String intention;
     private final String location;
     private final String price;
+    private final String status;
 
     /**
      * Constructs an adapted property from saved fields. A missing or null price means unknown.
      */
+    public JsonAdaptedProperty(String type, String intention, String location, String price) {
+        this(type, intention, location, price, null);
+    }
+
+    /**
+     * Constructs an adapted property. Missing or null legacy status means no stage has been recorded.
+     */
     @JsonCreator
     public JsonAdaptedProperty(@JsonProperty("type") String type, @JsonProperty("intention") String intention,
-            @JsonProperty("location") String location, @JsonProperty("price") String price) {
+            @JsonProperty("location") String location, @JsonProperty("price") String price,
+            @JsonProperty("status") String status) {
         this.type = type;
         this.intention = intention;
         this.location = location;
         this.price = price;
+        this.status = status;
     }
 
     /**
@@ -44,6 +55,7 @@ class JsonAdaptedProperty {
         intention = source.getIntention().toString();
         location = source.getLocation().value;
         price = source.getPrice().map(PropertyPrice::toString).orElse(null);
+        status = source.getStatus().name();
     }
 
     /**
@@ -89,6 +101,13 @@ class JsonAdaptedProperty {
             modelPrice = new PropertyPrice(price);
         }
 
-        return new Property(modelType, modelIntention, modelLocation, modelPrice);
+        final PropertyStatus modelStatus;
+        try {
+            modelStatus = status == null ? PropertyStatus.UNSPECIFIED : PropertyStatus.parse(status);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(PropertyStatus.MESSAGE_CONSTRAINTS, e);
+        }
+
+        return new Property(modelType, modelIntention, modelLocation, modelPrice, modelStatus);
     }
 }

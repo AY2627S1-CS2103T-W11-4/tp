@@ -16,6 +16,7 @@ import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 
 /**
@@ -25,14 +26,16 @@ public class EditPropertyCommand extends Command {
     public static final String COMMAND_WORD = "editp";
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Edits a property belonging to the displayed client.\n"
-            + "Parameters: CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]\n"
+            + "Parameters: CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]\n"
             + "Supply at least one field. Empty pr/ removes the price.\n"
+            + "Use s/unspecified to reset status; empty s/ is rejected.\n"
             + "Example: " + COMMAND_WORD + " 1 2 l/Toa Payoh pr/600000";
     public static final String MESSAGE_NOT_EDITED = "Supply at least one property field to edit.";
     public static final String MESSAGE_UNCHANGED = "Property %1$d for %2$s is unchanged.";
     public static final String MESSAGE_SUCCESS = "Edited property %1$d for %2$s: %3$s";
 
-    private final Logger logger = LogsCenter.getLogger(EditPropertyCommand.class);
+    private static final Logger logger = LogsCenter.getLogger(EditPropertyCommand.class);
+
     private final Index clientIndex;
     private final Index propertyIndex;
     private final EditPropertyDescriptor descriptor;
@@ -68,6 +71,11 @@ public class EditPropertyCommand extends Command {
         model.setPerson(original, updated);
         logger.fine("Edited property " + propertyIndex.getOneBased()
                 + " for displayed client " + clientIndex.getOneBased());
+        if (current.getStatus() != replacement.getStatus()) {
+            logger.fine(() -> "Property status changed for displayed client " + clientIndex.getOneBased()
+                    + ", property " + propertyIndex.getOneBased() + ": " + current.getStatus().name()
+                    + " -> " + replacement.getStatus().name());
+        }
         return new CommandResult(String.format(MESSAGE_SUCCESS, propertyIndex.getOneBased(),
                 original.getName(), replacement.toDisplay()));
     }
@@ -97,6 +105,7 @@ public class EditPropertyCommand extends Command {
         private PropertyIntention intention;
         private PropertyLocation location;
         private PropertyPrice price;
+        private PropertyStatus status;
         private boolean priceEdited;
 
         public EditPropertyDescriptor() {
@@ -111,6 +120,7 @@ public class EditPropertyCommand extends Command {
             intention = source.intention;
             location = source.location;
             price = source.price;
+            status = source.status;
             priceEdited = source.priceEdited;
         }
 
@@ -126,6 +136,10 @@ public class EditPropertyCommand extends Command {
             this.location = requireNonNull(location);
         }
 
+        public void setStatus(PropertyStatus status) {
+            this.status = requireNonNull(status);
+        }
+
         /**
          * Sets the price, or explicitly removes it if {@code price} is null.
          */
@@ -135,14 +149,15 @@ public class EditPropertyCommand extends Command {
         }
 
         public boolean isAnyFieldEdited() {
-            return type != null || intention != null || location != null || priceEdited;
+            return type != null || intention != null || location != null || priceEdited || status != null;
         }
 
         private Property applyTo(Property original) {
             return new Property(type == null ? original.getType() : type,
                     intention == null ? original.getIntention() : intention,
                     location == null ? original.getLocation() : location,
-                    priceEdited ? price : original.getPrice().orElse(null));
+                    priceEdited ? price : original.getPrice().orElse(null),
+                    status == null ? original.getStatus() : status);
         }
 
         @Override
@@ -155,13 +170,14 @@ public class EditPropertyCommand extends Command {
                     && intention == otherDescriptor.intention
                     && Objects.equals(location, otherDescriptor.location)
                     && Objects.equals(price, otherDescriptor.price)
+                    && status == otherDescriptor.status
                     && priceEdited == otherDescriptor.priceEdited;
         }
 
         @Override
         public String toString() {
             return new ToStringBuilder(this).add("type", type).add("intention", intention).add("location", location)
-                    .add("price", price).add("priceEdited", priceEdited).toString();
+                    .add("price", price).add("priceEdited", priceEdited).add("status", status).toString();
         }
     }
 }

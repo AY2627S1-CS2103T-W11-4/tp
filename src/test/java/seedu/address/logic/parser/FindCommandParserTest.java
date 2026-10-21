@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,8 @@ import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
+import seedu.address.model.person.PropertyStatusMatchesPredicate;
+import seedu.address.model.property.PropertyStatus;
 
 public class FindCommandParserTest {
 
@@ -233,16 +236,17 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_locationAndDerivedIntentionErrors_preserveValidationPrecedence() {
-        for (String args : List.of("x/", "x/ i/both", "x/ l/Clementi")) {
+        for (String args : List.of("x/", "x/ i/both", "x/ l/Clementi", "x/ s/viewing")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
         }
         for (String args : List.of("i/", "l/")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_MISSING_KEYWORD);
         }
-        for (String args : List.of("i/invalid l/Clementi", "i/both l/", "l/ i/both")) {
+        for (String args : List.of("i/invalid l/Clementi", "i/both l/", "l/ i/both",
+                "s/invalid l/Clementi", "i/both s/", "s/ l/")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
         }
-        for (String args : List.of("i/both x/", "l/Clementi x/")) {
+        for (String args : List.of("i/both x/", "l/Clementi x/", "s/viewing x/")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
         }
         assertParseFailure(parser, "i/both extra",
@@ -315,6 +319,52 @@ public class FindCommandParserTest {
     public void parse_longTrailingSlashSelectors_throwsParseException() {
         for (String args : List.of("name/Alice", "email/gmail", "phone/9123", "intention/buyer",
                 "NAME/Alice", "Email/gmail", "Phone/9123", "Intention/BUYER")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+    }
+
+    @Test
+    public void parse_statusSelectors_acceptsEveryStatusIgnoringCase() {
+        for (String selector : List.of("s/", "S/")) {
+            for (PropertyStatus status : PropertyStatus.values()) {
+                FindCommand expected = new FindCommand(new PropertyStatusMatchesPredicate(status));
+                assertParseSuccess(parser, selector + status.name(), expected);
+                assertParseSuccess(parser, " \n " + selector + "\t" + status.name().toLowerCase(Locale.ROOT) + " \t ",
+                        expected);
+            }
+        }
+        assertParseSuccess(parser, "s/nEgOtIaTiNg",
+                new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.NEGOTIATING)));
+    }
+
+    @Test
+    public void parse_statusSelectorWithoutValue_throwsParseException() {
+        for (String selector : List.of("s/", "S/")) {
+            assertParseFailure(parser, selector, FindCommand.MESSAGE_MISSING_KEYWORD);
+            assertParseFailure(parser, " \t " + selector + " \n ", FindCommand.MESSAGE_MISSING_KEYWORD);
+        }
+    }
+
+    @Test
+    public void parse_invalidStatus_throwsParseException() {
+        for (String keyword : List.of("not-specified", "Cancelled", "Withdrawn", "view", "viewings", "1")) {
+            assertParseFailure(parser, "s/" + keyword, FindCommand.MESSAGE_INVALID_STATUS);
+        }
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String values : List.of("viewing completed", "VIEWING viewing", "Not specified")) {
+            assertParseFailure(parser, "s/" + values, expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_statusMixedWithAnySelector_throwsParseException() {
+        for (String field : List.of("n/Alice", "e/gmail", "p/9123", "i/buyer", "i/both",
+                "l/Clementi", "s/closing", "S/")) {
+            assertParseFailure(parser, "s/viewing " + field, FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+            assertParseFailure(parser, field + " S/viewing", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        }
+        for (String args : List.of("status/viewing", "s/viewing status/closing",
+                "s/viewing/foo", "s/viewing x/", "n/Alice status/viewing")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
         }
     }

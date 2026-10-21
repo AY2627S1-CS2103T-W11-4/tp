@@ -21,6 +21,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.testutil.PersonBuilder;
 
 public class PropertyCommandTest {
@@ -35,6 +36,7 @@ public class PropertyCommandTest {
         assertThrows(NullPointerException.class, () -> new EditPropertyCommand(INDEX_FIRST_PERSON, null, descriptor));
         assertThrows(NullPointerException.class, () -> new EditPropertyCommand(
                 INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, null));
+        assertThrows(NullPointerException.class, () -> descriptor.setStatus(null));
     }
 
     @Test
@@ -87,6 +89,10 @@ public class PropertyCommandTest {
         copy.setPrice(null);
         assertFalse(descriptor.equals(copy));
         assertTrue(copy.isAnyFieldEdited());
+        copy = new EditPropertyDescriptor(descriptor);
+        copy.setStatus(PropertyStatus.VIEWING);
+        assertFalse(descriptor.equals(copy));
+        assertTrue(copy.isAnyFieldEdited());
     }
 
     @Test
@@ -95,12 +101,15 @@ public class PropertyCommandTest {
         model.addPerson(new PersonBuilder(ALICE).withProperties(CLEMENTI_HDB).build());
         EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
         descriptor.setLocation(new PropertyLocation("Bishan"));
+        descriptor.setStatus(PropertyStatus.VIEWING);
         EditPropertyCommand command = new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor);
 
         descriptor.setLocation(new PropertyLocation("Tampines"));
+        descriptor.setStatus(PropertyStatus.COMPLETED);
         command.execute(model);
 
         assertEquals("Bishan", model.getFilteredPersonList().get(0).getProperties().get(0).getLocation().value);
+        assertEquals(PropertyStatus.VIEWING, model.getFilteredPersonList().get(0).getProperties().get(0).getStatus());
     }
 
     @Test
@@ -136,6 +145,29 @@ public class PropertyCommandTest {
     }
 
     @Test
+    public void execute_editExistingFields_preservesRecordedStatus() throws Exception {
+        for (PropertyStatus status : PropertyStatus.values()) {
+            Property recorded = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
+                    CLEMENTI_HDB.getLocation(), CLEMENTI_HDB.getPrice().orElseThrow(), status);
+            Model model = new ModelManager();
+            model.addPerson(new PersonBuilder(ALICE).withProperties(recorded).build());
+            EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+            descriptor.setLocation(new PropertyLocation("Bishan"));
+            descriptor.setPrice(null);
+
+            new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor).execute(model);
+
+            Property updated = model.getFilteredPersonList().get(0).getProperties().get(0);
+            assertEquals(status, updated.getStatus());
+            assertEquals("Bishan", updated.getLocation().value);
+            assertTrue(updated.getPrice().isEmpty());
+            assertEquals(CLEMENTI_HDB.getLocation(), recorded.getLocation());
+            assertEquals(CLEMENTI_HDB.getPrice(), recorded.getPrice());
+            assertEquals(status, recorded.getStatus());
+        }
+    }
+
+    @Test
     public void toString_addAndDelete_includeSelectedIndexesAndProperty() {
         AddPropertyCommand add = new AddPropertyCommand(INDEX_FIRST_PERSON, CLEMENTI_HDB);
         assertEquals(AddPropertyCommand.class.getCanonicalName() + "{clientIndex=" + INDEX_FIRST_PERSON
@@ -153,10 +185,11 @@ public class PropertyCommandTest {
         descriptor.setIntention(CLEMENTI_HDB.getIntention());
         descriptor.setLocation(CLEMENTI_HDB.getLocation());
         descriptor.setPrice(CLEMENTI_HDB.getPrice().orElseThrow());
+        descriptor.setStatus(PropertyStatus.VIEWING);
         String expectedDescriptor = EditPropertyDescriptor.class.getCanonicalName()
                 + "{type=" + CLEMENTI_HDB.getType() + ", intention=" + CLEMENTI_HDB.getIntention()
                 + ", location=" + CLEMENTI_HDB.getLocation() + ", price=" + CLEMENTI_HDB.getPrice().orElseThrow()
-                + ", priceEdited=true}";
+                + ", priceEdited=true, status=Viewing}";
         assertEquals(expectedDescriptor, descriptor.toString());
 
         EditPropertyCommand edit = new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON, descriptor);

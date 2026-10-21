@@ -26,9 +26,11 @@ import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
+import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.TypicalPersons;
@@ -331,5 +333,32 @@ public class FindCommandTest {
      */
     private NameContainsKeywordsPredicate preparePredicate(String userInput) {
         return new NameContainsKeywordsPredicate(List.of(userInput.split("\\s+")));
+    }
+
+    @Test
+    public void execute_propertyStatuses_matchClientsOnceInSourceOrder() throws ParseException {
+        for (PropertyStatus status : PropertyStatus.values()) {
+            Property property = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
+                    CLEMENTI_HDB.getLocation(), null, status);
+            Person first = new PersonBuilder(TypicalPersons.ALICE).withProperties(property, property).build();
+            Person second = new PersonBuilder(TypicalPersons.BENSON).withProperties(property).build();
+            AddressBook data = new AddressBook();
+            data.setPersons(List.of(new PersonBuilder(TypicalPersons.CARL).withProperties().build(), first,
+                    new PersonBuilder(TypicalPersons.DANIEL).withProperties().build(), second));
+            model = new ModelManager(data, new UserPrefs());
+            expectedModel = new ModelManager(data, new UserPrefs());
+
+            assertParsedFindSuccess("find S/" + status.name(), new PropertyStatusMatchesPredicate(status),
+                    List.of(first, second));
+        }
+    }
+
+    @Test
+    public void execute_statusOnEmptyAddressBook_noPersonFound() throws ParseException {
+        model = new ModelManager();
+        expectedModel = new ModelManager();
+        for (PropertyStatus status : PropertyStatus.values()) {
+            assertParsedFindSuccess("find s/" + status.name(), new PropertyStatusMatchesPredicate(status), List.of());
+        }
     }
 }

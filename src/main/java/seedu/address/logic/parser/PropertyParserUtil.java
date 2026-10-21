@@ -5,6 +5,7 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_PRICE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_TYPE;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 
 /**
@@ -26,9 +28,9 @@ import seedu.address.model.property.PropertyType;
 final class PropertyParserUtil {
     private static final Pattern FIELD_PREFIX = Pattern.compile("(?<!\\S)([A-Za-z]+)/");
     private static final Prefix[] PREFIXES = {
-        PREFIX_PROPERTY_TYPE, PREFIX_INTENTION, PREFIX_PROPERTY_LOCATION, PREFIX_PROPERTY_PRICE
+        PREFIX_PROPERTY_TYPE, PREFIX_INTENTION, PREFIX_PROPERTY_LOCATION, PREFIX_PROPERTY_PRICE, PREFIX_PROPERTY_STATUS
     };
-    private static final List<String> FIELD_NAMES = List.of("t", "i", "l", "pr");
+    private static final List<String> FIELD_NAMES = List.of("t", "i", "l", "pr", "s");
 
     private PropertyParserUtil() {
     }
@@ -44,7 +46,7 @@ final class PropertyParserUtil {
             String field = matcher.group(1).toLowerCase(Locale.ROOT);
             if (!FIELD_NAMES.contains(field)) {
                 throw new ParseException("Unknown property field: " + matcher.group(1)
-                        + "/. Use t/, i/, l/ or pr/.");
+                        + "/. Use t/, i/, l/, pr/ or s/.");
             }
             matcher.appendReplacement(normalised, " " + field + "/");
         }
@@ -98,5 +100,13 @@ final class PropertyParserUtil {
             throw new ParseException(PropertyPrice.MESSAGE_CONSTRAINTS);
         }
         return new PropertyPrice(value);
+    }
+
+    static PropertyStatus parseStatus(String value) throws ParseException {
+        try {
+            return PropertyStatus.parse(value);
+        } catch (IllegalArgumentException e) {
+            throw new ParseException(PropertyStatus.MESSAGE_CONSTRAINTS, e);
+        }
     }
 }

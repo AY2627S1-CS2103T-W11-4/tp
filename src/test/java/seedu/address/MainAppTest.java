@@ -220,6 +220,18 @@ public class MainAppTest {
         assertEquals(1, saves.get());
     }
 
+    @Test
+    public void init_invalidPropertyStatus_preventsCommandsAndPreservesFile() throws Exception {
+        for (String status : new String[]{"", "Cancelled", "Not specified", "viewing completed"}) {
+            assertLoadFailurePreservesFile("""
+                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                      "properties": [
+                        {"type": "HDB", "intention": "Buying", "location": "Clementi", "status": "%s"}
+                      ]}]}
+                    """.formatted(status));
+        }
+    }
+
     private MainApp createApp() {
         return new MainApp(prefsPath(), dataPath());
     }

@@ -50,6 +50,8 @@ import seedu.address.logic.LogicManager;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -171,7 +173,9 @@ public class ResidexUiTest {
     @Test
     public void clientCards_showNumberedPropertiesWithAndWithoutPrices() throws Exception {
         runOnFxThread(() -> {
-            Person person = new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB).build();
+            Property viewing = new Property(TAMPINES_CONDO.getType(), TAMPINES_CONDO.getIntention(),
+                    TAMPINES_CONDO.getLocation(), null, PropertyStatus.VIEWING);
+            Person person = new PersonBuilder().withProperties(CLEMENTI_HDB, viewing, CLEMENTI_HDB).build();
             Region card = new PersonCard(person, 2).getRoot();
             styleCard(card);
             VBox properties = (VBox) card.lookup("#properties");
@@ -179,8 +183,9 @@ public class ResidexUiTest {
             assertTrue(properties.isManaged());
             assertEquals(3, properties.getChildren().size());
             assertEquals("Intention: Buyer / Seller", label(card, "intention").getText());
-            assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000",
-                    "2. Condominium | Selling | Tampines", "3. HDB | Buying | Clementi Ave 3 | $800,000"),
+            assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000 | Not specified",
+                    "2. Condominium | Selling | Tampines | Viewing",
+                    "3. HDB | Buying | Clementi Ave 3 | $800,000 | Not specified"),
                     propertyTexts(properties));
             for (Node node : properties.getChildren()) {
                 Label property = (Label) node;
@@ -194,7 +199,8 @@ public class ResidexUiTest {
             styleCard(otherClient);
             VBox otherProperties = (VBox) otherClient.lookup("#properties");
             assertEquals(1, otherProperties.getChildren().size());
-            assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000"), propertyTexts(otherProperties));
+            assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000 | Not specified"),
+                    propertyTexts(otherProperties));
         });
     }
 
@@ -214,7 +220,7 @@ public class ResidexUiTest {
                 assertFalse(properties.isManaged());
                 assertEquals("Intention: Not specified", label(root, "intention").getText());
 
-                command.setText("addp 1 t/HDB i/Buying l/Clementi Ave 3 pr/800000");
+                command.setText("addp 1 t/HDB i/Buying l/Clementi Ave 3 pr/800000 s/Viewing");
                 run.fire();
                 root.applyCss();
                 root.layout();
@@ -223,16 +229,17 @@ public class ResidexUiTest {
                 assertTrue(properties.isManaged());
                 assertEquals(1, properties.getChildren().size());
                 assertEquals("Intention: Buyer", label(root, "intention").getText());
-                assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000"), propertyTexts(properties));
+                assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000 | Viewing"),
+                        propertyTexts(properties));
 
-                command.setText("editp 1 1 l/Bishan pr/");
+                command.setText("editp 1 1 l/Bishan pr/ s/Negotiating");
                 command.fireEvent(new ActionEvent());
                 root.applyCss();
                 root.layout();
                 properties = (VBox) root.lookup("#properties");
                 assertEquals(1, properties.getChildren().size());
                 assertEquals("Intention: Buyer", label(root, "intention").getText());
-                assertEquals(List.of("1. HDB | Buying | Bishan"), propertyTexts(properties));
+                assertEquals(List.of("1. HDB | Buying | Bishan | Negotiating"), propertyTexts(properties));
 
                 command.setText("delp 1 1");
                 run.fire();

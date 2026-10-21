@@ -26,6 +26,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.PersonBuilder;
 
@@ -220,6 +221,16 @@ public class JsonAdaptedPersonTest {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, null, VALID_INTENTION);
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName());
+        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_invalidPropertyStatus_reportsItsIndexAndConstraint() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
+                "", null, List.of(new JsonAdaptedProperty(CLEMENTI_HDB),
+                        new JsonAdaptedProperty("HDB", "Buyer", "Clementi", null, "Cancelled")));
+        String expectedMessage = String.format(JsonAdaptedPerson.MESSAGE_INVALID_PROPERTY_FORMAT, 2,
+                PropertyStatus.MESSAGE_CONSTRAINTS);
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
 

@@ -34,11 +34,13 @@ import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
+import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.Remark;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -144,7 +146,9 @@ public class HelpContentTest {
                 new FindCommand(new PhoneContainsKeywordsPredicate(List.of("9123"))),
                 new FindCommand(new LocationContainsKeywordsPredicate(List.of("clementi"))),
                 new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)),
-                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BOTH)));
+                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BOTH)),
+                new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.VIEWING)),
+                new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.UNSPECIFIED)));
 
         assertEquals(expectedCommands.size(), examples.size());
         for (int i = 0; i < examples.size(); i++) {
@@ -166,5 +170,21 @@ public class HelpContentTest {
         return HelpContent.getCommands().stream()
                 .filter(command -> command.commandWord().equals(commandWord))
                 .findFirst().orElseThrow().examples();
+    }
+
+    @Test
+    public void propertyStatusExamples_setAndResetRecordedStages() throws ParseException {
+        Property viewing = new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi"),
+                null, PropertyStatus.VIEWING);
+        assertEquals(new AddPropertyCommand(Index.fromOneBased(1), viewing),
+                parser.parseCommand(getExamples(AddPropertyCommand.COMMAND_WORD).get(2)));
+        EditPropertyDescriptor negotiating = new EditPropertyDescriptor();
+        negotiating.setStatus(PropertyStatus.NEGOTIATING);
+        EditPropertyDescriptor unspecified = new EditPropertyDescriptor();
+        unspecified.setStatus(PropertyStatus.UNSPECIFIED);
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), negotiating),
+                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(4)));
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), unspecified),
+                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(5)));
     }
 }

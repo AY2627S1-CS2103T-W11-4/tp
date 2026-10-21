@@ -181,7 +181,7 @@ examples parse as the intended commands without executing them or starting JavaF
 
 ### Find command
 
-`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, or `i/`.
+`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, `i/` or `s/`.
 For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
 Name, email, phone, and location searches use case-insensitive substring matching with OR semantics across keywords.
 `LocationContainsKeywordsPredicate` checks every entry in `Person#getProperties()` and returns a client once if any
@@ -214,6 +214,18 @@ Property commands preserve the active filter, so a role-changing update can move
 displayed indexes, live role changes, normal-order restoration and saved source order.
 `ModelManagerIntentionOrderTest` additionally checks replacements, source resets and 1,000 clients without
 timing assertions: intention sorting must not scan clients using `Person#equals()` to resolve ties.
+
+Status searches accept exactly one `PropertyStatus` token, ignoring case.
+`FindCommandParser` shares `PropertyParserUtil.parseStatus()` with property commands while retaining
+the find command's validation order and error messages.
+`PropertyStatusMatchesPredicate` matches a client if any existing property has the requested status.
+The predicate returns false for an empty property list, including when searching for `UNSPECIFIED`.
+Multiple matching properties still produce one client result.
+The predicate bases both equality and hashing on the requested status.
+
+Status results retain source order through the displayed list; a status query clears the intention comparator.
+Replacing a property re-evaluates the active status predicate, so clients may leave the displayed results.
+`PropertyStatusSearchIntegrationTest` checks stages, selector coexistence, saved order and displayed-index targeting.
 
 ### Derived client intention
 
@@ -322,10 +334,36 @@ Each entry describes one client's interest in buying or selling a property.
 | Intention | `PropertyIntention` | Required: `BUYING` or `SELLING`. `parse` accepts `Buying` or `Selling`, ignoring case and surrounding whitespace. Client-role values are invalid. Property directions determine the derived `ClientIntention`. |
 | Location | `PropertyLocation` | Required, nonblank text. Surrounding whitespace is removed; case and internal whitespace are preserved. |
 | Price | `PropertyPrice` | Optional. A supplied price must be a positive whole-dollar SGD amount up to `Long.MAX_VALUE`, without commas, decimals, leading zeros, or surrounding whitespace. |
+| Status | `PropertyStatus` | Always non-null internally. The six tokens ignore case and outer whitespace; omitted creation status defaults to `UNSPECIFIED`. Empty input is invalid. |
 
 Use the three-argument `Property` constructor when the price is unknown, or pass `null` as the fourth argument.
 `getPrice()` returns `Optional.empty()` for an unknown price. Zero is invalid for a property price.
+The three- and four-argument constructors default status to `UNSPECIFIED`.
+Use the five-argument constructor `(type, intention, location, price, status)` to record an explicit stage;
+`price` may be null, but `status` may not. `getStatus()` returns the enum directly.
 The existing client budget remains a separate field with its existing validation.
+For a buying property, price records the asking/current listing price; for a selling property, the client's asking price.
+Status edits do not change price or budget automatically.
+
+#### Transaction status
+
+Each immutable `Property` owns one current status, independently of its direction and the client's other properties.
+Status participates in equality, hashing, display and diagnostic strings.
+
+| Enum / token | Display | Meaning |
+| --- | --- | --- |
+| `UNSPECIFIED` / `unspecified` | Not specified | No transaction stage has been recorded for this property yet. |
+| `ENQUIRING` / `enquiring` | Enquiring | The client has shown interest in buying or selling the property but has not committed to proceeding. |
+| `VIEWING` / `viewing` | Viewing | For a Buying property, the agent arranges a client visit so the client can assess whether to proceed. For a Selling property, the agent visits and assesses the seller's property before representing and marketing it to prospective buyers. The agent is the intermediary; RESIDEX does not require the seller and prospective buyers to deal directly with each other. |
+| `NEGOTIATING` / `negotiating` | Negotiating | The client intends to proceed and the relevant parties work toward agreement on price and other transaction terms. |
+| `CLOSING` / `closing` | Closing | The main transaction terms are agreed, but contracts, signing, payment or other final formalities remain incomplete. |
+| `COMPLETED` / `completed` | Completed | Required documents are signed, payment is completed and the property has been handed over. |
+
+This is a recorded assessment, not a one-way state machine. All old/new status pairs are permitted,
+including Viewing to Enquiring, Closing to Negotiating and corrections from Completed.
+Completed does not delete, archive or lock a property or client. Explicit `delp`/`delete` remains necessary.
+There is no client-level status, stage history, viewing-date field or automatic transition.
+The CLI token for Not specified is `unspecified`, not `not-specified` or the display text.
 
 `PropertyIntention` describes an individual property's buying or selling action.
 It is separate from `ClientIntention`, the role derived from all of the client's properties.
@@ -349,28 +387,48 @@ identity as determined by `isSamePerson()`.
 
 `AddressBookParser` normalises command words with `Locale.ROOT`, making command words case-insensitive.
 `AddPropertyCommandParser`, `DeletePropertyCommandParser` and `EditPropertyCommandParser` parse the three property commands.
-`PropertyParserUtil` recognises `t/`, `i/`, `l/` and `pr/` case-insensitively without changing field values.
+`PropertyParserUtil` recognises `t/`, `i/`, `l/`, `pr/` and `s/` case-insensitively without changing field values.
 Unknown and repeated fields are rejected, including repeated prefixes with different capitalisation.
 Whitespace-separated alphabetic words ending in `/` are reserved as prefixes and cannot be used as literal location text.
 Property type aliases and Buying/Selling values ignore case in property commands.
 `PropertyParserUtil.parseIntention` delegates to `PropertyIntention.parse` and translates invalid values into
 `ParseException`. `Buyer`, `Seller`, `Both` and blank values are rejected; legacy values are accepted only by storage.
 
-`addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]` requires a type, intention and nonblank location.
+`addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]` requires a type, intention and nonblank location.
 The parser validates every field before constructing a complete `Property`; an omitted price is unknown.
-A supplied empty price is invalid when adding.
+An omitted status defaults to `UNSPECIFIED`. Supplied empty price or status is invalid when adding.
 `delp CLIENT_INDEX PROPERTY_INDEX` accepts exactly two positive indexes and no field arguments.
-`editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]` requires at least one field.
+`editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]` requires at least one field.
 `EditPropertyDescriptor` copies the requested edits and distinguishes an omitted price from an explicitly cleared price.
 An empty `pr/` clears the price on edit, while empty required fields are rejected.
+Omitted `s/` preserves status; empty `s/` is rejected. `s/unspecified` explicitly resets the stage.
+The descriptor copies a supplied non-null status and accepts status-only or combined edits.
+Invalid status tokens are translated from `IllegalArgumentException` to `ParseException` with the cause preserved.
 
 `PropertyCommandUtil` resolves the client from `model.getFilteredPersonList()` and validates the property index within that client's list.
 Both indexes use the existing `Index` class and errors are reported through `CommandException`.
-Commands preserve the active client filter and all unrelated fields; the derived role and displayed position can change.
+Commands preserve the active client filter and all unrelated fields, including an omitted status.
+The derived role and displayed position can change.
+Changing or deleting a matching property can remove the client from status results; subsequent indexes use that new view.
 `EditPropertyCommand` constructs a replacement using the current values for omitted fields.
 Only after successful validation does it call `model.setPerson` once.
 An equal replacement reports no change and leaves the original `Person` in the model.
 Invalid parses or indexes leave both the model and saved data unchanged.
+
+After a successful `model.setPerson`, `EditPropertyCommand` retains the generic FINE edit diagnostic and adds one
+FINE transition record only when the status actually changes.
+It uses the existing `LogsCenter` logger and a lazy message containing displayed client/property indexes and enum names:
+
+```text
+Property status changed for displayed client 2, property 1: VIEWING -> NEGOTIATING
+```
+
+The diagnostic contains no client name, phone, email, location or full command/domain object.
+Same-status edits, changes to other fields, rejected indexes and failed model mutations produce no transition record.
+The existing default INFO level is unchanged. `EditPropertyStatusLoggingTest` temporarily attaches a FINE handler,
+checks that mutation precedes the record, and restores logger settings after each test.
+The handler verifies the underlying source client, including when a parsed status edit removes that client
+from `find s/viewing` results. The regression checks the original displayed indexes and a single PII-free record.
 
 The add-property command applies the immutable model update after validating the displayed client index:
 
@@ -397,8 +455,11 @@ accepts the property list as its final argument.
 #### Storage and compatibility
 
 Each saved client has a `properties` array. `JsonAdaptedProperty` stores `type`, `intention`, and `location` as strings,
-and `price` as a whole-dollar string or `null` when unknown. Property order and duplicate entries survive saving and
-loading. A missing `price` also loads as unknown.
+`price` as a whole-dollar string or `null` when unknown, and `status` as a canonical enum name such as `VIEWING`.
+Property order and duplicate entries survive saving and loading. A missing `price` also loads as unknown.
+Missing or null legacy status loads as `UNSPECIFIED`; otherwise the status must be a recognised token.
+The adapter retains its four-argument convenience constructor for old callers and uses a five-field JSON creator.
+New saves always write a status for each property. Loading alone does not rewrite the file.
 
 Property intentions are saved canonically as `Buying` or `Selling`.
 The adapter also accepts exact legacy `Buyer` and `Seller` values, mapping them to `BUYING` and `SELLING`.
@@ -412,6 +473,8 @@ Unlike CLI input, saved intention values are case-sensitive and do not permit su
 migration. Null property entries, missing required fields, and invalid values are rejected with `IllegalValueException`;
 the error includes the property's one-based index. File loading reports these errors as `DataLoadingException`.
 Invalid entries are not silently discarded.
+An invalid or blank persisted status follows the same indexed `IllegalValueException`/`DataLoadingException` path;
+it is not replaced with a default. File-level tests check that rejected loads leave the original bytes untouched.
 
 The regression tests cover field validation, case-insensitive parsing, price clearing, index changes, independent clients and preservation through client edits and remarks.
 Integration tests execute command strings through the real parser, model and JSON storage, checking unchanged data after rejected operations and persistence after valid operations.
@@ -419,12 +482,16 @@ Old-file compatibility and property-list immutability are also covered.
 Storage tests assert canonical output, legacy read-save-read migration, mixed representations, and preserved order,
 duplicates and client fields. Invalid property intentions retain the indexed `IllegalValueException` error path;
 full-file reads fail without changing the input file.
+Status coverage includes all six parse/display values, locale independence, all 36 old/new stage pairs,
+omission/default/reset behavior, canonical round trips, invalid legacy data, Completed edits,
+live status-filter membership and exact transition-log content/suppression.
 
 #### Property display
 
 `PersonCard` renders one wrapped label per property, using its one-based list position and `Property#toDisplay()`.
 The property list is hidden when empty, and `PersonListPanel` measures each card at its available width so longer locations expand the row.
-Type, property intention, location and a known price are displayed together; an unknown price has no amount.
+Type, property intention, location, a known price and readable status are displayed together;
+an unknown price has no amount, while `UNSPECIFIED` displays as Not specified.
 `HelpContent` includes the three property commands and its examples are parsed by `HelpContentTest`.
 
 ### \[Proposed\] Undo/redo feature
@@ -624,9 +691,9 @@ The general user story for updating client information is an epic that is furthe
 | `* * *`  | property agent                       | identify whether a client buys, sells, both or neither       | manage the client according to their property needs           |
 | `* * *`  | property agent                       | view all the clients I am currently serving                | keep track of my active clients                               |
 | `* * *`  | property agent managing many clients | search for clients by name, phone number, or email         | retrieve their information quickly                            |
-| `* * *`  | property agent                       | filter clients by category, buying status, property requirements, or priority | focus on clients relevant to my current task       |
-| `* * *`  | property agent                       | view a client's profile                                    | review their contact details, requirements, status, priority, and property information |
-| `* * *`  | property agent                       | update a client's information, such as interests or status | keep the client's record accurate                             |
+| `* * *`  | property agent                       | filter clients by category, property stage, property requirements, or priority | focus on clients relevant to my current task       |
+| `* * *`  | property agent                       | view a client's profile                                    | review their contact details, requirements, priority, and each property's stage |
+| `* * *`  | property agent                       | update a client's information, including each property's stage | keep the client's record accurate                          |
 | `* * *`  | property agent                       | record a client's contact details                          | contact the client when needed                                |
 | `* * *`  | property agent                       | record a client's preferred property type and location     | recommend properties that match the client's preferences      |
 | `* * *`  | property agent                       | record a buyer's budget                                    | recommend properties within the buyer's budget                |
@@ -698,8 +765,8 @@ delete information, invalid input is rejected without changing that information.
 
 **MSS**
 
-1. Property agent requests to find clients by name, phone number, email, property location or derived intention,
-   supplying search keywords.
+1. Property agent requests to find clients by name, phone number, email, property location, derived intention or property transaction stage.
+   They supply keywords for contact/location fields, or one complete intention/stage value.
 2. RESIDEX displays the matching clients and the number of matches.
 
    Use case ends.
@@ -733,11 +800,11 @@ delete information, invalid input is rejected without changing that information.
 
 **MSS**
 
-1. Property agent requests to filter clients by criteria such as buyer/seller category, buying
-   status, property requirements or priority.
+1. Property agent requests to filter clients by criteria such as buyer/seller category,
+   property transaction stage, property requirements or priority.
 2. RESIDEX displays the clients satisfying the criteria.
 3. Property agent requests to view a listed client's profile.
-4. RESIDEX displays the client's details, including recorded requirements, buying status,
+4. RESIDEX displays the client's details, including recorded requirements, each property's stage,
    priority and associated property details.
 
    Use case ends.
@@ -770,7 +837,7 @@ delete information, invalid input is rejected without changing that information.
 2. RESIDEX displays the client list.
 3. Property agent requests to update a listed client, supplying the new information,
    such as contact details, budget, preferred location, property type, required number of bedrooms,
-   buying status, priority or associated property details.
+   each property's transaction stage, priority or associated property details.
 4. RESIDEX updates the client's information and displays the updated details.
 
    Use case ends.
@@ -807,8 +874,8 @@ delete information, invalid input is rejected without changing that information.
 2. RESIDEX displays the client list.
 3. Property agent requests to view a listed client's profile.
 4. RESIDEX displays the client's profile and associated properties.
-5. Property agent requests to remove selected information, such as an interest, buying status
-   or a specific associated property.
+5. Property agent requests to remove selected information, such as an interest or a specific associated property.
+   To reset a recorded stage while keeping its property, the agent updates that property to Not specified instead.
 6. RESIDEX removes the selected information and displays the updated profile. The client
    and their other information are retained.
 
@@ -1002,7 +1069,7 @@ They are documented for future reference, without committing to their implementa
 * **Client**: A person whose details a property agent stores in RESIDEX; their property-derived role can be Buyer, Seller, both or Not specified.
 * **Client intention**: The role derived from the client's property directions; no properties means Not specified, and both directions means Buyer / Seller.
 * **Client information history**: Previously recorded information or changes associated with a client, available for review.
-* **Client profile**: The stored information about a client, including contact details, requirements, buying status, priority and associated properties.
+* **Client profile**: The stored information about a client, including contact details, requirements, priority and associated properties with their individual transaction stages.
 * **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
 * **Filtered client list**: The clients currently displayed after a search. Each `find` command searches all stored clients and replaces this list; `list` restores all clients.
 * **Follow-up**: A planned next contact with a client. A follow-up may be upcoming or overdue.
@@ -1024,6 +1091,7 @@ They are documented for future reference, without committing to their implementa
 * **Property location**: Nonblank descriptive text stored on a property entry, such as `Clementi Ave 3`. The `find l/` search checks these locations.
 * **Property price**: An optional, positive whole-dollar amount recorded for a property, separate from the client's budget.
 * **Property type**: The HDB, Condominium or Landed category of a property entry.
+* **Property status**: A property's current recorded transaction stage: Not specified, Enquiring, Viewing, Negotiating, Closing or Completed. It can be corrected in either direction and is not a client-level field.
 * **Property viewing**: An appointment for a client to inspect a property
 * **Purpose**: A client's buying or selling needs, represented by property intentions and summarised by the derived client role.
 * **Remark**: Text recorded for a client using the `remark` command and displayed on the client card.
@@ -1032,7 +1100,7 @@ They are documented for future reference, without committing to their implementa
 * **Selling**: A property intention describing a client's interest in selling that property.
 * **Substring matching**: Matching text that contains a keyword anywhere, ignoring case; for example, `clementi` matches both `Clementi Ave 3` and `Woodlands Clementi`.
 * **Transaction**: The process of completing a property sale or rental
-* **Viewing**: A scheduled visit to a property with a client.
+* **Viewing**: A property stage covering a buying client's assessment visit or the agent's visit to assess a seller's property before representation and marketing. It does not record an appointment date.
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -1140,17 +1208,17 @@ Run these steps in order; client indexes below refer to the filtered list.
       Their intention is Not specified because they have no properties.
 
    1. Enter `ADDP 1 T/h I/buying L/Clementi Ave 3 PR/800000`.<br>
-      Expected: Property 1 appears under this client as HDB, Buying, Clementi Ave 3, $800,000.
+      Expected: Property 1 appears under this client as HDB, Buying, Clementi Ave 3, $800,000, Not specified.
       The client filter remains active, the client's role becomes Buyer and the budget remains $900,000.
 
-   1. Enter `addp 1 t/c i/Selling l/Bishan`.<br>
-      Expected: Property 2 appears as Condominium, Selling, Bishan with no price.
+   1. Enter `addp 1 t/c i/Selling l/Bishan s/Viewing`.<br>
+      Expected: Property 2 appears as Condominium, Selling, Bishan, Viewing with no price.
       The client's derived intention becomes Buyer / Seller.
 
 1. Editing and clearing price
 
    1. Enter `editp 1 2 l/Toa Payoh pr/1500000`.<br>
-      Expected: Only property 2's location and price change; its type, property intention and position are retained.
+      Expected: Only property 2's location and price change; its type, intention, Viewing status and position are retained.
 
    1. Enter `editp 1 2 pr/`.<br>
       Expected: Property 2's price is removed; all other fields remain unchanged.
@@ -1184,7 +1252,7 @@ Run these steps in order; client indexes below refer to the filtered list.
       The client remains in the phone-filtered list and their role becomes Seller.
 
    1. Exit and relaunch the app, then enter `find p/91009001`.<br>
-      Expected: The single Condominium/Selling/Toa Payoh entry remains, without a price.
+      Expected: The single Condominium/Selling/Toa Payoh/Viewing entry remains, without a price.
       The client's contact details and $900,000 budget are retained; the role is derived as Seller.
 
 1. Loading legacy property intentions
@@ -1282,6 +1350,110 @@ Run the steps in order; use the displayed indexes after each search.
    1. Enter `list`, exit and inspect the saved JSON.<br>
       Expected: Client-level intention is absent. Property intentions remain present, and property and client
       order is preserved. Relaunch to verify all roles are derived from the same saved properties.
+
+### Recording and finding property transaction stages
+
+Prerequisite: Use a separate fresh data folder for this scenario, without Stage First, Stage Second or Stage Empty.
+Run these steps in order. Client indexes always refer to the current displayed list.
+
+1. Preparing independent property stages
+
+   1. Enter `add n/Stage First p/91007001 e/first@stage.example.com b/900000`,
+      then `find p/91007001`.<br>
+      Expected: One client with no properties. Enter `find s/unspecified`; Stage First is excluded
+      because no property exists yet. Use `find p/91007001` again before adding properties.
+
+   1. Enter `addp 1 t/HDB i/Buying l/Clementi pr/800000`,
+      then `addp 1 t/Condominium i/Selling l/Bishan s/Viewing`.<br>
+      Expected: Property 1 is Not specified and property 2 is Viewing. The client role becomes Buyer / Seller
+      and budget remains $900,000; stages belong to properties independently.
+
+   1. Enter `add n/Stage Second p/91007002 e/second@stage.example.com`, then `find p/91007002`.
+      Enter `addp 1 t/HDB i/Selling l/Tampines pr/950000 s/Viewing`,
+      then `addp 1 t/HDB i/Selling l/Pasir Ris s/viewing`.<br>
+      Expected: Both properties are Viewing, with their own locations and optional prices.
+
+   1. Enter `add n/Stage Empty p/91007003 e/empty@stage.example.com`, then `find n/Stage`.<br>
+      Expected: Stage First, Stage Second and Stage Empty appear in that source order; Stage Empty has no properties.
+
+1. Searching stages and replacing filters
+
+   1. Enter `find S/VIEWING`.<br>
+      Expected: Stage First then Stage Second, each once even though Stage Second has two matching properties.
+
+   1. Enter `find s/unspecified`.<br>
+      Expected: Only Stage First. Stage Empty is excluded because it has no properties.
+
+   1. Try `find s/enquiring`, `find s/negotiating`, `find s/closing` and `find s/completed`.<br>
+      Expected: Empty results before any such stage has been recorded.
+
+   1. Enter `find n/Stage`, `find e/stage.example.com`, `find p/91007` and `list` in turn.<br>
+      Expected: Ordinary searches restore the three Stage clients in source order; list restores the full list.
+      Repeat `find s/viewing` after each: it searches all clients again and returns Stage First then Stage Second.
+
+1. Checking displayed indexes, duplicate matches and corrections
+
+   1. Enter `find s/viewing`, then `editp 2 1 s/Negotiating`.<br>
+      Expected: This edits Stage Second, displayed client 2, property 1. It still appears once because
+      its property 2 remains Viewing. Stage First and both properties' other fields are unchanged.
+
+   1. Enter `editp 2 2 s/Negotiating`.<br>
+      Expected: Stage Second leaves Viewing results; only Stage First is displayed. A subsequent
+      `editp 2 1 s/Closing` is rejected because displayed client 2 no longer exists.
+
+   1. Enter `delp 1 2`.<br>
+      Expected: Stage First's Viewing property is removed and Viewing results become empty.
+      The client and its Not specified property remain stored.
+
+   1. Enter `find s/negotiating`, then `editp 1 2 s/Viewing`.<br>
+      Expected: Only Stage Second is selected. The backward correction succeeds; it still matches Negotiating
+      through property 1 and also matches Viewing through property 2 when that status is searched.
+
+   1. Enter `editp 1 1 s/Closing`, then `find s/closing`.<br>
+      Expected: Stage Second is the only Closing result, in normal source order.
+
+   1. Enter `editp 1 1 s/Completed`, then `find p/91007002`.<br>
+      Expected: Both properties and the client still exist. Property 1 is Completed; property 2 remains Viewing.
+      No automatic deletion, archive or lock occurs.
+
+   1. Enter `editp 1 1 l/Tampines Central`, then `editp 1 1 s/Enquiring`.<br>
+      Expected: Completed remains editable. The location edit preserves Completed, then the stage correction
+      succeeds. The $950,000 price, other property, client details and source position remain unchanged.
+
+   1. Enter `editp 1 1 s/unspecified`, then `editp 1 1 s/UNSPECIFIED`.<br>
+      Expected: The first resets the stage to Not specified; the second reports unchanged.
+      The property remains present. Stage First and Stage Empty are unaffected.
+
+1. Rejecting invalid status input
+
+   1. While Stage Second is phone-filtered, try `editp 1 1 s/`, `editp 1 1 s/unknown`,
+      `editp 1 1 s/not-specified`, `editp 1 1 s/Viewing S/Closing`,
+      and `addp 1 t/HDB i/Selling l/Bedok s/`.<br>
+      Expected: Each input error leaves the properties, displayed filter and saved data unchanged.
+
+   1. Try `find s/`, `find s/unknown`, `find s/Not specified`, `find s/viewing s/closing`
+      and `find s/viewing n/Stage`.<br>
+      Expected: Input errors. The previous phone-filtered client remains displayed.
+
+1. Saving, legacy defaults and invalid persisted data
+
+   1. Exit and relaunch, then enter `find n/Stage`.<br>
+      Expected: All three clients remain in source order. Stage First has its one Not specified property;
+      Stage Second has Not specified/Tampines Central/$950,000 then Viewing/Pasir Ris/no price;
+      Stage Empty still has no properties.
+
+   1. Exit and back up `data/addressbook.json`. Remove the `status` field from Stage Second's property 1,
+      and set property 2's status to JSON `null`. Relaunch and inspect the file before entering any command.<br>
+      Expected: Both properties load as Not specified, and loading alone leaves file contents unchanged.
+      Enter `find p/91007002`, exit and inspect the saved file: both statuses are now canonical `UNSPECIFIED`.
+      Relaunch to verify the same property order and unrelated client fields.
+
+   1. Exit, retain a valid backup and replace one property's status with `"unknown"`. Relaunch.<br>
+      Expected: Loading reports an invalid status through the normal data-loading error path; the file is unchanged.
+      Do not enter commands after a failed load on this version. Restore the valid backup before continuing.
+
+The automated logging test checks FINE diagnostics for successful status changes and their absence for unchanged,
+unrelated or rejected edits. Normal INFO logging does not show these diagnostics.
 
 ### Recording a budget
 

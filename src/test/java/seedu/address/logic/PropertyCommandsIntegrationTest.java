@@ -24,6 +24,7 @@ import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -84,10 +85,11 @@ public class PropertyCommandsIntegrationTest {
     @Test
     public void execute_editAllFields_changesOnlySelectedProperty() throws Exception {
         logic.execute("addp 1 t/HDB i/Buying l/Clementi");
-        logic.execute("editp 1 1 t/c i/selling l/Bishan pr/1500000");
+        logic.execute("editp 1 1 t/c i/selling l/Bishan pr/1500000 s/Closing");
 
         assertEquals(new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
-                new PropertyLocation("Bishan"), new PropertyPrice("1500000")), client(0).getProperties().get(0));
+                new PropertyLocation("Bishan"), new PropertyPrice("1500000"), PropertyStatus.CLOSING),
+                client(0).getProperties().get(0));
         assertEquals(ClientIntention.SELLER, client(0).getIntention());
         assertEquals("900000", client(0).getBudget().orElseThrow().toString());
         assertSaved();
@@ -134,12 +136,12 @@ public class PropertyCommandsIntegrationTest {
 
     @Test
     public void execute_unchangedEdit_keepsOriginalClientAndSavedData() throws Exception {
-        logic.execute("addp 1 t/HDB i/Buying l/Clementi");
+        logic.execute("addp 1 t/HDB i/Buying l/Clementi s/Viewing");
         Person original = client(0);
         String savedData = Files.readString(storage.getAddressBookFilePath());
 
         assertEquals(String.format(EditPropertyCommand.MESSAGE_UNCHANGED, 1, original.getName()),
-                logic.execute("editp 1 1 t/h i/buying l/Clementi pr/").getFeedbackToUser());
+                logic.execute("editp 1 1 t/h i/buying l/Clementi pr/ s/VIEWING").getFeedbackToUser());
 
         assertSame(original, client(0));
         assertEquals(savedData, Files.readString(storage.getAddressBookFilePath()));
@@ -192,14 +194,14 @@ public class PropertyCommandsIntegrationTest {
         logic.execute("find n/Ben");
         logic.execute("addp 1 t/HDB i/Selling l/Clementi");
         logic.execute("addp 1 t/c i/Buying l/Bishan");
-        logic.execute("editp 1 2 l/Toa Payoh");
+        logic.execute("editp 1 2 l/Toa Payoh s/Negotiating");
         logic.execute("delp 1 1");
 
         assertEquals(alice, client(0));
         assertEquals(1, model.getFilteredPersonList().size());
         assertEquals(client(1), model.getFilteredPersonList().get(0));
-        assertEquals(new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
-                new PropertyLocation("Toa Payoh")),
+        assertEquals(new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING, new PropertyLocation("Toa Payoh"),
+                null, PropertyStatus.NEGOTIATING),
                 client(1).getProperties().get(0));
         assertSaved();
     }
@@ -272,7 +274,7 @@ public class PropertyCommandsIntegrationTest {
 
     @Test
     public void execute_existingClientCommands_preserveProperties() throws Exception {
-        logic.execute("addp 1 t/HDB i/Buying l/Clementi pr/800000");
+        logic.execute("addp 1 t/HDB i/Buying l/Clementi pr/800000 s/Completed");
         List<Property> properties = client(0).getProperties();
 
         logic.execute("edit 1 n/Alice Lim b/950000");
@@ -330,5 +332,46 @@ public class PropertyCommandsIntegrationTest {
         assertEquals(allClients, model.getAddressBook().getPersonList());
         assertEquals(displayedClients, model.getFilteredPersonList());
         assertEquals(savedData, Files.readString(storage.getAddressBookFilePath()));
+    }
+
+    @Test
+    public void execute_statusOnlyEdits_allowEveryTransitionAndPreserveUnrelatedData() throws Exception {
+        logic.execute("addp 1 t/HDB i/Buying l/Clementi pr/800000 s/Viewing");
+        logic.execute("addp 1 t/Condominium i/Selling l/Bishan");
+        Person original = client(0);
+        Person otherClient = client(1);
+        Property first = original.getProperties().get(0);
+        Property second = original.getProperties().get(1);
+        assertEquals(PropertyStatus.VIEWING, first.getStatus());
+        assertEquals(PropertyStatus.UNSPECIFIED, second.getStatus());
+
+        for (PropertyStatus previous : PropertyStatus.values()) {
+            for (PropertyStatus next : PropertyStatus.values()) {
+                logic.execute("editp 1 1 s/" + previous.name());
+                logic.execute("editp 1 1 s/" + next.name());
+
+                Property expected = new Property(first.getType(), first.getIntention(), first.getLocation(),
+                        first.getPrice().orElseThrow(), next);
+                assertEquals(new PersonBuilder(original).withProperties(expected, second).build(), client(0));
+                assertEquals(ClientIntention.BOTH, client(0).getIntention());
+                assertEquals(2, model.getAddressBook().getPersonList().size());
+                assertEquals(otherClient, client(1));
+                assertEquals(PropertyStatus.VIEWING, first.getStatus());
+                assertSaved();
+            }
+        }
+    }
+
+    @Test
+    public void execute_invalidStatusInput_keepsModelFilterAndSavedData() throws Exception {
+        logic.execute("addp 1 t/HDB i/Buying l/Clementi s/Viewing");
+        logic.execute("find n/Alice");
+        for (String suffix : List.of("s/", "s/ ", "s/Not specified", "s/not-specified", "s/Cancelled",
+                "s/Withdrawn", "s/view", "s/Viewing S/Completed", "s/Completed S/", "s/ s/Viewing")) {
+            assertRejectedWithoutChanges("editp 1 1 " + suffix, ParseException.class);
+            assertRejectedWithoutChanges("addp 1 t/HDB i/Buying l/Bishan " + suffix, ParseException.class);
+        }
+        assertRejectedWithoutChanges("editp 1 2 s/Closing", CommandException.class);
+        assertRejectedWithoutChanges("editp 2 1 s/Completed", CommandException.class);
     }
 }

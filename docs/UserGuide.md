@@ -162,28 +162,55 @@ Examples:
 ### Managing a client's properties
 
 Each client can have an ordered list of properties, shown as numbered entries on their client card.
-Each property has one type, one buying or selling intention, one location, and an optional price.
+Each property has one type, one buying or selling intention, one location, one transaction status, and an optional price.
 Property intentions determine the client's overall role. Property prices remain separate from the client's budget.
+Status is independent of the derived client role.
 
 * `CLIENT_INDEX` selects a client in the currently displayed list, including search results.
 * `PROPERTY_INDEX` selects a numbered property under that client, starting from 1.
 * Property commands keep the current client filter.
   A role change can move a client within intention results or remove them if they no longer match.
   Check the displayed indexes again after each change.
+  Changing or removing a matching property can remove a client from status results.
+  Check the displayed client indexes again before the next command.
 * Identical property entries are allowed within one client and across clients.
   Each entry is independent; editing one does not change another client's entry.
 * Property fields can be supplied in any order, once each.
-  Prefixes, property types and property intentions are case-insensitive.
+  Prefixes, property types, property intentions and statuses are case-insensitive.
 * Valid types are `HDB` (`h`), `Condominium` (`c`) and `Landed` (`l`).
   Valid property intentions are `Buying` and `Selling`.
   `Buyer`, `Seller` and `Both` are rejected in property commands.
 * Location is nonblank text, for example `Clementi Ave 3`.
   Surrounding whitespace is removed; capitalisation and internal spaces are preserved.
 * `pr/PRICE` is the property's price in whole Singapore dollars, separate from `b/BUDGET` on the client.
+  For a Buying property, it records the asking or current listing price; for a Seller property, the client's asking price.
   A supplied price must be positive, no greater than `9223372036854775807`, and contain no commas, decimals or leading zeros.
   Use `pr/` rather than `p/` for property prices.
 * Whitespace-separated words ending in `/` are treated as field prefixes in property commands.
-  Use only `t/`, `i/`, `l/` and `pr/`; do not include prefix-like text such as `MRT/Exit` in a location.
+  Use only `t/`, `i/`, `l/`, `pr/` and `s/`; do not include prefix-like text such as `MRT/Exit` in a location.
+
+#### Property transaction stages
+
+Status belongs to each property, so a client's properties can be at different stages.
+Use these single-word values with `s/`; capitalization does not matter.
+
+| Value | Display | Meaning |
+| --- | --- | --- |
+| `unspecified` | Not specified | No transaction stage has been recorded for this property yet. |
+| `enquiring` | Enquiring | The client has shown interest in buying or selling the property but has not committed to proceeding. |
+| `viewing` | Viewing | For a Buying property, the agent arranges a client visit to assess whether to proceed. For a Selling property, the agent visits and assesses the seller's property before representing and marketing it to prospective buyers. The agent acts as the intermediary. |
+| `negotiating` | Negotiating | The client intends to proceed and the relevant parties are working toward agreement on price and other transaction terms. |
+| `closing` | Closing | The main transaction terms are agreed, but contracts, signing, payment or other final formalities remain incomplete. |
+| `completed` | Completed | Required documents are signed, payment is completed and the property has been handed over. |
+
+Stages record the agent's current assessment. They do not advance automatically and can be corrected in either direction,
+including from Completed. Completed does not delete, archive or lock a property or client.
+Use `delp` or `delete` explicitly to remove records. Status does not schedule viewing dates or retain a stage history.
+
+Use `s/unspecified` to reset a stage; empty `s/` and `s/not-specified` are rejected.
+Properties saved by older versions without a status load as Not specified; a saved null status has the same default.
+New saves record a canonical status such as `"status": "VIEWING"`.
+An invalid saved status cannot be loaded; back up the data file before editing it.
 
 **Existing property data:** Saved property intentions `Buyer` and `Seller` load automatically as `Buying` and `Selling`.
 New saves use `Buying` and `Selling` for properties; no manual conversion is needed.
@@ -201,10 +228,11 @@ Older releases may reject the migrated file. Before upgrading, back up
 
 ### Adding a property: `addp`
 
-Format: `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`
+Format: `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]`
 
 Type, property intention and location are required.
 Omit `pr/` if the price is unknown; a supplied empty `pr/` is rejected when adding.
+Omit `s/` to default to Not specified, or supply one of the stages above. Empty `s/` is rejected.
 The new property is appended to the selected client's list.
 
 Examples:
@@ -212,6 +240,7 @@ Examples:
 * `addp 1 t/HDB i/Buying l/Clementi pr/800000` adds a property with an $800,000 price to the first displayed client.
 * `addp 1 t/c i/Selling l/Bishan` adds a condominium entry without a price to the same client.
 * `ADDP 1 T/l I/buying L/Bukit Timah PR/3200000` adds a landed property using mixed-case syntax.
+* `addp 1 t/HDB i/Buying l/Clementi s/Viewing` records a property at the Viewing stage.
 
 ### Deleting a property: `delp`
 
@@ -227,12 +256,15 @@ The former property 3, if any, becomes property 2.
 
 ### Editing a property: `editp`
 
-Format: `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]`
+Format: `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]`
 
 * Supply at least one field.
   Omitted fields keep their current values.
 * Empty `pr/` removes the optional price.
-  Empty `t/`, `i/` and `l/` are rejected.
+  Empty `t/`, `i/`, `l/` and `s/` are rejected.
+* Omitted `s/` preserves the current status. Use `s/unspecified` to reset it to Not specified.
+  Status-only edits and edits combining status with other fields are supported.
+  Backward corrections, such as Closing to Negotiating, are allowed.
 * All supplied values and both indexes are checked before anything changes.
   Invalid input leaves the original property unchanged.
 * An edit that produces the same stored values reports that the property is unchanged.
@@ -244,8 +276,10 @@ Examples:
 * `editp 1 2 i/Buying` changes only its property intention, preserving its type, location, price and position.
 * `editp 1 2 t/Landed i/Selling pr/3200000` changes its type, property intention and price together.
 * `editp 1 2 pr/` removes its price while preserving its location and other fields.
+* `editp 1 2 s/Negotiating` changes only its transaction stage.
+* `editp 1 2 s/unspecified` resets its stage without removing the property.
 
-### Locating persons by name, email, phone, location, or intention: `find`
+### Locating persons by name, email, phone, location, intention or property status: `find`
 
 Finds contacts using exactly one selected search field.
 
@@ -258,6 +292,7 @@ Email | `e/`
 Phone | `p/`
 Property location | `l/`
 Intention | `i/`
+Property status | `s/`
 
 * Prefix letters and keywords are case-insensitive; `N/` and `n/` have the same effect.
 * Specify exactly one short prefix immediately after `find`, with `/` immediately after the letter.
@@ -280,6 +315,11 @@ Intention | `i/`
   Intention sorting does not change stored order.
 * Commands using client indexes always act on the currently displayed order, including sorted intention results.
 * Only the selected search field is searched. Each search filters the entire contact list, replacing any previous filter.
+
+* Status searches require exactly one complete stage: `unspecified`, `enquiring`, `viewing`, `negotiating`, `closing` or `completed`.
+  A client matches if **any existing property** has that stage and appears only once even if several properties match.
+  A client with no properties does **not** match `find s/unspecified`.
+* Status results retain normal client order. Client indexes refer to the currently displayed results.
   Use `list` to show all contacts again. Searches do not modify stored contacts.
 
 Examples:
@@ -295,6 +335,8 @@ Examples:
 * `find i/buyer` lists Buyer clients followed by Buyer / Seller clients.
 * `find i/seller` lists Seller clients followed by Buyer / Seller clients.
 * `find i/both` lists Buyer / Seller clients only.
+* `find s/viewing` lists clients with at least one property at Viewing.
+* `find S/UNSPECIFIED` lists clients with at least one property whose stage is Not specified.
 
 ### Deleting a client: `delete`
 
@@ -381,10 +423,10 @@ Action     | Format, Examples
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com b/1500000`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000`
+**Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
-**Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]`<br> e.g., `editp 1 2 l/Toa Payoh`
-**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`
+**Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]`<br> e.g., `editp 1 2 l/Toa Payoh`
+**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`
 **List**   | `list`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
 **Help**   | `help`
