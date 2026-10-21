@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.model.person.Intention;
 
 /**
  * An immutable property entry belonging to a client's property list.
@@ -16,14 +15,14 @@ import seedu.address.model.person.Intention;
 public final class Property {
 
     private final PropertyType type;
-    private final Intention intention;
+    private final PropertyIntention intention;
     private final PropertyLocation location;
     private final PropertyPrice price;
 
     /**
      * Constructs a property with an unknown price.
      */
-    public Property(PropertyType type, Intention intention, PropertyLocation location) {
+    public Property(PropertyType type, PropertyIntention intention, PropertyLocation location) {
         this(type, intention, location, null);
     }
 
@@ -32,7 +31,7 @@ public final class Property {
      *
      * @param price The price, or null if unknown.
      */
-    public Property(PropertyType type, Intention intention, PropertyLocation location, PropertyPrice price) {
+    public Property(PropertyType type, PropertyIntention intention, PropertyLocation location, PropertyPrice price) {
         requireAllNonNull(type, intention, location);
         this.type = type;
         this.intention = intention;
@@ -44,7 +43,7 @@ public final class Property {
         return type;
     }
 
-    public Intention getIntention() {
+    public PropertyIntention getIntention() {
         return intention;
     }
 

@@ -70,8 +70,8 @@ public class Person {
         boolean hasSellingProperty = false;
         for (Property property : properties) {
             switch (property.getIntention()) {
-                case BUYER -> hasBuyingProperty = true;
-                case SELLER -> hasSellingProperty = true;
+                case BUYING -> hasBuyingProperty = true;
+                case SELLING -> hasSellingProperty = true;
                 default -> throw new IllegalStateException("Unsupported property intention");
             }
             if (hasBuyingProperty && hasSellingProperty) {

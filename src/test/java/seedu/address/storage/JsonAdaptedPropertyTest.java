@@ -6,10 +6,12 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
-import seedu.address.model.person.Intention;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyType;
@@ -17,13 +19,33 @@ import seedu.address.model.property.PropertyType;
 public class JsonAdaptedPropertyTest {
 
     @Test
+    public void json_legacyIntentions_loadsAndSavesCanonicalValues() throws Exception {
+        String[] savedIntentions = {"Buyer", "Seller"};
+        PropertyIntention[] modelIntentions = {PropertyIntention.BUYING, PropertyIntention.SELLING};
+        for (int i = 0; i < savedIntentions.length; i++) {
+            String json = "{\"type\":\"HDB\",\"intention\":\"" + savedIntentions[i]
+                    + "\",\"location\":\"Clementi\",\"price\":\"800000\"}";
+            Property expected = new Property(PropertyType.HDB, modelIntentions[i],
+                    new PropertyLocation("Clementi"), new PropertyPrice("800000"));
+            assertEquals(expected, JsonUtil.fromJsonString(json, JsonAdaptedProperty.class).toModelType());
+
+            String savedJson = JsonUtil.toJsonString(new JsonAdaptedProperty(expected));
+            assertEquals(modelIntentions[i].toString(), JsonUtil.fromJsonString(savedJson, JsonNode.class)
+                    .get("intention").asText());
+            assertEquals(expected, JsonUtil.fromJsonString(savedJson, JsonAdaptedProperty.class).toModelType());
+        }
+    }
+
+    @Test
     public void json_roundTrip_preservesAllTypesIntentionsAndOptionalPrices() throws Exception {
         for (PropertyType type : PropertyType.values()) {
-            for (Intention intention : Intention.values()) {
+            for (PropertyIntention intention : PropertyIntention.values()) {
                 for (String price : new String[]{null, "800000", Long.toString(Long.MAX_VALUE)}) {
                     Property property = new Property(type, intention, new PropertyLocation("Clementi Ave 3"),
                             price == null ? null : new PropertyPrice(price));
                     String json = JsonUtil.toJsonString(new JsonAdaptedProperty(property));
+                    assertEquals(intention.toString(), JsonUtil.fromJsonString(json, JsonNode.class)
+                            .get("intention").asText());
                     assertEquals(property, JsonUtil.fromJsonString(json, JsonAdaptedProperty.class).toModelType());
                 }
             }
@@ -64,7 +86,7 @@ public class JsonAdaptedPropertyTest {
     @Test
     public void toModelType_typeAliasAndWhitespace_returnsNormalisedProperty() throws Exception {
         Property property = new JsonAdaptedProperty(" C ", "Seller", "  Tampines  ", "1500000").toModelType();
-        assertEquals(new Property(PropertyType.CONDOMINIUM, Intention.SELLER,
+        assertEquals(new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
                 new PropertyLocation("Tampines"), new PropertyPrice("1500000")), property);
     }
 
@@ -78,9 +100,11 @@ public class JsonAdaptedPropertyTest {
 
     @Test
     public void toModelType_invalidIntention_throwsIllegalValueException() {
-        for (String intention : new String[]{"", "Tenant", "buyer", "Seller "}) {
+        for (String intention : new String[]{"", " ", "\t\n", "\u2003", "Tenant", "Both", "buyer", "SELLER",
+            "Seller ", " Buyer", "buying", "SELLING", " Buying", "Selling ", "Buying/Selling", "42"}) {
             JsonAdaptedProperty property = new JsonAdaptedProperty("HDB", intention, "Clementi", null);
-            assertThrows(IllegalValueException.class, Intention.MESSAGE_CONSTRAINTS, property::toModelType);
+            assertThrows(IllegalValueException.class,
+                    JsonAdaptedProperty.MESSAGE_INVALID_INTENTION, property::toModelType);
         }
     }
 

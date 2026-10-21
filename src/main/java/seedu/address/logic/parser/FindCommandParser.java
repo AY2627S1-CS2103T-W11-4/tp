@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
 import seedu.address.model.person.IntentionMatchesPredicate;
+import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 
@@ -40,25 +42,10 @@ public class FindCommandParser implements Parser<FindCommand> {
             throw new ParseException(FindCommand.MESSAGE_MISSING_PROPERTY);
         }
         String selector = firstToken.substring(0, prefixLength);
-        if (!isSelector(selector)) {
-            throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
-        }
-
         String keywordArgs = trimmedArgs.substring(prefixLength).trim();
-        if (keywordArgs.isEmpty()) {
-            throw new ParseException(FindCommand.MESSAGE_MISSING_KEYWORD);
-        }
-        List<String> keywords = List.of(keywordArgs.split("\\s+"));
-        if (keywords.stream()
-                .filter(keyword -> keyword.contains("/"))
-                .map(keyword -> keyword.split("/", 2)[0] + "/")
-                .anyMatch(this::isSelector)) {
-            throw new ParseException(FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
-        }
-        if (keywords.stream().anyMatch(keyword -> keyword.contains("/"))) {
-            throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
-        }
+
         if (isIntentionSelector(selector)) {
+            List<String> keywords = parseKeywords(keywordArgs);
             if (keywords.size() != 1) {
                 throw new ParseException(
                         String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
@@ -75,14 +62,42 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         if (isEmailSelector(selector)) {
-            return new FindCommand(new EmailContainsKeywordsPredicate(keywords));
+            return new FindCommand(new EmailContainsKeywordsPredicate(parseKeywords(keywordArgs)));
         }
 
         if (isPhoneSelector(selector)) {
-            return new FindCommand(new PhoneContainsKeywordsPredicate(keywords));
+            return new FindCommand(new PhoneContainsKeywordsPredicate(parseKeywords(keywordArgs)));
         }
 
-        return new FindCommand(new NameContainsKeywordsPredicate(keywords));
+        if (isLocationSelector(selector)) {
+            return new FindCommand(new LocationContainsKeywordsPredicate(parseKeywords(keywordArgs)));
+        }
+
+        if (isNameSelector(selector)) {
+            return new FindCommand(new NameContainsKeywordsPredicate(parseKeywords(keywordArgs)));
+        }
+
+        throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
+    }
+
+    /**
+     * Parses keywords for a supported search field, rejecting missing keywords and additional selectors.
+     */
+    private List<String> parseKeywords(String keywordArgs) throws ParseException {
+        if (keywordArgs.isEmpty()) {
+            throw new ParseException(FindCommand.MESSAGE_MISSING_KEYWORD);
+        }
+        List<String> keywords = List.of(keywordArgs.split("\\s+"));
+        if (keywords.stream()
+                .filter(keyword -> keyword.contains("/"))
+                .map(keyword -> keyword.split("/", 2)[0] + "/")
+                .anyMatch(this::isSelector)) {
+            throw new ParseException(FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        }
+        if (keywords.stream().anyMatch(keyword -> keyword.contains("/"))) {
+            throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+        return keywords;
     }
 
     private boolean isNameSelector(String token) {
@@ -98,10 +113,15 @@ public class FindCommandParser implements Parser<FindCommand> {
     }
 
     private boolean isSelector(String token) {
-        return isNameSelector(token) || isEmailSelector(token) || isPhoneSelector(token) || isIntentionSelector(token);
+        return isNameSelector(token) || isEmailSelector(token) || isPhoneSelector(token)
+                || isIntentionSelector(token) || isLocationSelector(token);
     }
 
     private boolean isIntentionSelector(String token) {
         return token.equalsIgnoreCase(PREFIX_INTENTION.getPrefix());
+    }
+
+    private boolean isLocationSelector(String token) {
+        return token.equalsIgnoreCase(PREFIX_PROPERTY_LOCATION.getPrefix());
     }
 }

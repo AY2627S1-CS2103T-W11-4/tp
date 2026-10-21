@@ -18,6 +18,7 @@ import seedu.address.logic.commands.EditPropertyCommand.EditPropertyDescriptor;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.testutil.PersonBuilder;
@@ -117,18 +118,21 @@ public class PropertyCommandTest {
 
     @Test
     public void execute_editOnlyIntention_preservesOtherPropertyFields() throws Exception {
-        Model model = new ModelManager();
-        model.addPerson(new PersonBuilder(ALICE).withProperties(CLEMENTI_HDB).build());
-        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
-        descriptor.setIntention(TAMPINES_CONDO.getIntention());
+        for (Property original : List.of(CLEMENTI_HDB, TAMPINES_CONDO)) {
+            Model model = new ModelManager();
+            Person client = new PersonBuilder(ALICE).withProperties(original, CLEMENTI_HDB).build();
+            model.addPerson(client);
+            Property otherDirection = original == CLEMENTI_HDB ? TAMPINES_CONDO : CLEMENTI_HDB;
+            EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+            descriptor.setIntention(otherDirection.getIntention());
 
-        new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor).execute(model);
+            new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor).execute(model);
 
-        Property updated = model.getFilteredPersonList().get(0).getProperties().get(0);
-        assertEquals(TAMPINES_CONDO.getIntention(), updated.getIntention());
-        assertEquals(CLEMENTI_HDB.getType(), updated.getType());
-        assertEquals(CLEMENTI_HDB.getLocation(), updated.getLocation());
-        assertEquals(CLEMENTI_HDB.getPrice(), updated.getPrice());
+            Property expected = new Property(original.getType(), otherDirection.getIntention(),
+                    original.getLocation(), original.getPrice().orElse(null));
+            assertEquals(new PersonBuilder(client).withProperties(expected, CLEMENTI_HDB).build(),
+                    model.getFilteredPersonList().get(0));
+        }
     }
 
     @Test

@@ -22,9 +22,14 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
 import seedu.address.model.person.IntentionMatchesPredicate;
+import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
+import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
+import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.TypicalPersons;
 
@@ -210,6 +215,70 @@ public class FindCommandTest {
         assertParsedFindSuccess("find e/ALICE", new EmailContainsKeywordsPredicate(List.of("ALICE")), List.of(ALICE));
         assertIntentionFindSuccess("find i/seller", ClientIntention.SELLER, List.of(BENSON));
         assertParsedFindSuccess("find n/ALI BEN", preparePredicate("ALI BEN"), List.of(ALICE, BENSON));
+    }
+
+    @Test
+    public void execute_locationSelectors_matchAnyPropertyAndKeyword() throws ParseException {
+        Person clementiClient = new PersonBuilder(ALICE).withProperties(
+                new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi Ave 3")),
+                new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
+                        new PropertyLocation("Clementi Ave 5")))
+                .build();
+        Person woodlandsClient = new PersonBuilder(BENSON).withProperties(
+                new Property(PropertyType.HDB, PropertyIntention.SELLING, new PropertyLocation("Tampines")),
+                new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
+                        new PropertyLocation("Woodlands Clementi")))
+                .build();
+        model = new ModelManager(new AddressBook(), new UserPrefs());
+        expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
+        Person withoutProperties = new PersonBuilder(CARL).withProperties().build();
+        for (Person person : List.of(clementiClient, woodlandsClient, withoutProperties)) {
+            model.addPerson(person);
+            expectedModel.addPerson(person);
+        }
+
+        for (String selector : List.of("l/", "L/")) {
+            assertParsedFindSuccess("find " + selector + "cLeMeNtI",
+                    new LocationContainsKeywordsPredicate(List.of("cLeMeNtI")),
+                    List.of(clementiClient, woodlandsClient));
+        }
+        assertParsedFindSuccess("find l/nonexistent woodlands",
+                new LocationContainsKeywordsPredicate(List.of("nonexistent", "woodlands")), List.of(woodlandsClient));
+        assertParsedFindSuccess("find l/nonexistent",
+                new LocationContainsKeywordsPredicate(List.of("nonexistent")), List.of());
+        assertParsedFindSuccess("find l/clementi",
+                new LocationContainsKeywordsPredicate(List.of("clementi")), List.of(clementiClient, woodlandsClient));
+        assertParsedFindSuccess("find n/ALI", preparePredicate("ALI"), List.of(clementiClient));
+        assertParsedFindSuccess("find l/woodlands",
+                new LocationContainsKeywordsPredicate(List.of("woodlands")), List.of(woodlandsClient));
+    }
+
+    @Test
+    public void execute_multiwordLocation_matchesAnyParsedKeyword() throws ParseException {
+        Person exactLocationClient = new PersonBuilder(ALICE).withProperties(
+                new Property(PropertyType.HDB, PropertyIntention.BUYING,
+                        new PropertyLocation("Clementi Ave 3"))).build();
+        Person clementiClient = new PersonBuilder(BENSON).withProperties(
+                new Property(PropertyType.HDB, PropertyIntention.SELLING,
+                        new PropertyLocation("Woodlands Clementi"))).build();
+        Person avenueClient = new PersonBuilder(CARL).withProperties(
+                new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Bedok Ave 1"))).build();
+        Person numberClient = new PersonBuilder(DANIEL).withProperties(
+                new Property(PropertyType.HDB, PropertyIntention.BUYING,
+                        new PropertyLocation("Tampines Street 3"))).build();
+        Person nonMatchingClient = new PersonBuilder(ELLE).withProperties(
+                new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Jurong East"))).build();
+        model = new ModelManager(new AddressBook(), new UserPrefs());
+        expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
+        for (Person person : List.of(exactLocationClient, clementiClient, avenueClient, numberClient,
+                nonMatchingClient, new PersonBuilder(FIONA).withProperties().build())) {
+            model.addPerson(person);
+            expectedModel.addPerson(person);
+        }
+
+        assertParsedFindSuccess("find l/Clementi Ave 3",
+                new LocationContainsKeywordsPredicate(List.of("Clementi", "Ave", "3")),
+                List.of(exactLocationClient, clementiClient, avenueClient, numberClient));
     }
 
     @Test

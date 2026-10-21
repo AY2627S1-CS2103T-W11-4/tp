@@ -97,6 +97,16 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_invalidPropertyIntention_reportsItsIndexAndConstraint() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
+                "", null, List.of(new JsonAdaptedProperty(CLEMENTI_HDB),
+                        new JsonAdaptedProperty("HDB", "Both", "Clementi", null)));
+        String expectedMessage = String.format(JsonAdaptedPerson.MESSAGE_INVALID_PROPERTY_FORMAT, 2,
+                JsonAdaptedProperty.MESSAGE_INVALID_INTENTION);
+        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+    }
+
+    @Test
     public void toModelType_budget_roundTrip() throws Exception {
         Person buyer = new PersonBuilder(BENSON).withBudget("1800000").build();
         assertEquals(buyer, new JsonAdaptedPerson(buyer).toModelType());

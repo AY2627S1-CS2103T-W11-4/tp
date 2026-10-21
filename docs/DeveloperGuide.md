@@ -154,6 +154,17 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Protecting client data after a failed load
+
+`MainApp#initModelManager()` propagates `DataLoadingException` when an existing client data file cannot
+be loaded. `MainApp#init()` then provides an error UI without creating a model or command logic.
+When the application starts, the error dialog shows the file's absolute path and recovery instructions,
+then the application exits. `stop()` skips saving preferences when no model was initialized.
+
+This prevents command-triggered automatic saving from overwriting the failed file with an empty list.
+The user must repair or replace the file and restart. Moving the file aside explicitly selects the existing
+first-run behavior, which loads sample clients. A valid file containing an empty client list still loads normally.
+
 ### Command reference help
 
 `HelpCommand` returns a `CommandResult` with `showHelp` set to `true`. The existing `MainWindow#handleHelp()`
@@ -170,9 +181,12 @@ examples parse as the intended commands without executing them or starting JavaF
 
 ### Find command
 
-`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, or `i/`.
+`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, or `i/`.
 For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
-Name, email, and phone searches use substring matching with OR semantics across keywords.
+Name, email, phone, and location searches use case-insensitive substring matching with OR semantics across keywords.
+`LocationContainsKeywordsPredicate` checks every entry in `Person#getProperties()` and returns a client once if any
+property location contains any keyword. Clients without properties do not match a location search.
+For example, `find l/clementi` matches clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
 Intention searches accept exactly one value, `buyer`, `seller` or `both`, case-insensitively.
 Missing keywords, repeated or mixed prefixes, and unsupported selectors are rejected.
 `find i/unspecified` is rejected. `IntentionMatchesPredicate` includes `BOTH` in buyer/seller searches and matches
@@ -204,7 +218,7 @@ timing assertions: intention sorting must not scan clients using `Person#equals(
 ### Derived client intention
 
 `Person#getIntention()` computes a `ClientIntention` from the current property list on demand.
-Properties use the existing `Intention.BUYER`/`Intention.SELLER` values for their direction.
+Properties use `PropertyIntention.BUYING` and `PropertyIntention.SELLING` for their direction.
 
 | Buying-direction property present | Selling-direction property present | Derived role | Display |
 | --- | --- | --- | --- |
@@ -231,7 +245,7 @@ values, preventing it from being absorbed into another field's text. Property co
 `JsonAdaptedPerson` accepts the legacy JSON `intention` parameter as ignored input and stores no role field.
 New JSON omits client intention; only properties determine the role after loading.
 A missing, null or stale legacy client role does not prevent otherwise valid data from loading.
-For example, legacy Buyer plus an empty property list becomes `UNSPECIFIED`; legacy Buyer plus only Seller
+For example, legacy Buyer plus an empty property list becomes `UNSPECIFIED`; legacy Buyer plus only Selling
 properties becomes `SELLER`. Property-value validation and indexed storage errors remain unchanged.
 Round-trip tests cover all four roles, and legacy-file tests verify that loading does not rewrite the file.
 
@@ -305,13 +319,18 @@ Each entry describes one client's interest in buying or selling a property.
 | Field | Type | Rules |
 | --- | --- | --- |
 | Type | `PropertyType` | Required: `HDB`, `CONDOMINIUM`, or `LANDED`. `parse` accepts full names and `h`, `c`, or `l`, ignoring case and surrounding whitespace. |
-| Intention | `Intention` | Required: `BUYER` or `SELLER`. Property directions determine the client's derived `ClientIntention`. `Intention.parse` accepts exactly `Buyer` or `Seller`. |
+| Intention | `PropertyIntention` | Required: `BUYING` or `SELLING`. `parse` accepts `Buying` or `Selling`, ignoring case and surrounding whitespace. Client-role values are invalid. Property directions determine the derived `ClientIntention`. |
 | Location | `PropertyLocation` | Required, nonblank text. Surrounding whitespace is removed; case and internal whitespace are preserved. |
 | Price | `PropertyPrice` | Optional. A supplied price must be a positive whole-dollar SGD amount up to `Long.MAX_VALUE`, without commas, decimals, leading zeros, or surrounding whitespace. |
 
 Use the three-argument `Property` constructor when the price is unknown, or pass `null` as the fourth argument.
 `getPrice()` returns `Optional.empty()` for an unknown price. Zero is invalid for a property price.
 The existing client budget remains a separate field with its existing validation.
+
+`PropertyIntention` describes an individual property's buying or selling action.
+It is separate from `ClientIntention`, the role derived from all of the client's properties.
+Each `Property` has exactly one non-null intention, enforced by its constructor and the two-value enum.
+Changing a property's intention recomputes the client role and can change how `find i/` matches or orders that client.
 
 #### Ownership and indexes
 
@@ -333,7 +352,9 @@ identity as determined by `isSamePerson()`.
 `PropertyParserUtil` recognises `t/`, `i/`, `l/` and `pr/` case-insensitively without changing field values.
 Unknown and repeated fields are rejected, including repeated prefixes with different capitalisation.
 Whitespace-separated alphabetic words ending in `/` are reserved as prefixes and cannot be used as literal location text.
-Property type aliases and Buyer/Seller values ignore case in property commands; the underlying property intention enum remains unchanged.
+Property type aliases and Buying/Selling values ignore case in property commands.
+`PropertyParserUtil.parseIntention` delegates to `PropertyIntention.parse` and translates invalid values into
+`ParseException`. `Buyer`, `Seller`, `Both` and blank values are rejected; legacy values are accepted only by storage.
 
 `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]` requires a type, intention and nonblank location.
 The parser validates every field before constructing a complete `Property`; an omitted price is unknown.
@@ -355,7 +376,7 @@ The add-property command applies the immutable model update after validating the
 
 ```java
 Property property = new Property(
-        PropertyType.HDB, Intention.BUYER, new PropertyLocation("Clementi Ave 3"));
+        PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi Ave 3"));
 Person original = model.getFilteredPersonList().get(personIndex.getZeroBased());
 Person updated = original.withAddedProperty(property);
 model.setPerson(original, updated);
@@ -379,6 +400,14 @@ Each saved client has a `properties` array. `JsonAdaptedProperty` stores `type`,
 and `price` as a whole-dollar string or `null` when unknown. Property order and duplicate entries survive saving and
 loading. A missing `price` also loads as unknown.
 
+Property intentions are saved canonically as `Buying` or `Selling`.
+The adapter also accepts exact legacy `Buyer` and `Seller` values, mapping them to `BUYING` and `SELLING`.
+This compatibility rule stays in `JsonAdaptedProperty` and does not broaden command syntax.
+Legacy client-level intention is ignored and omitted from new saves; the client role is derived from properties.
+Mixed old/new property values can be loaded in one file.
+Reading does not rewrite the file; saving writes all property intentions in the new canonical form.
+Unlike CLI input, saved intention values are case-sensitive and do not permit surrounding whitespace.
+
 `JsonAdaptedPerson` treats a missing or null `properties` field as an empty list, so valid v1.3 files load without
 migration. Null property entries, missing required fields, and invalid values are rejected with `IllegalValueException`;
 the error includes the property's one-based index. File loading reports these errors as `DataLoadingException`.
@@ -387,6 +416,9 @@ Invalid entries are not silently discarded.
 The regression tests cover field validation, case-insensitive parsing, price clearing, index changes, independent clients and preservation through client edits and remarks.
 Integration tests execute command strings through the real parser, model and JSON storage, checking unchanged data after rejected operations and persistence after valid operations.
 Old-file compatibility and property-list immutability are also covered.
+Storage tests assert canonical output, legacy read-save-read migration, mixed representations, and preserved order,
+duplicates and client fields. Invalid property intentions retain the indexed `IllegalValueException` error path;
+full-file reads fail without changing the input file.
 
 #### Property display
 
@@ -498,6 +530,70 @@ _{Explain here how the data archiving feature will be implemented}_
 * [Logging guide](Logging.md)
 * [DevOps guide](DevOps.md)
 
+### Viewing application logs in VS Code or Cursor
+
+These steps use the integrated terminal in VS Code or Cursor.
+IntelliJ IDEA procedures may differ and are not covered here.
+Logging is available throughout RESIDEX through `LogsCenter`; the property commands below are an example.
+
+1. Open the repository root in the editor, where `gradlew` and `build.gradle` are located.
+
+2. Open `src/main/java/seedu/address/commons/core/LogsCenter.java`.
+   The default `LOG_LEVEL` is `Level.INFO`.
+   To see detailed debugging messages, temporarily change it to the following and save the file:
+
+   ```java
+   private static final Level LOG_LEVEL = Level.FINE;
+   ```
+
+3. Select **Terminal > New Terminal** and run the following from the repository root:
+
+   ```bash
+   ./gradlew run --console=plain
+   ```
+
+   On Windows, use `.\gradlew.bat run --console=plain` instead.
+   If the app is already running, close it first and restart it using this command so the new logging level takes effect.
+   Logs appear in the terminal that launches the app.
+
+4. In the app, choose a test client with no properties.
+   The following example assumes the client is displayed at index `1`; replace the client index if needed.
+   Run these commands one at a time:
+
+   ```text
+   addp 1 t/HDB i/Buying l/Clementi pr/800000
+   editp 1 1 l/Bishan
+   editp 1 1 l/Bishan
+   delp 1 1
+   delp 1 99
+   ```
+
+5. Check the terminal for these `FINE` messages in order:
+
+   ```text
+   Added property 1 to displayed client 1
+   Edited property 1 for displayed client 1
+   Property 1 is unchanged for displayed client 1
+   Deleted property 1 from displayed client 1
+   ```
+
+   The final command has an invalid property index, so it should show an error in the app without a successful deletion log.
+   An `INFO` entry containing `[USER COMMAND]` records an attempt, including commands that fail validation.
+   The property-operation messages record completed model changes or an unchanged edit; they do not confirm that saving to disk succeeded.
+
+6. To review saved output, open `residex.log.0` in the repository root.
+   Logs rotate between `residex.log.*` files, and concurrent app instances may use additional file suffixes.
+   On macOS or Linux, you can also open a second terminal and follow the log live:
+
+   ```bash
+   tail -f residex.log.0
+   ```
+
+   Press **Ctrl+C** in that terminal to stop following the log.
+
+7. After debugging, restore `LOG_LEVEL` to `Level.INFO` and save the file.
+   Check the editor's Source Control view to ensure the temporary logging-level change is removed before committing.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Appendix: Requirements**
@@ -602,7 +698,8 @@ delete information, invalid input is rejected without changing that information.
 
 **MSS**
 
-1. Property agent requests to find clients by name, phone number, email or derived intention, supplying a search value.
+1. Property agent requests to find clients by name, phone number, email, property location or derived intention,
+   supplying search keywords.
 2. RESIDEX displays the matching clients and the number of matches.
 
    Use case ends.
@@ -898,27 +995,42 @@ They are documented for future reference, without committing to their implementa
 * **Active property listing**: A property listing recorded under a seller's client profile that is currently available for sale.
 * **Associated property**: A property linked to a client's profile, such as a property the client is interested in or is selling.
 * **Budget**: The amount of money a buyer is prepared to spend on a property.
+* **Budget band**: The category derived from a client's recorded budget: Low ($800,000 and below), Middle (above $800,000, up to and including $2,500,000), or High (above $2,500,000).
 * **Buyer**: A client who wants to purchase a property.
+* **Buying**: A property intention describing a client's interest in purchasing that property.
 * **Buying status**: How close a client is to agreeing on a property.
 * **Client**: A person whose details a property agent stores in RESIDEX; their property-derived role can be Buyer, Seller, both or Not specified.
 * **Client intention**: The role derived from the client's property directions; no properties means Not specified, and both directions means Buyer / Seller.
 * **Client information history**: Previously recorded information or changes associated with a client, available for review.
 * **Client profile**: The stored information about a client, including contact details, requirements, buying status, priority and associated properties.
 * **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
+* **Filtered client list**: The clients currently displayed after a search. Each `find` command searches all stored clients and replaces this list; `list` restores all clients.
 * **Follow-up**: A planned next contact with a client. A follow-up may be upcoming or overdue.
+* **Intention**: Whether a client or property is on the buying or selling side.
 * **Internal note**: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
+* **Keyword**: A search term supplied after a `find` prefix. Whitespace separates keywords, and any matching keyword returns a client.
 * **Lead**: A potential client or transaction that the property agent is currently pursuing
 * **Mainstream OS**: Windows, Linux, Unix, or macOS.
 * **Minimum Viable Product (MVP)**: The initial version of RESIDEX containing the features selected to meet its core user needs.
+* **Prefix**: A field selector such as `n/` for a name or `l/` for a property location. The `find` command accepts exactly one selector.
 * **Priority**: An indication of a client's importance or urgency, assigned by the property agent to help decide whom to attend to first.
 * **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 * **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
+* **Property entry**: A record in a client's ordered property list that stores information about an associated property.
+* **Property index**: The one-based position of a property entry within a selected client's property list. It is not a permanent identifier: deleting an earlier property shifts subsequent indexes down by one.
+* **Property intention**: The Buying or Selling action recorded for one property; these actions determine the client's derived role.
 * **Property listing**: A record containing information about a property available for sale or rent
+* **Property location**: Nonblank descriptive text stored on a property entry, such as `Clementi Ave 3`. The `find l/` search checks these locations.
+* **Property price**: An optional, positive whole-dollar amount recorded for a property, separate from the client's budget.
+* **Property type**: The HDB, Condominium or Landed category of a property entry.
 * **Property viewing**: An appointment for a client to inspect a property
 * **Purpose**: A client's buying or selling needs, represented by property intentions and summarised by the derived client role.
+* **Remark**: Text recorded for a client using the `remark` command and displayed on the client card.
 * **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
+* **Selling**: A property intention describing a client's interest in selling that property.
+* **Substring matching**: Matching text that contains a keyword anywhere, ignoring case; for example, `clementi` matches both `Clementi Ave 3` and `Woodlands Clementi`.
 * **Transaction**: The process of completing a property sale or rental
 * **Viewing**: A scheduled visit to a property with a client.
 
@@ -1027,12 +1139,12 @@ Run these steps in order; client indexes below refer to the filtered list.
       Expected: Exactly one client is shown, with displayed index 1.
       Their intention is Not specified because they have no properties.
 
-   1. Enter `ADDP 1 T/h I/buyer L/Clementi Ave 3 PR/800000`.<br>
-      Expected: Property 1 appears under this client as HDB, Buyer, Clementi Ave 3, $800,000.
+   1. Enter `ADDP 1 T/h I/buying L/Clementi Ave 3 PR/800000`.<br>
+      Expected: Property 1 appears under this client as HDB, Buying, Clementi Ave 3, $800,000.
       The client filter remains active, the client's role becomes Buyer and the budget remains $900,000.
 
-   1. Enter `addp 1 t/c i/Seller l/Bishan`.<br>
-      Expected: Property 2 appears as Condominium, Seller, Bishan with no price.
+   1. Enter `addp 1 t/c i/Selling l/Bishan`.<br>
+      Expected: Property 2 appears as Condominium, Selling, Bishan with no price.
       The client's derived intention becomes Buyer / Seller.
 
 1. Editing and clearing price
@@ -1043,16 +1155,26 @@ Run these steps in order; client indexes below refer to the filtered list.
    1. Enter `editp 1 2 pr/`.<br>
       Expected: Property 2's price is removed; all other fields remain unchanged.
 
+   1. Enter `editp 1 2 i/BUYING`, then `editp 1 2 i/sElLiNg`.<br>
+      Expected: Property 2 changes from Selling to Buying and back to Selling.
+      Its type, Toa Payoh location, unknown price and position remain unchanged.
+      Property 1 and the $900,000 budget are retained; the role changes to Buyer and back to Buyer / Seller.
+
    1. Enter `editp 1 2 l/Toa Payoh`.<br>
       Expected: The feedback reports an unchanged property and the original entry is retained.
 
 1. Rejecting invalid requests
 
-   1. Try `editp 1 2 l/`, `editp 1 2 l/Bishan pr/1.5`, `editp 1 2 l/Bishan L/Tampines`, and `addp 1 t/HDB i/Buyer l/Bishan p/800000`.<br>
+   1. Try `addp 1 t/HDB i/Buyer l/Bishan`, `addp 1 t/HDB i/Both l/Bishan`,
+      `editp 1 2 i/Seller`, `editp 1 2 i/`, and `editp 1 2 i/Buying I/Selling`.<br>
+      Expected: Legacy client-role values, blank intentions and duplicate prefixes are rejected.
+      The client list, property entries, active filter and saved file remain unchanged.
+
+   1. Try `editp 1 2 l/`, `editp 1 2 l/Bishan pr/1.5`, `editp 1 2 l/Bishan L/Tampines`, and `addp 1 t/HDB i/Buying l/Bishan p/800000`.<br>
       Expected: Each command reports an input error; no property or saved data is changed.
       Price uses `pr/`, not `p/`.
 
-   1. Try `addp 2 t/HDB i/Buyer l/Bishan`, `editp 1 99 l/Bishan`, and `delp 1 0`.<br>
+   1. Try `addp 2 t/HDB i/Buying l/Bishan`, `editp 1 99 l/Bishan`, and `delp 1 0`.<br>
       Expected: Invalid client/property indexes are rejected without modifying any client or property.
 
 1. Deleting and saving
@@ -1062,8 +1184,27 @@ Run these steps in order; client indexes below refer to the filtered list.
       The client remains in the phone-filtered list and their role becomes Seller.
 
    1. Exit and relaunch the app, then enter `find p/91009001`.<br>
-      Expected: The single Condominium/Seller/Toa Payoh entry remains, without a price.
+      Expected: The single Condominium/Selling/Toa Payoh entry remains, without a price.
       The client's contact details and $900,000 budget are retained; the role is derived as Seller.
+
+1. Loading legacy property intentions
+
+   1. Exit the app and back up its data file. In the remaining property's JSON object, change only
+      its `"intention": "Selling"` field to `"intention": "Seller"`, then relaunch.<br>
+      Expected: The property displays Selling with its other fields unchanged; the role is derived as Seller.
+      No client-level intention field needs to be added.
+
+   1. After each legacy load, enter `list`, exit and inspect the saved file.<br>
+      Expected: The property's intention uses canonical Selling or Buying respectively.
+      Relaunch and verify that the same property details and derived Seller role are retained.
+      Repeat these two steps with legacy property `"intention": "Buyer"`; expect Buying on display and save,
+      and a derived Buyer role. Other client fields remain unchanged.
+
+   1. Exit the app, back up the valid file, and change only the property's intention to `"Both"`.
+      Relaunch and inspect the load error and file before entering any commands.<br>
+      Expected: Loading fails through the normal data-loading error path and the read leaves the file unchanged.
+      Missing, blank or noncanonical property intentions such as `"buying"` must also fail.
+      Close the app without issuing commands and restore the valid backup before continuing.
 
 ### Deriving and finding client intentions
 
@@ -1075,15 +1216,15 @@ Run the steps in order; use the displayed indexes after each search.
    1. Enter `add n/Role Mixed p/91008001 e/mixed@example.com`, then `find p/91008001`.<br>
       Expected: The new client has intention Not specified.
 
-   1. Enter `addp 1 t/HDB i/Buyer l/Clementi`, then `addp 1 t/Condominium i/Seller l/Bishan`.<br>
+   1. Enter `addp 1 t/HDB i/Buying l/Clementi`, then `addp 1 t/Condominium i/Selling l/Bishan`.<br>
       Expected: The role changes to Buyer after the first addition and Buyer / Seller after the second.
 
    1. Enter `add n/Role Buyer p/91008002 e/buyer@example.com`, then `find p/91008002`,
-      then `addp 1 t/HDB i/Buyer l/Clementi`.<br>
+      then `addp 1 t/HDB i/Buying l/Clementi`.<br>
       Expected: This client's role is Buyer.
 
    1. Enter `add n/Role Seller p/91008003 e/seller@example.com`, then `find p/91008003`,
-      then `addp 1 t/Condominium i/Seller l/Bishan`.<br>
+      then `addp 1 t/Condominium i/Selling l/Bishan`.<br>
       Expected: This client's role is Seller.
 
    1. Enter `add n/Role Empty p/91008004 e/empty@example.com`, then `find n/Role`.<br>
@@ -1113,11 +1254,11 @@ Run the steps in order; use the displayed indexes after each search.
       Expected: The Buyer client is renamed; Role Mixed is untouched even though it is earlier in source order.
       Client edit returns to the full list, so run the search again before using its indexes.
 
-   1. Enter `find i/buyer`, then `addp 1 t/Condominium i/Seller l/Tampines`.<br>
+   1. Enter `find i/buyer`, then `addp 1 t/Condominium i/Selling l/Tampines`.<br>
       Expected: Role Buyer Updated becomes Buyer / Seller. Role Mixed is now displayed before it because
       both matches retain source order. Property commands keep the filter active.
 
-   1. Enter `editp 1 1 i/Seller`.<br>
+   1. Enter `editp 1 1 i/Selling`.<br>
       Expected: This edits Role Mixed, the currently displayed client 1. That client becomes Seller and
       disappears from buyer results; Role Buyer Updated remains visible.
 
@@ -1195,8 +1336,25 @@ Run the steps in order; use the displayed indexes after each search.
 
 ### Saving data
 
-1. Dealing with missing/corrupted data files
+Use a copy of the application in a separate folder for these tests, and keep a backup of its
+`data/addressbook.json` file. Close RESIDEX before changing the file.
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+1. Failed loading:
+   1. Replace the file contents with `invalid JSON`, then launch RESIDEX.
+      Expected: An error dialog identifies the file, explains that it has not been changed, and gives
+      recovery instructions. Closing the dialog exits RESIDEX without opening the main window.
+   2. Open the file in a text editor.
+      Expected: It still contains `invalid JSON`.
+   3. Repeat with `null`, `{"persons": [null]}`, and a client with an invalid field value.
+      Expected: The same error and file-preservation behavior.
 
-1. _{ more test cases … }_
+2. Recovery:
+   1. Restore the valid backup and restart RESIDEX.
+      Expected: The saved clients appear. Changes made with commands persist after restarting.
+   2. Close RESIDEX, rename the data file to `addressbook.backup.json`, then restart.
+      Expected: Sample clients appear. Run `list`; a new data file is saved while the renamed file stays unchanged.
+
+3. Valid empty data:
+   1. Close RESIDEX and set the data file contents to `{"persons": []}`.
+   2. Restart, then add a client using `add n/Alice p/91234567 e/alice@example.com`.
+      Expected: RESIDEX starts normally with an empty list, and the added client persists after restarting.

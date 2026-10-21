@@ -20,6 +20,7 @@ import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeletePropertyCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditPropertyCommand;
+import seedu.address.logic.commands.EditPropertyCommand.EditPropertyDescriptor;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -30,9 +31,15 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
 import seedu.address.model.person.IntentionMatchesPredicate;
+import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.person.Remark;
+import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
+import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -111,12 +118,31 @@ public class HelpContentTest {
     }
 
     @Test
+    public void propertyExamples_useBuyingAndSelling() throws ParseException {
+        List<String> examples = getExamples(AddPropertyCommand.COMMAND_WORD);
+        Property buying = new Property(PropertyType.HDB, PropertyIntention.BUYING,
+                new PropertyLocation("Clementi"), new PropertyPrice("800000"));
+        Property selling = new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
+                new PropertyLocation("Bishan"));
+        assertEquals(new AddPropertyCommand(Index.fromOneBased(1), buying), parser.parseCommand(examples.get(0)));
+        assertEquals(new AddPropertyCommand(Index.fromOneBased(1), selling), parser.parseCommand(examples.get(1)));
+
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setType(PropertyType.LANDED);
+        descriptor.setIntention(PropertyIntention.SELLING);
+        descriptor.setPrice(new PropertyPrice("3200000"));
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), descriptor),
+                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(1)));
+    }
+
+    @Test
     public void findExamples_searchEachDocumentedProperty() throws ParseException {
         List<String> examples = getExamples(FindCommand.COMMAND_WORD);
         List<FindCommand> expectedCommands = List.of(
                 new FindCommand(new NameContainsKeywordsPredicate(List.of("alex", "david"))),
                 new FindCommand(new EmailContainsKeywordsPredicate(List.of("gmail"))),
                 new FindCommand(new PhoneContainsKeywordsPredicate(List.of("9123"))),
+                new FindCommand(new LocationContainsKeywordsPredicate(List.of("clementi"))),
                 new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)),
                 new FindCommand(new IntentionMatchesPredicate(ClientIntention.BOTH)));
 

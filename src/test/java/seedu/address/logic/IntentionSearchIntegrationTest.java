@@ -23,9 +23,9 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyType;
 import seedu.address.storage.JsonAddressBookStorage;
@@ -102,6 +102,16 @@ public class IntentionSearchIntegrationTest {
     }
 
     @Test
+    public void execute_locationAndIntentionSearches_replaceFiltersAndPreserveStoredOrder() throws Exception {
+        assertSearch("i/buyer", BUYER_ORDER);
+        assertSearch("l/CLEMENTI", List.of(BOTH_ALPHA, BUYER_ALPHA, BOTH_BETA, BUYER_BETA));
+        assertSearch("i/seller", SELLER_ORDER);
+        assertSearch("l/missing", List.of());
+        assertSearch("i/both", List.of(BOTH_ALPHA, BOTH_BETA));
+        assertSearch("l/Tampines", List.of(BOTH_ALPHA, SELLER_ALPHA, BOTH_BETA, SELLER_BETA));
+    }
+
+    @Test
     public void execute_edit_usesDisplayedIndexForBothSearchDirections() throws Exception {
         assertTargetsDisplayedFirst("edit 1 n/Changed Client",
                 person -> new PersonBuilder(person).withName("Changed Client").build());
@@ -120,8 +130,8 @@ public class IntentionSearchIntegrationTest {
 
     @Test
     public void execute_addProperty_usesDisplayedIndexForBothSearchDirections() throws Exception {
-        Property added = new Property(PropertyType.LANDED, Intention.BUYER, new PropertyLocation("Serangoon"));
-        assertTargetsDisplayedFirst("addp 1 t/Landed i/Buyer l/Serangoon", person -> person.withAddedProperty(added));
+        Property added = new Property(PropertyType.LANDED, PropertyIntention.BUYING, new PropertyLocation("Serangoon"));
+        assertTargetsDisplayedFirst("addp 1 t/Landed i/Buying l/Serangoon", person -> person.withAddedProperty(added));
     }
 
     @Test
@@ -142,16 +152,16 @@ public class IntentionSearchIntegrationTest {
     @Test
     public void execute_roleChangingPropertyEdit_updatesDisplayedOrderAndMembership() throws Exception {
         logic.execute("find i/buyer");
-        logic.execute("addp 1 t/Condominium i/Seller l/Tampines");
+        logic.execute("addp 1 t/Condominium i/Selling l/Tampines");
         Person mixed = BUYER_ALPHA.withAddedProperty(TAMPINES_CONDO);
         assertEquals(List.of(BUYER_BETA, BOTH_ALPHA, mixed, BOTH_BETA), logic.getFilteredPersonList());
         List<Person> expectedSource = new ArrayList<>(SOURCE_ORDER);
         expectedSource.set(2, mixed);
         assertSourceAndStorage(expectedSource);
 
-        logic.execute("editp 1 1 i/Seller");
+        logic.execute("editp 1 1 i/Selling");
         Person seller = BUYER_BETA.withUpdatedProperty(Index.fromOneBased(1), new Property(
-                CLEMENTI_HDB.getType(), Intention.SELLER, CLEMENTI_HDB.getLocation(),
+                CLEMENTI_HDB.getType(), PropertyIntention.SELLING, CLEMENTI_HDB.getLocation(),
                 CLEMENTI_HDB.getPrice().orElse(null)));
         assertEquals(List.of(BOTH_ALPHA, mixed, BOTH_BETA), logic.getFilteredPersonList());
         expectedSource.set(4, seller);
@@ -165,7 +175,7 @@ public class IntentionSearchIntegrationTest {
             List<Person> displayed = List.copyOf(logic.getFilteredPersonList());
             String saved = Files.readString(storage.getAddressBookFilePath());
             for (String command : List.of("edit 5 n/Changed", "delete 5", "remark 5 r/Changed",
-                    "addp 5 t/HDB i/Buyer l/Clementi", "editp 5 1 l/Changed", "delp 5 1")) {
+                    "addp 5 t/HDB i/Buying l/Clementi", "editp 5 1 l/Changed", "delp 5 1")) {
                 assertThrows(CommandException.class, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX, () ->
                         logic.execute(command));
                 assertEquals(displayed, logic.getFilteredPersonList());

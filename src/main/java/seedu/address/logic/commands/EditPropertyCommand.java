@@ -4,14 +4,16 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Objects;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyType;
@@ -30,6 +32,7 @@ public class EditPropertyCommand extends Command {
     public static final String MESSAGE_UNCHANGED = "Property %1$d for %2$s is unchanged.";
     public static final String MESSAGE_SUCCESS = "Edited property %1$d for %2$s: %3$s";
 
+    private final Logger logger = LogsCenter.getLogger(EditPropertyCommand.class);
     private final Index clientIndex;
     private final Index propertyIndex;
     private final EditPropertyDescriptor descriptor;
@@ -53,9 +56,18 @@ public class EditPropertyCommand extends Command {
         }
         Property replacement = descriptor.applyTo(current);
         if (replacement.equals(current)) {
+            logger.fine("Property " + propertyIndex.getOneBased()
+                    + " is unchanged for displayed client " + clientIndex.getOneBased());
             return new CommandResult(String.format(MESSAGE_UNCHANGED, propertyIndex.getOneBased(), original.getName()));
         }
-        model.setPerson(original, original.withUpdatedProperty(propertyIndex, replacement));
+        Person updated = original.withUpdatedProperty(propertyIndex, replacement);
+        assert updated.getProperties().size() == original.getProperties().size()
+                : "Editing a property must preserve the property count";
+        assert updated.getProperties().get(propertyIndex.getZeroBased()).equals(replacement)
+                : "Editing a property must apply the replacement at the selected index";
+        model.setPerson(original, updated);
+        logger.fine("Edited property " + propertyIndex.getOneBased()
+                + " for displayed client " + clientIndex.getOneBased());
         return new CommandResult(String.format(MESSAGE_SUCCESS, propertyIndex.getOneBased(),
                 original.getName(), replacement.toDisplay()));
     }
@@ -82,7 +94,7 @@ public class EditPropertyCommand extends Command {
      */
     public static class EditPropertyDescriptor {
         private PropertyType type;
-        private Intention intention;
+        private PropertyIntention intention;
         private PropertyLocation location;
         private PropertyPrice price;
         private boolean priceEdited;
@@ -106,7 +118,7 @@ public class EditPropertyCommand extends Command {
             this.type = requireNonNull(type);
         }
 
-        public void setIntention(Intention intention) {
+        public void setIntention(PropertyIntention intention) {
             this.intention = requireNonNull(intention);
         }
 

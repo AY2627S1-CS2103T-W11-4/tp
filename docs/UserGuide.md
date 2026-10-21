@@ -105,8 +105,8 @@ Use the property commands to change the properties that determine the role.
 | Recorded property intentions | Client intention shown |
 | --- | --- |
 | No properties | Not specified |
-| One or more Buyer properties, no Seller properties | Buyer |
-| One or more Seller properties, no Buyer properties | Seller |
+| One or more Buying properties, no Selling properties | Buyer |
+| One or more Selling properties, no Buying properties | Seller |
 | At least one of each direction | Buyer / Seller |
 
 The role updates automatically after `addp`, `editp` or `delp`.
@@ -122,6 +122,7 @@ The old client-level `"intention"` field is ignored when loading; properties det
 A legacy client with no properties becomes Not specified, even if their old role is Buyer or Seller.
 New saves omit the client-level intention field and retain each property's intention.
 Property intentions remain required and must be valid; invalid property data cannot be loaded.
+RESIDEX shows an error and closes when existing data is invalid; it does not replace the file with empty data.
 Saved files containing duplicate name-and-phone pairs under the rule above also cannot be loaded.
 Back up the file and resolve these duplicates before opening it with this version.
 
@@ -174,7 +175,8 @@ Property intentions determine the client's overall role. Property prices remain 
 * Property fields can be supplied in any order, once each.
   Prefixes, property types and property intentions are case-insensitive.
 * Valid types are `HDB` (`h`), `Condominium` (`c`) and `Landed` (`l`).
-  Valid property intentions are `Buyer` and `Seller`.
+  Valid property intentions are `Buying` and `Selling`.
+  `Buyer`, `Seller` and `Both` are rejected in property commands.
 * Location is nonblank text, for example `Clementi Ave 3`.
   Surrounding whitespace is removed; capitalisation and internal spaces are preserved.
 * `pr/PRICE` is the property's price in whole Singapore dollars, separate from `b/BUDGET` on the client.
@@ -182,6 +184,20 @@ Property intentions determine the client's overall role. Property prices remain 
   Use `pr/` rather than `p/` for property prices.
 * Whitespace-separated words ending in `/` are treated as field prefixes in property commands.
   Use only `t/`, `i/`, `l/` and `pr/`; do not include prefix-like text such as `MRT/Exit` in a location.
+
+**Existing property data:** Saved property intentions `Buyer` and `Seller` load automatically as `Buying` and `Selling`.
+New saves use `Buying` and `Selling` for properties; no manual conversion is needed.
+Saved property values must use these exact spellings, including capitalisation, or the legacy `Buyer`/`Seller` spellings.
+Legacy client-level intention is ignored; new saves omit it and derive the role from the properties.
+
+<box type="warning" seamless>
+
+**Returning to an older version:** Compatibility is one-way. Automatic saves, including those triggered by
+`list` or `help`, convert legacy property intentions to `Buying` and `Selling`.
+Older releases may reject the migrated file. Before upgrading, back up
+`[JAR file location]/data/addressbook.json` and retain that pre-upgrade backup if you may need to return to an older release.
+
+</box>
 
 ### Adding a property: `addp`
 
@@ -193,9 +209,9 @@ The new property is appended to the selected client's list.
 
 Examples:
 
-* `addp 1 t/HDB i/Buyer l/Clementi pr/800000` adds a property with an $800,000 price to the first displayed client.
-* `addp 1 t/c i/Seller l/Bishan` adds a condominium entry without a price to the same client.
-* `ADDP 1 T/l I/buyer L/Bukit Timah PR/3200000` adds a landed property using mixed-case syntax.
+* `addp 1 t/HDB i/Buying l/Clementi pr/800000` adds a property with an $800,000 price to the first displayed client.
+* `addp 1 t/c i/Selling l/Bishan` adds a condominium entry without a price to the same client.
+* `ADDP 1 T/l I/buying L/Bukit Timah PR/3200000` adds a landed property using mixed-case syntax.
 
 ### Deleting a property: `delp`
 
@@ -225,39 +241,45 @@ Format: `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [
 Examples:
 
 * `editp 1 2 l/Toa Payoh` changes only property 2's location for the first displayed client.
-* `editp 1 2 t/Landed i/Seller pr/3200000` changes its type, property intention and price together.
+* `editp 1 2 i/Buying` changes only its property intention, preserving its type, location, price and position.
+* `editp 1 2 t/Landed i/Selling pr/3200000` changes its type, property intention and price together.
 * `editp 1 2 pr/` removes its price while preserving its location and other fields.
 
-### Locating persons by name, email, phone, or intention: `find`
+### Locating persons by name, email, phone, location, or intention: `find`
 
-Finds contacts using exactly one selected property.
+Finds contacts using exactly one selected search field.
 
-Format: `find PROPERTY/KEYWORD [MORE_KEYWORDS]`
+Format: `find FIELD/KEYWORD [MORE_KEYWORDS]`
 
-Property | Prefix
+Search field | Prefix
 --- | ---
 Name | `n/`
 Email | `e/`
 Phone | `p/`
+Property location | `l/`
 Intention | `i/`
 
 * Prefix letters and keywords are case-insensitive; `N/` and `n/` have the same effect.
 * Specify exactly one short prefix immediately after `find`, with `/` immediately after the letter.
   Missing, unknown, repeated, or mixed prefixes are rejected. For example, use `find n/alice`.
-  Long property aliases are not supported.
+  Long search field aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
-* Name, email, and phone searches use substring matching; `find n/ali` matches `Alice`.
-* Multiple keywords use `OR` matching: a contact is returned if any keyword matches the selected property.
+* Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
+* Multiple keywords use `OR` matching: a contact is returned if any keyword matches the selected search field.
+* Location searches check all property entries attached to each client. A client appears once if any location matches;
+  clients without property entries do not match. Enter keywords without quotation marks.
+* Spaces separate location keywords. A multiword location search matches any of its keywords independently;
+  it does not search for the whole phrase or require an exact address match.
 * Intention searches require exactly one complete value: `buyer`, `seller` or `both`, in any capitalization.
   `find i/unspecified` is not supported.
 * `find i/buyer` shows Buyer clients first, then Buyer / Seller clients.
   `find i/seller` shows Seller clients first, then Buyer / Seller clients.
   `find i/both` shows only Buyer / Seller clients.
   Each group retains normal client order.
-* Name, email and phone searches restore normal client order. `list` also restores that order.
+* Name, email, phone and location searches restore normal client order. `list` also restores that order.
   Intention sorting does not change stored order.
 * Commands using client indexes always act on the currently displayed order, including sorted intention results.
-* Only the selected property is searched. Each search filters the entire contact list, replacing any previous filter.
+* Only the selected search field is searched. Each search filters the entire contact list, replacing any previous filter.
   Use `list` to show all contacts again. Searches do not modify stored contacts.
 
 Examples:
@@ -266,6 +288,10 @@ Examples:
 * `find n/alex david` returns `Alex Yeoh` and `David Li`.
 * `find e/gmail` finds email addresses containing `gmail`.
 * `find p/9123` finds phone numbers containing `9123`.
+* `find l/clementi` finds clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
+* `find l/clementi woodlands` finds clients with any property location containing `clementi` or `woodlands`.
+* `find l/Clementi Ave 3` searches for `Clementi`, `Ave`, or `3` independently. It matches locations such as
+  `Clementi Ave 3`, `Woodlands Clementi`, `Bedok Ave 1`, and `Tampines Street 3`.
 * `find i/buyer` lists Buyer clients followed by Buyer / Seller clients.
 * `find i/seller` lists Seller clients followed by Buyer / Seller clients.
 * `find i/both` lists Buyer / Seller clients only.
@@ -316,9 +342,17 @@ RESIDEX data is saved automatically as a JSON file `[JAR file location]/data/add
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, RESIDEX starts with an empty client list at the next run. The invalid file remains on disk until you run a command (RESIDEX saves after every command). Still, we recommend backing up the file before editing it.<br>
+If your changes make the data file invalid, RESIDEX shows an error with the file's location and closes without changing the client data file. Back up the file before editing it.<br>
 Furthermore, certain edits can cause RESIDEX to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
+
+### Recovering from a data loading error
+
+If RESIDEX cannot load an existing client data file, it shows an error and closes. Commands and automatic saving are unavailable, so the failed file cannot be overwritten by an empty client list.
+
+1. Locate the file using the path shown in the error dialog and make a backup copy.
+2. Repair the invalid data or replace the file with a valid backup, then restart RESIDEX.
+3. If you want to start fresh instead, move or rename the failed file before restarting. RESIDEX will start with sample clients, as it does when no data file exists. Keep the original file if you want to recover its contents later.
 
 ### Archiving data files `[coming in v2.0]`
 
@@ -347,10 +381,10 @@ Action     | Format, Examples
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com b/1500000`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`<br> e.g., `addp 1 t/HDB i/Buyer l/Clementi pr/800000`
+**Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]`<br> e.g., `editp 1 2 l/Toa Payoh`
-**Find**   | `find PROPERTY/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find i/seller`
+**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`
 **List**   | `list`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
 **Help**   | `help`

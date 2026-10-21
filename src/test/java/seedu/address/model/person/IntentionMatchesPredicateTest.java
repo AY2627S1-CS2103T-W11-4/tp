@@ -69,6 +69,15 @@ public class IntentionMatchesPredicateTest {
     }
 
     @Test
+    public void test_unspecified_matchesOnlyClientsWithoutProperties() {
+        IntentionMatchesPredicate predicate = new IntentionMatchesPredicate(ClientIntention.UNSPECIFIED);
+        assertTrue(predicate.test(new PersonBuilder().build()));
+        assertFalse(predicate.test(new PersonBuilder().withProperties(CLEMENTI_HDB).build()));
+        assertFalse(predicate.test(new PersonBuilder().withProperties(TAMPINES_CONDO).build()));
+        assertFalse(predicate.test(new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build()));
+    }
+
+    @Test
     public void test_keywordInOtherFields_returnsFalse() {
         IntentionMatchesPredicate predicate = new IntentionMatchesPredicate(ClientIntention.BUYER);
         Person seller = new PersonBuilder().withProperties(TAMPINES_CONDO).withName("Buyer")

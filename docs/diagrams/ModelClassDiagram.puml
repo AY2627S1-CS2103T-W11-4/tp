@@ -18,7 +18,6 @@ Class Person
 Class Email
 Class Name
 Class Phone
-Class Intention <<enumeration>>
 Class ClientIntention <<enumeration>> {
   BUYER
   SELLER
@@ -28,6 +27,10 @@ Class ClientIntention <<enumeration>> {
 Class Budget
 Class Remark
 Class Property
+Class PropertyIntention <<enumeration>> {
+  BUYING
+  SELLING
+}
 Class PropertyType <<enumeration>>
 Class PropertyLocation
 Class PropertyPrice
@@ -39,6 +42,7 @@ Class HiddenOutside #FFFFFF
 HiddenOutside ..> Model
 
 show ClientIntention members
+show PropertyIntention members
 
 AddressBook .up.|> ReadOnlyAddressBook
 
@@ -59,7 +63,7 @@ Person *--> "0..1" Budget
 Person *--> Remark
 Person *--> "0..* ordered" Property
 Property --> PropertyType
-Property --> Intention
+Property --> "1" PropertyIntention
 Property *--> PropertyLocation
 Property *--> "0..1" PropertyPrice
 
