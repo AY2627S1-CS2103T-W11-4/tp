@@ -34,6 +34,15 @@ test {
     finalizedBy jacocoTestReport
 }
 
+tasks.register('captureDocumentationScreenshots', JavaExec) {
+    group = 'documentation'
+    description = 'Capture the current JavaFX UI using sample client data.'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'seedu.address.ui.DocumentationScreenshots'
+    enableAssertions = true
+}
+
 task coverage(type: JacocoReport) {
     dependsOn test
     sourceDirectories.from files(sourceSets.main.allSource.srcDirs)

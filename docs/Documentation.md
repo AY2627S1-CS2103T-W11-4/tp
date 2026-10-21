@@ -39,6 +39,35 @@ Refresh the browser and export the PDF again; an existing PDF keeps the old erro
 * Follow the [**_Google developer documentation style guide_**](https://developers.google.com/style).
 * Also relevant is the [_se-edu/guides **Markdown coding standard**_](https://se-education.org/guides/conventions/markdown.html).
 
+### Refreshing UI screenshots
+
+The README, homepage and User Guide share screenshots captured from the application's actual FXML and CSS.
+Regenerate them after changes to the interface or command syntax, rather than editing amounts or labels into an old image.
+
+From the repository root on a graphical desktop, run:
+
+```bash
+./gradlew captureDocumentationScreenshots
+```
+
+On Windows, use `.\gradlew.bat captureDocumentationScreenshots`.
+On Linux without a desktop, use `xvfb-run -a ./gradlew captureDocumentationScreenshots`.
+
+`DocumentationScreenshots` starts with bundled sample clients and adds example remarks and property statuses through
+the command box. It captures the UI without opening a visible window and uses isolated sample storage under
+`build/documentation-screenshots/data`, leaving the user's client data untouched.
+
+| Image | Screen and documentation usage |
+| --- | --- |
+| `docs/images/Ui.png` | All clients, used by the README, homepage and Quick start |
+| `docs/images/clientDetails.png` | `view 3`, used by the full-detail command section |
+| `docs/images/findAlexDavidResult.png` | `find n/Alex David`, used by the search section |
+| `docs/images/helpMessage.png` | The offline command reference, used by the help section |
+
+Inspect all generated images before committing: client cards have no budget amount, prices remain on properties,
+derived roles and transaction statuses are visible, and the detail screen contains the return-to-list reminder.
+Keep the User Guide's formats, command summary and legacy-data notes consistent with the screenshots.
+
 
 **Converting to PDF**
 

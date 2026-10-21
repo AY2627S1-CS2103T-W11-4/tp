@@ -73,6 +73,12 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
+`PersonListPanel` uses `PersonCard` for normal and filtered lists, and `PersonDetailsCard` for `view INDEX`.
+Both display the client's derived intention; prices and transaction statuses belong to the property's display.
+The detail card uses the client's name as its heading, labels each remaining field and shows the return-to-list hint.
+`MainWindow` creates one `HelpWindow`, which constructs a `CommandHelpCard` for each supported command.
+The current screens are illustrated in the [User Guide](UserGuide.html#reading-the-interface).
+
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-W11-4/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-W11-4/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
@@ -168,7 +174,7 @@ first-run behavior, which loads sample clients. A valid file containing an empty
 ### Command reference help
 
 `HelpCommand` returns a `CommandResult` with `showHelp` set to `true`. The existing `MainWindow#handleHelp()`
-method shows or focuses a single `HelpWindow`. The `F1` shortcut and Help menu use the same method.
+method shows or focuses a single `HelpWindow`. The `F1` shortcut uses the same method.
 
 `HelpContent` holds each command's description, syntax, notes and examples, using shared command words,
 prefixes and validation messages where appropriate. `HelpWindow` creates a `CommandHelpCard` for each entry.
@@ -1178,13 +1184,14 @@ testers are expected to do more *exploratory* testing.
    1. With help already open, enter `help` again in the main window.<br>
       Expected: The existing help window is focused; no second help window is created.
 
-   1. Close help, focus the main command box and press `F1`. Also try **Help > Help**.<br>
-      Expected: Each action opens the same command-reference window.
+   1. Close help, focus the main command box and press `F1`.<br>
+      Expected: The same command-reference window opens.
 
 1. Reading the reference
 
    1. Scroll through the cards.<br>
-      Expected: Cards for `add`, `edit`, `addp`, `delp`, `editp`, `find`, `list`, `delete`, `remark`, `help` and `exit` show their formats, details and examples.
+      Expected: Cards for `add`, `edit`, `addp`, `delp`, `editp`, `find`, `list`, `view`, `delete`, `remark`, `help` and `exit` show their formats, details and examples.
+      Client `add` and `edit` have no budget option; property commands retain `pr/PRICE` and transaction status.
       The heading and User Guide footer remain visible while the cards scroll.
 
    1. Resize the window narrower and wider.<br>

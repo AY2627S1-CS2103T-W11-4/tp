@@ -24,7 +24,9 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar Residex.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
-   ![Ui](images/Ui.png)
+   ![RESIDEX client list with contact details, derived roles and property summaries](images/Ui.png)
+
+   This screenshot uses the bundled sample clients with example remarks and property statuses.
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
@@ -33,7 +35,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 
    * `view 1` : Shows all fields of the first displayed client. Use `list` to return to all clients.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com` : Adds a client named `John Doe` and intention Not specified.
+   * `add n/John Doe p/98765432 e/johnd@example.com` : Adds a client named `John Doe` with intention Not specified.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -42,6 +44,20 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 1. Refer to the [Features](#features) section below for details of each command.
 
 --------------------------------------------------------------------------------------------------------------------
+
+## Reading the interface
+
+* **Command:** Type a command and press Enter or click **Run**. The feedback box below shows its result or an input error.
+* **Client list:** The heading is **All clients**, **Filtered clients** or **Client details**.
+  The count shows how many clients are displayed out of all stored clients.
+* **Client cards:** Each card shows its displayed index, name, phone, email, derived intention,
+  any remark and numbered property summaries. A property summary shows type, intention, location,
+  optional price and transaction status. Clients without properties have intention **Not specified**.
+* **Prices:** Monetary amounts belong to property entries. There is no client budget amount on the right of a card;
+  the badge on the right shows the derived intention.
+* **Full details:** `view INDEX` replaces the list with the selected client's details and a reminder to enter `list`.
+  Long values wrap, and the list area scrolls when needed.
+* **Data location:** The footer shows where the client data file is stored.
 
 ## Features
 
@@ -78,7 +94,7 @@ Format: `help`
 
 * Scroll through the cards using the mouse wheel or scrollbar. Resize the window for more space.
 * Examples are for reference only. Enter commands in the main application's command box to run them.
-* You can also open help by pressing `F1` or selecting **Help > Help**. Opening help again focuses the existing window.
+* You can also open help by pressing `F1`. Opening help again focuses the existing window.
 * Click **Copy URL** in the footer to copy the RESIDEX User Guide link for further information.
   Opening the online guide requires an internet connection.
 
@@ -139,6 +155,10 @@ Every property is numbered in its stored order and shows its type, intention, lo
 Long values wrap onto additional lines; scroll down to see details that do not fit in the window.
 
 Format: `view INDEX`
+
+![Full details for Charlotte Oliveiro, with a name heading and separate property prices and statuses](images/clientDetails.png)
+
+This example shows `view 3` from the sample list above. The selected client is now displayed at index 1.
 
 * `INDEX` must be a positive integer referring to the **currently displayed** client list, including search results.
   Supply exactly one index, with no prefixes or extra arguments.
@@ -366,6 +386,10 @@ Examples:
 * `find s/viewing` lists clients with at least one property at Viewing.
 * `find S/UNSPECIFIED` lists clients with at least one property whose stage is Not specified.
 
+The following example shows `find n/Alex David` using the sample clients:
+
+![Search results for Alex and David, numbered within the filtered list](images/findAlexDavidResult.png)
+
 ### Deleting a client: `delete`
 
 Deletes the specified client from RESIDEX.
@@ -440,7 +464,7 @@ _Details coming soon ..._
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+2. **If you minimize the Help Window** and then run the `help` command (or use the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
