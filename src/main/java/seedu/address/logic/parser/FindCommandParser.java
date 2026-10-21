@@ -17,7 +17,6 @@ import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
-import seedu.address.model.property.PropertyStatus;
 
 /**
  * Parses input arguments and creates a new FindCommand object.
@@ -81,8 +80,9 @@ public class FindCommandParser implements Parser<FindCommand> {
                 throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
             }
             try {
-                return new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.parse(keywords.get(0))));
-            } catch (IllegalArgumentException e) {
+                return new FindCommand(new PropertyStatusMatchesPredicate(
+                        PropertyParserUtil.parseStatus(keywords.get(0))));
+            } catch (ParseException e) {
                 throw new ParseException(FindCommand.MESSAGE_INVALID_STATUS, e);
             }
         }

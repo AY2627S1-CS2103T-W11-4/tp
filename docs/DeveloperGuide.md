@@ -174,6 +174,8 @@ For example, `find n/Alice Bob` searches names; prefix letters are case-insensit
 Name, email, and phone searches use substring matching with OR semantics across keywords.
 Intention searches accept exactly one value, `buyer` or `seller`, case-insensitively.
 Status searches accept exactly one `PropertyStatus` token, ignoring case.
+`FindCommandParser` shares `PropertyParserUtil.parseStatus()` with property commands while retaining
+the find command's validation order and error messages.
 `PropertyStatusMatchesPredicate` matches a client if any existing property has the requested status.
 The predicate returns false for an empty property list, including when searching for `UNSPECIFIED`.
 Multiple matching properties still produce one client result.
