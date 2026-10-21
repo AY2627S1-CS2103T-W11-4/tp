@@ -2,12 +2,14 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.regex.Pattern;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 
@@ -18,18 +20,17 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
+    private static final Pattern CLIENT_INTENTION_PREFIX = Pattern.compile("(?i)(?<!\\S)i/");
+
     /**
-     * Parses an intention, ignoring leading and trailing whitespace.
+     * Rejects a manual client intention before it can be consumed as another field's text.
      *
-     * @throws NullPointerException if {@code intention} is null.
-     * @throws ParseException if {@code intention} is not Buyer or Seller.
+     * @throws ParseException if an i/ field is supplied, regardless of its value.
      */
-    public static Intention parseIntention(String intention) throws ParseException {
-        requireNonNull(intention);
-        try {
-            return Intention.parse(intention.trim());
-        } catch (IllegalArgumentException exception) {
-            throw new ParseException(Intention.MESSAGE_CONSTRAINTS, exception);
+    public static void rejectClientIntention(String args) throws ParseException {
+        requireNonNull(args);
+        if (CLIENT_INTENTION_PREFIX.matcher(args).find()) {
+            throw new ParseException(Messages.MESSAGE_DERIVED_CLIENT_INTENTION);
         }
     }
 

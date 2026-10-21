@@ -11,9 +11,9 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyStatus;
@@ -59,9 +59,18 @@ public class EditPropertyCommand extends Command {
         }
         Property replacement = descriptor.applyTo(current);
         if (replacement.equals(current)) {
+            logger.fine("Property " + propertyIndex.getOneBased()
+                    + " is unchanged for displayed client " + clientIndex.getOneBased());
             return new CommandResult(String.format(MESSAGE_UNCHANGED, propertyIndex.getOneBased(), original.getName()));
         }
-        model.setPerson(original, original.withUpdatedProperty(propertyIndex, replacement));
+        Person updated = original.withUpdatedProperty(propertyIndex, replacement);
+        assert updated.getProperties().size() == original.getProperties().size()
+                : "Editing a property must preserve the property count";
+        assert updated.getProperties().get(propertyIndex.getZeroBased()).equals(replacement)
+                : "Editing a property must apply the replacement at the selected index";
+        model.setPerson(original, updated);
+        logger.fine("Edited property " + propertyIndex.getOneBased()
+                + " for displayed client " + clientIndex.getOneBased());
         if (current.getStatus() != replacement.getStatus()) {
             logger.fine(() -> "Property status changed for displayed client " + clientIndex.getOneBased()
                     + ", property " + propertyIndex.getOneBased() + ": " + current.getStatus().name()
@@ -93,7 +102,7 @@ public class EditPropertyCommand extends Command {
      */
     public static class EditPropertyDescriptor {
         private PropertyType type;
-        private Intention intention;
+        private PropertyIntention intention;
         private PropertyLocation location;
         private PropertyPrice price;
         private PropertyStatus status;
@@ -119,7 +128,7 @@ public class EditPropertyCommand extends Command {
             this.type = requireNonNull(type);
         }
 
-        public void setIntention(Intention intention) {
+        public void setIntention(PropertyIntention intention) {
             this.intention = requireNonNull(intention);
         }
 

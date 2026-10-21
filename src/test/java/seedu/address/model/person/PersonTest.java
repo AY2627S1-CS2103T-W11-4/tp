@@ -9,6 +9,8 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
+import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
+import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,19 +19,27 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
-    public void constructor_nullIntention_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> new PersonBuilder().withIntention(null).build());
+    public void constructor_nullDetails_throwsNullPointerException() {
+        Person person = new PersonBuilder().build();
+        assertThrows(NullPointerException.class, () -> new Person(null, person.getPhone(), person.getEmail(),
+                person.getRemark(), null));
+        assertThrows(NullPointerException.class, () -> new Person(person.getName(), null, person.getEmail(),
+                person.getRemark(), null));
+        assertThrows(NullPointerException.class, () -> new Person(person.getName(), person.getPhone(), null,
+                person.getRemark(), null));
+        assertThrows(NullPointerException.class, () -> new Person(person.getName(), person.getPhone(),
+                person.getEmail(), null, null));
     }
 
     @Test
     public void getIntention_returnsIntention() {
-        assertEquals(Intention.BUYER, new PersonBuilder().withIntention(Intention.BUYER).build().getIntention());
-        assertEquals(Intention.SELLER, new PersonBuilder().withIntention(Intention.SELLER).build().getIntention());
+        assertEquals(ClientIntention.BUYER, new PersonBuilder().withProperties(CLEMENTI_HDB).build().getIntention());
+        assertEquals(ClientIntention.SELLER, new PersonBuilder().withProperties(TAMPINES_CONDO).build().getIntention());
     }
 
     @Test
-    public void intention_differentValue_affectsEqualityButNotIdentity() {
-        Person seller = new PersonBuilder(ALICE).withIntention(Intention.SELLER).build();
+    public void properties_differentValue_affectsEqualityButNotIdentity() {
+        Person seller = new PersonBuilder(ALICE).withProperties(TAMPINES_CONDO).build();
         assertFalse(ALICE.equals(seller));
         assertTrue(ALICE.isSamePerson(seller));
         Person sellerCopy = new PersonBuilder(seller).build();
@@ -46,7 +56,7 @@ public class PersonTest {
         assertFalse(ALICE.isSamePerson(null));
 
         // same name and phone, all other attributes different -> returns true
-        Person editedAlice = new PersonBuilder(ALICE).withEmail(VALID_EMAIL_BOB).withIntention(Intention.SELLER)
+        Person editedAlice = new PersonBuilder(ALICE).withEmail(VALID_EMAIL_BOB).withProperties(TAMPINES_CONDO)
                 .withRemark("Call next week").withBudget("900000").build();
         assertTrue(ALICE.isSamePerson(editedAlice));
 

@@ -8,6 +8,8 @@ import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
 import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -27,6 +29,7 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -39,11 +42,13 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.Window;
+import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyStatus;
@@ -81,6 +86,57 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void dataLoadingError_showsFilePathAndRecoveryInstructions() throws Exception {
+        assertDataLoadingError(new IOException("Invalid JSON.\nParser details."), "Invalid JSON.");
+    }
+
+    @Test
+    public void dataLoadingError_duplicateClients_showsValidationMessage() throws Exception {
+        assertDataLoadingError(new IllegalValueException("Persons list contains duplicate person(s)."),
+                "Persons list contains duplicate person(s).");
+    }
+
+    @Test
+    public void dataLoadingError_accessDenied_showsPermissionMessage() throws Exception {
+        assertDataLoadingError(new AccessDeniedException("addressbook.json"),
+                "Access to the file was denied. Check its permissions.");
+    }
+
+    private void assertDataLoadingError(Exception cause, String expectedReason) throws Exception {
+        runOnFxThread(() -> {
+            Path dataFile = temporaryFolder.resolve("addressbook.json");
+            CompletableFuture<Void> checked = new CompletableFuture<>();
+            Platform.runLater(() -> {
+                List<Window> windows = List.copyOf(Window.getWindows());
+                try {
+                    DialogPane dialog = windows.stream().map(Window::getScene)
+                            .map(scene -> scene.lookup("#" + UiManager.ALERT_DIALOG_PANE_FIELD_ID))
+                            .filter(DialogPane.class::isInstance).map(DialogPane.class::cast)
+                            .findFirst().orElseThrow();
+                    assertEquals("RESIDEX could not open your client data", dialog.getHeaderText());
+                    String message = dialog.getContentText();
+                    assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
+                    assertTrue(message.contains("Reason: " + expectedReason));
+                    assertFalse(message.contains("Parser details."));
+                    assertTrue(message.contains("has not been changed"));
+                    assertTrue(message.contains("RESIDEX will close"));
+                    assertTrue(message.contains("repair it or replace it with a valid backup"));
+                    assertTrue(message.contains("move the file aside"));
+                    checked.complete(null);
+                } catch (Throwable e) {
+                    checked.completeExceptionally(e);
+                } finally {
+                    windows.forEach(Window::hide);
+                }
+            });
+
+            UiManager.showDataLoadingError(dataFile, new DataLoadingException(cause));
+
+            checked.get(5, TimeUnit.SECONDS);
+        });
+    }
+
+    @Test
     public void clientCards_showIntentionOptionalFieldsAndBudgetBands() throws Exception {
         runOnFxThread(() -> {
             String[] amounts = {"800000", "800001", "2500000", "2500001"};
@@ -88,7 +144,7 @@ public class ResidexUiTest {
             Color[] colours = {Color.web("#e74c3c"), Color.web("#f1c40f"),
                 Color.web("#f1c40f"), Color.web("#2ecc71")};
             for (int i = 0; i < amounts.length; i++) {
-                Person person = new PersonBuilder().withIntention(Intention.BUYER).withBudget(amounts[i]).build();
+                Person person = new PersonBuilder().withProperties(CLEMENTI_HDB).withBudget(amounts[i]).build();
                 Region card = new PersonCard(person, i + 1).getRoot();
                 styleCard(card);
                 Label budget = label(card, "budget");
@@ -103,7 +159,7 @@ public class ResidexUiTest {
                 assertFalse(label(card, "remark").isManaged());
             }
 
-            Region seller = new PersonCard(new PersonBuilder().withIntention(Intention.SELLER)
+            Region seller = new PersonCard(new PersonBuilder().withProperties(TAMPINES_CONDO)
                     .withRemark("Call after 6 pm").build(), 1).getRoot();
             styleCard(seller);
             assertEquals("Intention: Seller", label(seller, "intention").getText());
@@ -126,9 +182,10 @@ public class ResidexUiTest {
             assertTrue(properties.isVisible());
             assertTrue(properties.isManaged());
             assertEquals(3, properties.getChildren().size());
-            assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000 | Not specified",
-                    "2. Condominium | Seller | Tampines | Viewing",
-                    "3. HDB | Buyer | Clementi Ave 3 | $800,000 | Not specified"),
+            assertEquals("Intention: Buyer / Seller", label(card, "intention").getText());
+            assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000 | Not specified",
+                    "2. Condominium | Selling | Tampines | Viewing",
+                    "3. HDB | Buying | Clementi Ave 3 | $800,000 | Not specified"),
                     propertyTexts(properties));
             for (Node node : properties.getChildren()) {
                 Label property = (Label) node;
@@ -142,7 +199,7 @@ public class ResidexUiTest {
             styleCard(otherClient);
             VBox otherProperties = (VBox) otherClient.lookup("#properties");
             assertEquals(1, otherProperties.getChildren().size());
-            assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000 | Not specified"),
+            assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000 | Not specified"),
                     propertyTexts(otherProperties));
         });
     }
@@ -161,8 +218,9 @@ public class ResidexUiTest {
                 assertTrue(properties.getChildren().isEmpty());
                 assertFalse(properties.isVisible());
                 assertFalse(properties.isManaged());
+                assertEquals("Intention: Not specified", label(root, "intention").getText());
 
-                command.setText("addp 1 t/HDB i/Buyer l/Clementi Ave 3 pr/800000 s/Viewing");
+                command.setText("addp 1 t/HDB i/Buying l/Clementi Ave 3 pr/800000 s/Viewing");
                 run.fire();
                 root.applyCss();
                 root.layout();
@@ -170,7 +228,8 @@ public class ResidexUiTest {
                 assertTrue(properties.isVisible());
                 assertTrue(properties.isManaged());
                 assertEquals(1, properties.getChildren().size());
-                assertEquals(List.of("1. HDB | Buyer | Clementi Ave 3 | $800,000 | Viewing"),
+                assertEquals("Intention: Buyer", label(root, "intention").getText());
+                assertEquals(List.of("1. HDB | Buying | Clementi Ave 3 | $800,000 | Viewing"),
                         propertyTexts(properties));
 
                 command.setText("editp 1 1 l/Bishan pr/ s/Negotiating");
@@ -179,7 +238,8 @@ public class ResidexUiTest {
                 root.layout();
                 properties = (VBox) root.lookup("#properties");
                 assertEquals(1, properties.getChildren().size());
-                assertEquals(List.of("1. HDB | Buyer | Bishan | Negotiating"), propertyTexts(properties));
+                assertEquals("Intention: Buyer", label(root, "intention").getText());
+                assertEquals(List.of("1. HDB | Buying | Bishan | Negotiating"), propertyTexts(properties));
 
                 command.setText("delp 1 1");
                 run.fire();
@@ -189,6 +249,7 @@ public class ResidexUiTest {
                 assertTrue(properties.getChildren().isEmpty());
                 assertFalse(properties.isVisible());
                 assertFalse(properties.isManaged());
+                assertEquals("Intention: Not specified", label(root, "intention").getText());
                 assertTrue(model.getFilteredPersonList().get(0).getProperties().isEmpty());
             } finally {
                 window.getPrimaryStage().close();
@@ -201,7 +262,7 @@ public class ResidexUiTest {
         runOnFxThread(() -> {
             Model model = new ModelManager();
             model.addPerson(new PersonBuilder().withName("Alice Pauline").withBudget("750000").build());
-            model.addPerson(new PersonBuilder().withName("Bob Choo").withIntention(Intention.SELLER).build());
+            model.addPerson(new PersonBuilder().withName("Bob Choo").withProperties(TAMPINES_CONDO).build());
             MainWindow window = createWindow(model);
             Region root = layoutWindow(window, 1100, 900);
             TextField command = (TextField) root.lookup("#commandTextField");
@@ -234,7 +295,7 @@ public class ResidexUiTest {
             assertEquals("1 of 1 clients", label(root, "clientCount").getText());
             assertEquals("All clients", label(root, "clientListHeading").getText());
 
-            command.setText("add n/Carol p/91234567 e/carol@example.com i/Buyer b/900000");
+            command.setText("add n/Carol p/91234567 e/carol@example.com b/900000");
             run.fire();
             assertEquals("2 of 2 clients", label(root, "clientCount").getText());
             command.setText("invalidcommand");
@@ -263,7 +324,7 @@ public class ResidexUiTest {
             for (int i = 0; i < names.length; i++) {
                 model.addPerson(new PersonBuilder().withName(names[i]).withPhone(phones[i])
                         .withEmail(emails[i] + "@example.com")
-                        .withIntention(i % 2 == 0 ? Intention.BUYER : Intention.SELLER)
+                        .withProperties(i % 2 == 0 ? CLEMENTI_HDB : TAMPINES_CONDO)
                         .withBudget(budgets[i]).build());
             }
             MainWindow window = createWindow(model);

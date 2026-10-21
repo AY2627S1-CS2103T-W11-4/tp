@@ -37,6 +37,7 @@ import seedu.address.testutil.PersonBuilder;
 public class EditPropertyStatusLoggingTest {
     private final ModelManager model = new ModelManager();
     private final List<LogRecord> records = new ArrayList<>();
+    private final List<LogRecord> genericRecords = new ArrayList<>();
     private Logger logger;
     private Level originalLevel;
     private boolean originalUseParentHandlers;
@@ -46,9 +47,13 @@ public class EditPropertyStatusLoggingTest {
     private final Handler handler = new Handler() {
         @Override
         public void publish(LogRecord record) {
-            // A transition must already be applied before a success diagnostic is emitted.
-            assertTransitionApplied.run();
-            records.add(record);
+            if (record.getMessage().startsWith("Property status changed ")) {
+                // Generic edit diagnostics remain separate from transition records.
+                assertTransitionApplied.run();
+                records.add(record);
+            } else {
+                genericRecords.add(record);
+            }
         }
 
         @Override
@@ -93,6 +98,9 @@ public class EditPropertyStatusLoggingTest {
         statusEdit.execute(model);
 
         assertEquals(1, records.size());
+        assertEquals(1, genericRecords.size());
+        assertEquals("Edited property 2 for displayed client 2", genericRecords.get(0).getMessage());
+        assertEquals(Level.FINE, genericRecords.get(0).getLevel());
         assertEquals(Level.FINE, records.get(0).getLevel());
         assertEquals("Property status changed for displayed client 2, property 2: UNSPECIFIED -> VIEWING",
                 records.get(0).getMessage());
@@ -163,5 +171,6 @@ public class EditPropertyStatusLoggingTest {
         assertThrows(IllegalArgumentException.class, () -> statusEdit.execute(rejectingModel));
 
         assertTrue(records.isEmpty());
+        assertTrue(genericRecords.isEmpty());
     }
 }

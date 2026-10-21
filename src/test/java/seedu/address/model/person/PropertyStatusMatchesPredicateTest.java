@@ -74,7 +74,7 @@ public class PropertyStatusMatchesPredicateTest {
             }
             assertFalse(predicate.equals(null));
             assertFalse(predicate.equals(status));
-            assertFalse(predicate.equals(new IntentionMatchesPredicate(Intention.BUYER)));
+            assertFalse(predicate.equals(new IntentionMatchesPredicate(ClientIntention.BUYER)));
         }
     }
 

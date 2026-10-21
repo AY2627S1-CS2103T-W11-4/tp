@@ -39,21 +39,21 @@ public class DuplicateClientFeedbackTest {
         dataFile = temporaryFolder.resolve("clients.json");
         logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataFile),
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
-        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer b/900000");
-        logic.execute("add n/ALICE   TAN p/92345678 e/anotheralice@example.com i/Seller");
-        logic.execute("add n/Ben Ong p/91234567 e/ben@example.com i/Buyer");
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com b/900000");
+        logic.execute("add n/ALICE   TAN p/92345678 e/anotheralice@example.com");
+        logic.execute("add n/Ben Ong p/91234567 e/ben@example.com");
     }
 
     @Test
     public void execute_duplicateAdd_identifiesStoredClientAndExplainsMatching() throws Exception {
-        assertDuplicateFeedback("add n/aLiCe   TaN p/91234567 e/different@example.com i/Seller");
+        assertDuplicateFeedback("add n/aLiCe   TaN p/91234567 e/different@example.com");
     }
 
     @Test
     public void execute_duplicateAddOutsideFilter_identifiesHiddenClientWithoutChangingFilter() throws Exception {
         logic.execute("find p/92345678");
 
-        assertDuplicateFeedback("add n/ALICE TAN p/91234567 e/different@example.com i/Seller");
+        assertDuplicateFeedback("add n/ALICE TAN p/91234567 e/different@example.com");
     }
 
     @Test

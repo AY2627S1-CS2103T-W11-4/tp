@@ -3,7 +3,7 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Represents a client's intention to buy or sell a property.
+ * Represents a property's buying or selling direction using the legacy Buyer/Seller labels.
  */
 public enum Intention {
     BUYER("Buyer"),

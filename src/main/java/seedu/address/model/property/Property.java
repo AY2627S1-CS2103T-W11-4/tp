@@ -6,17 +6,16 @@ import java.util.Objects;
 import java.util.Optional;
 
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.model.person.Intention;
 
 /**
  * An immutable property entry belonging to a client's property list.
- * It has no permanent ID or owner reference. Its intention is independent of the client's intention.
+ * It has no permanent ID or owner reference. Its intention contributes to the client's derived role.
  * Equal entries may appear in different clients' lists without representing a shared record.
  */
 public final class Property {
 
     private final PropertyType type;
-    private final Intention intention;
+    private final PropertyIntention intention;
     private final PropertyLocation location;
     private final PropertyPrice price;
     private final PropertyStatus status;
@@ -24,7 +23,7 @@ public final class Property {
     /**
      * Constructs a property with an unknown price.
      */
-    public Property(PropertyType type, Intention intention, PropertyLocation location) {
+    public Property(PropertyType type, PropertyIntention intention, PropertyLocation location) {
         this(type, intention, location, null);
     }
 
@@ -33,7 +32,7 @@ public final class Property {
      *
      * @param price The price, or null if unknown.
      */
-    public Property(PropertyType type, Intention intention, PropertyLocation location, PropertyPrice price) {
+    public Property(PropertyType type, PropertyIntention intention, PropertyLocation location, PropertyPrice price) {
         this(type, intention, location, price, PropertyStatus.UNSPECIFIED);
     }
 
@@ -42,7 +41,7 @@ public final class Property {
      *
      * @param price The price, or null if unknown.
      */
-    public Property(PropertyType type, Intention intention, PropertyLocation location, PropertyPrice price,
+    public Property(PropertyType type, PropertyIntention intention, PropertyLocation location, PropertyPrice price,
             PropertyStatus status) {
         requireAllNonNull(type, intention, location, status);
         this.type = type;
@@ -56,7 +55,7 @@ public final class Property {
         return type;
     }
 
-    public Intention getIntention() {
+    public PropertyIntention getIntention() {
         return intention;
     }
 

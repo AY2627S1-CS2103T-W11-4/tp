@@ -24,7 +24,6 @@ public class Person {
 
     // Data fields
     private final Email email;
-    private final Intention intention;
     private final Remark remark;
     private final Budget budget;
     private final List<Property> properties;
@@ -32,9 +31,8 @@ public class Person {
     /**
      * Constructs a person with no properties. The budget may be null when the client has none.
      */
-    public Person(Name name, Phone phone, Email email, Intention intention,
-            Remark remark, Budget budget) {
-        this(name, phone, email, intention, remark, budget, List.of());
+    public Person(Name name, Phone phone, Email email, Remark remark, Budget budget) {
+        this(name, phone, email, remark, budget, List.of());
     }
 
     /**
@@ -42,13 +40,11 @@ public class Person {
      * Every field except {@code budget} must be non-null, and the list must not contain null entries.
      * Equal property entries are allowed. Each entry's position is its index within this client.
      */
-    public Person(Name name, Phone phone, Email email, Intention intention,
-            Remark remark, Budget budget, List<Property> properties) {
-        requireAllNonNull(name, phone, email, intention, remark, properties);
+    public Person(Name name, Phone phone, Email email, Remark remark, Budget budget, List<Property> properties) {
+        requireAllNonNull(name, phone, email, remark, properties);
         this.name = name;
         this.phone = phone;
         this.email = email;
-        this.intention = intention;
         this.remark = remark;
         this.budget = budget;
         this.properties = List.copyOf(properties);
@@ -66,8 +62,26 @@ public class Person {
         return email;
     }
 
-    public Intention getIntention() {
-        return intention;
+    /**
+     * Derives the client's role from the current properties without storing a second source of truth.
+     */
+    public ClientIntention getIntention() {
+        boolean hasBuyingProperty = false;
+        boolean hasSellingProperty = false;
+        for (Property property : properties) {
+            switch (property.getIntention()) {
+                case BUYING -> hasBuyingProperty = true;
+                case SELLING -> hasSellingProperty = true;
+                default -> throw new IllegalStateException("Unsupported property intention");
+            }
+            if (hasBuyingProperty && hasSellingProperty) {
+                return ClientIntention.BOTH;
+            }
+        }
+        if (hasBuyingProperty) {
+            return ClientIntention.BUYER;
+        }
+        return hasSellingProperty ? ClientIntention.SELLER : ClientIntention.UNSPECIFIED;
     }
 
     /**
@@ -127,7 +141,9 @@ public class Person {
     }
 
     private Person copyWithProperties(List<Property> updatedProperties) {
-        return new Person(name, phone, email, intention, remark, budget, updatedProperties);
+        Person updated = new Person(name, phone, email, remark, budget, updatedProperties);
+        assert isSamePerson(updated) : "Property updates must preserve client identity";
+        return updated;
     }
 
     /**
@@ -171,7 +187,6 @@ public class Person {
         return name.equals(otherPerson.name)
                 && phone.equals(otherPerson.phone)
                 && email.equals(otherPerson.email)
-                && intention == otherPerson.intention
                 && remark.equals(otherPerson.remark)
                 && Objects.equals(budget, otherPerson.budget)
                 && properties.equals(otherPerson.properties);
@@ -180,7 +195,7 @@ public class Person {
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, intention, remark, budget, properties);
+        return Objects.hash(name, phone, email, remark, budget, properties);
     }
 
     @Override
@@ -189,7 +204,7 @@ public class Person {
                 .add("name", name)
                 .add("phone", phone)
                 .add("email", email)
-                .add("intention", intention)
+                .add("intention", getIntention())
                 .add("remark", remark)
                 .add("budget", budget)
                 .add("properties", properties)

@@ -102,7 +102,7 @@ public class EditCommand extends Command {
         Remark updatedRemark = personToEdit.getRemark();
         Budget updatedBudget = editPersonDescriptor.getBudget().orElse(personToEdit.getBudget().orElse(null));
 
-        return new Person(updatedName, updatedPhone, updatedEmail, personToEdit.getIntention(),
+        return new Person(updatedName, updatedPhone, updatedEmail,
                 updatedRemark, updatedBudget, personToEdit.getProperties());
     }
 

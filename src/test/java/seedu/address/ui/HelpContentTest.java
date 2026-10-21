@@ -28,15 +28,18 @@ import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
-import seedu.address.model.person.Intention;
 import seedu.address.model.person.IntentionMatchesPredicate;
+import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.Remark;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -97,15 +100,15 @@ public class HelpContentTest {
     }
 
     @Test
-    public void addExamples_recordBuyerWithBudgetAndSellerWithoutBudget() throws ParseException {
+    public void addExamples_recordClientsWithAndWithoutBudget() throws ParseException {
         List<String> examples = getExamples(AddCommand.COMMAND_WORD);
-        AddCommand buyer = new AddCommand(new PersonBuilder().withName("John Doe").withPhone("98765432")
-                .withEmail("john@example.com").withIntention(Intention.BUYER).withBudget("1500000").build());
-        AddCommand seller = new AddCommand(new PersonBuilder().withName("Jane Lee").withPhone("91234567")
-                .withEmail("jane@example.com").withIntention(Intention.SELLER).build());
+        AddCommand withBudget = new AddCommand(new PersonBuilder().withName("John Doe").withPhone("98765432")
+                .withEmail("john@example.com").withBudget("1500000").build());
+        AddCommand withoutBudget = new AddCommand(new PersonBuilder().withName("Jane Lee").withPhone("91234567")
+                .withEmail("jane@example.com").build());
 
-        assertEquals(buyer, parser.parseCommand(examples.get(0)));
-        assertEquals(seller, parser.parseCommand(examples.get(1)));
+        assertEquals(withBudget, parser.parseCommand(examples.get(0)));
+        assertEquals(withoutBudget, parser.parseCommand(examples.get(1)));
     }
 
     @Test
@@ -117,13 +120,33 @@ public class HelpContentTest {
     }
 
     @Test
+    public void propertyExamples_useBuyingAndSelling() throws ParseException {
+        List<String> examples = getExamples(AddPropertyCommand.COMMAND_WORD);
+        Property buying = new Property(PropertyType.HDB, PropertyIntention.BUYING,
+                new PropertyLocation("Clementi"), new PropertyPrice("800000"));
+        Property selling = new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
+                new PropertyLocation("Bishan"));
+        assertEquals(new AddPropertyCommand(Index.fromOneBased(1), buying), parser.parseCommand(examples.get(0)));
+        assertEquals(new AddPropertyCommand(Index.fromOneBased(1), selling), parser.parseCommand(examples.get(1)));
+
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setType(PropertyType.LANDED);
+        descriptor.setIntention(PropertyIntention.SELLING);
+        descriptor.setPrice(new PropertyPrice("3200000"));
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), descriptor),
+                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(1)));
+    }
+
+    @Test
     public void findExamples_searchEachDocumentedProperty() throws ParseException {
         List<String> examples = getExamples(FindCommand.COMMAND_WORD);
         List<FindCommand> expectedCommands = List.of(
                 new FindCommand(new NameContainsKeywordsPredicate(List.of("alex", "david"))),
                 new FindCommand(new EmailContainsKeywordsPredicate(List.of("gmail"))),
                 new FindCommand(new PhoneContainsKeywordsPredicate(List.of("9123"))),
-                new FindCommand(new IntentionMatchesPredicate(Intention.BUYER)),
+                new FindCommand(new LocationContainsKeywordsPredicate(List.of("clementi"))),
+                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)),
+                new FindCommand(new IntentionMatchesPredicate(ClientIntention.BOTH)),
                 new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.VIEWING)),
                 new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.UNSPECIFIED)));
 
@@ -143,9 +166,15 @@ public class HelpContentTest {
                 parser.parseCommand(examples.get(1)));
     }
 
+    private List<String> getExamples(String commandWord) {
+        return HelpContent.getCommands().stream()
+                .filter(command -> command.commandWord().equals(commandWord))
+                .findFirst().orElseThrow().examples();
+    }
+
     @Test
     public void propertyStatusExamples_setAndResetRecordedStages() throws ParseException {
-        Property viewing = new Property(PropertyType.HDB, Intention.BUYER, new PropertyLocation("Clementi"),
+        Property viewing = new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi"),
                 null, PropertyStatus.VIEWING);
         assertEquals(new AddPropertyCommand(Index.fromOneBased(1), viewing),
                 parser.parseCommand(getExamples(AddPropertyCommand.COMMAND_WORD).get(2)));
@@ -154,14 +183,8 @@ public class HelpContentTest {
         EditPropertyDescriptor unspecified = new EditPropertyDescriptor();
         unspecified.setStatus(PropertyStatus.UNSPECIFIED);
         assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), negotiating),
-                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(3)));
-        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), unspecified),
                 parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(4)));
-    }
-
-    private List<String> getExamples(String commandWord) {
-        return HelpContent.getCommands().stream()
-                .filter(command -> command.commandWord().equals(commandWord))
-                .findFirst().orElseThrow().examples();
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), unspecified),
+                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(5)));
     }
 }

@@ -22,7 +22,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.Intention;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Remark;
 import seedu.address.testutil.PersonBuilder;
@@ -37,20 +37,19 @@ public class RemarkCommandTest {
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
-    public void execute_seller_preservesIntention() throws Exception {
-        Person seller = new PersonBuilder().withIntention(Intention.SELLER)
-                .withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
-        Model sellerModel = new ModelManager(new AddressBook(), new UserPrefs());
-        sellerModel.addPerson(seller);
-        Person expectedPerson = new PersonBuilder(seller).withRemark(REMARK_STUB).build();
+    public void execute_mixedRoleClient_preservesIntention() throws Exception {
+        Person client = new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
+        Model clientModel = new ModelManager(new AddressBook(), new UserPrefs());
+        clientModel.addPerson(client);
+        Person expectedPerson = new PersonBuilder(client).withRemark(REMARK_STUB).build();
 
         RemarkCommand command = new RemarkCommand(INDEX_FIRST_PERSON, new Remark(REMARK_STUB));
-        command.execute(sellerModel);
+        command.execute(clientModel);
 
-        assertEquals(expectedPerson, sellerModel.getFilteredPersonList().get(0));
-        assertEquals(Intention.SELLER, sellerModel.getFilteredPersonList().get(0).getIntention());
+        assertEquals(expectedPerson, clientModel.getFilteredPersonList().get(0));
+        assertEquals(ClientIntention.BOTH, clientModel.getFilteredPersonList().get(0).getIntention());
         assertEquals(List.of(CLEMENTI_HDB, TAMPINES_CONDO),
-                sellerModel.getFilteredPersonList().get(0).getProperties());
+                clientModel.getFilteredPersonList().get(0).getProperties());
     }
 
     @Test

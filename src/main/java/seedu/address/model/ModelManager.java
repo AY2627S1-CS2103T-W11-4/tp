@@ -3,13 +3,19 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
+import javafx.beans.InvalidationListener;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.Person;
 
 /**
@@ -21,6 +27,9 @@ public class ModelManager implements Model {
     private final AddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
+    private final SortedList<Person> sortedPersons;
+    private final ObservableList<Person> displayedPersons;
+    private final Map<Person, Integer> sourcePositions = new IdentityHashMap<>();
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -32,7 +41,11 @@ public class ModelManager implements Model {
 
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
+        // Invalidation precedes transformation change events, so sorting sees current source positions.
+        this.addressBook.getPersonList().addListener((InvalidationListener) observable -> sourcePositions.clear());
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
+        sortedPersons = new SortedList<>(filteredPersons);
+        displayedPersons = FXCollections.unmodifiableObservableList(sortedPersons);
     }
 
     public ModelManager() {
@@ -96,18 +109,35 @@ public class ModelManager implements Model {
     //=========== Filtered Person List Accessors =============================================================
 
     /**
-     * Returns an unmodifiable view of the list of {@code Person} backed by the internal list of
-     * {@code addressBook}
+     * Returns the single displayed order used by both the UI and index-based commands.
+     * Filtering and sorting never reorder the underlying address book.
      */
     @Override
     public ObservableList<Person> getFilteredPersonList() {
-        return filteredPersons;
+        return displayedPersons;
     }
 
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
         filteredPersons.setPredicate(predicate);
+        // Replacements can disturb SortedList ties, so resolve equal ranks using the source positions.
+        sortedPersons.setComparator(predicate instanceof IntentionMatchesPredicate intentionPredicate
+                ? intentionPredicate.getComparator().thenComparingInt(this::getSourcePosition) : null);
+    }
+
+    /**
+     * Builds the lookup once on demand after a source change, then resolves each tie in constant time.
+     * Identity keys avoid comparing clients' fields and keep distinct replacement instances separate.
+     */
+    private int getSourcePosition(Person person) {
+        if (sourcePositions.isEmpty()) {
+            ObservableList<Person> source = addressBook.getPersonList();
+            for (int i = 0; i < source.size(); i++) {
+                sourcePositions.put(source.get(i), i);
+            }
+        }
+        return sourcePositions.get(person);
     }
 
     @Override
@@ -123,7 +153,7 @@ public class ModelManager implements Model {
 
         return addressBook.equals(otherModelManager.addressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
-                && filteredPersons.equals(otherModelManager.filteredPersons);
+                && displayedPersons.equals(otherModelManager.displayedPersons);
     }
 
 }

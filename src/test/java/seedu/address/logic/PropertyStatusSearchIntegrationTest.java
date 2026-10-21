@@ -29,8 +29,10 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -59,9 +61,11 @@ public class PropertyStatusSearchIntegrationTest {
     public void setUp() throws Exception {
         List<Property> allStages = new ArrayList<>();
         for (PropertyStatus status : PropertyStatus.values()) {
-            allStages.add(property(status));
+            allStages.add(new Property(CLEMENTI_HDB.getType(), PropertyIntention.SELLING,
+                    CLEMENTI_HDB.getLocation(), null, status));
         }
-        allStages.add(property(PropertyStatus.VIEWING));
+        allStages.add(new Property(CLEMENTI_HDB.getType(), PropertyIntention.SELLING,
+                CLEMENTI_HDB.getLocation(), null, PropertyStatus.VIEWING));
         mixed = new PersonBuilder(BENSON).withProperties(allStages.toArray(Property[]::new)).build();
         closing = new PersonBuilder(CARL).withProperties(property(PropertyStatus.CLOSING)).build();
         viewingAlpha = new PersonBuilder(DANIEL).withProperties(property(PropertyStatus.VIEWING)).build();
@@ -95,7 +99,7 @@ public class PropertyStatusSearchIntegrationTest {
     @Test
     public void execute_statusAndExistingSelectors_replacePreviousFiltersAndRetainNormalOrder() throws Exception {
         for (String previous : List.of("find n/Nobody", "find n/Alice", "find e/alice",
-                "find p/" + ALICE.getPhone(), "find i/seller", "find s/closing")) {
+                "find p/" + ALICE.getPhone(), "find l/Clementi", "find i/seller", "find s/closing")) {
             logic.execute(previous);
             assertSearch("find s/viewing", List.of(mixed, viewingAlpha, viewingBeta));
         }
@@ -143,7 +147,7 @@ public class PropertyStatusSearchIntegrationTest {
     public void execute_addAndEditProperties_keepActiveStatusFilterAndRefreshMatches() throws Exception {
         assertSearch("find s/unspecified", List.of(mixed, unspecified));
 
-        logic.execute("addp 2 t/HDB i/Buyer l/Bishan s/Viewing");
+        logic.execute("addp 2 t/HDB i/Buying l/Bishan s/Viewing");
         assertEquals(List.of(mixed, client(4)), model.getFilteredPersonList());
         logic.execute("editp 2 1 s/Viewing");
         assertEquals(List.of(mixed), model.getFilteredPersonList());
@@ -164,6 +168,50 @@ public class PropertyStatusSearchIntegrationTest {
                 "find n/Alice s/viewing", "find status/viewing")) {
             assertRejectedWithoutChanges(command, ParseException.class);
         }
+    }
+
+    @Test
+    public void execute_statusEditAfterIntentionSort_preservesRolesAndUsesDisplayedIndexes() throws Exception {
+        Property buying = property(PropertyStatus.VIEWING);
+        Property selling = new Property(buying.getType(), PropertyIntention.SELLING,
+                buying.getLocation(), null, PropertyStatus.VIEWING);
+        Person both = new PersonBuilder(BENSON).withProperties(buying, selling).build();
+        Person buyer = new PersonBuilder(CARL).withProperties(buying).build();
+        Person seller = new PersonBuilder(DANIEL).withProperties(selling).build();
+        originalClients = List.of(both, buyer, seller);
+        AddressBook data = new AddressBook();
+        data.setPersons(originalClients);
+        model.setAddressBook(data);
+        storage.saveAddressBook(model.getAddressBook());
+
+        logic.execute("find i/buyer");
+        assertEquals(List.of(buyer, both), model.getFilteredPersonList());
+        logic.execute("editp 1 1 s/Completed");
+        Person updatedBuyer = client(1);
+        assertEquals(ClientIntention.BUYER, updatedBuyer.getIntention());
+        assertEquals(PropertyStatus.COMPLETED, updatedBuyer.getProperties().get(0).getStatus());
+        assertEquals(both, client(0));
+        assertEquals(List.of(updatedBuyer, both), model.getFilteredPersonList());
+
+        logic.execute("find i/seller");
+        assertEquals(List.of(seller, both), model.getFilteredPersonList());
+        logic.execute("editp 2 2 s/Closing");
+        Person updatedBoth = client(0);
+        assertEquals(ClientIntention.BOTH, updatedBoth.getIntention());
+        assertEquals(buying, updatedBoth.getProperties().get(0));
+        assertEquals(PropertyStatus.CLOSING, updatedBoth.getProperties().get(1).getStatus());
+        assertEquals(List.of(seller, updatedBoth), model.getFilteredPersonList());
+        logic.execute("find i/both");
+        assertEquals(List.of(updatedBoth), model.getFilteredPersonList());
+
+        logic.execute("find l/clementi");
+        assertEquals(List.of(updatedBoth, updatedBuyer, seller), model.getFilteredPersonList());
+        logic.execute("find s/viewing");
+        assertEquals(List.of(updatedBoth, seller), model.getFilteredPersonList());
+        logic.execute("find s/completed");
+        assertEquals(List.of(updatedBuyer), model.getFilteredPersonList());
+        assertRejectedWithoutChanges("editp 2 1 s/Closing", CommandException.class);
+        assertSaved();
     }
 
     private void assertSearch(String command, List<Person> expected) throws Exception {

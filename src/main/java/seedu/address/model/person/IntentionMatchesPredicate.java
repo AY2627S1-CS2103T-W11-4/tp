@@ -2,23 +2,33 @@ package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Comparator;
 import java.util.function.Predicate;
 
 import seedu.address.commons.util.ToStringBuilder;
 
 /**
- * Tests that a {@code Person}'s intention matches the given intention.
+ * Matches a derived role, including mixed-role clients in buyer and seller searches.
  */
 public class IntentionMatchesPredicate implements Predicate<Person> {
-    private final Intention intention;
+    private final ClientIntention intention;
 
-    public IntentionMatchesPredicate(Intention intention) {
+    public IntentionMatchesPredicate(ClientIntention intention) {
         this.intention = requireNonNull(intention);
     }
 
     @Override
     public boolean test(Person person) {
-        return person.getIntention() == intention;
+        ClientIntention role = person.getIntention();
+        return role == intention || role == ClientIntention.BOTH
+                && (intention == ClientIntention.BUYER || intention == ClientIntention.SELLER);
+    }
+
+    /**
+     * Ranks exact-role matches before mixed-role matches.
+     */
+    public Comparator<Person> getComparator() {
+        return Comparator.comparingInt(person -> person.getIntention() == intention ? 0 : 1);
     }
 
     @Override

@@ -61,6 +61,9 @@ public class JsonUtil {
 
         try {
             jsonFile = deserializeObjectFromJsonFile(filePath, classOfObjectToDeserialize);
+            if (jsonFile == null) {
+                throw new IOException("JSON file must not contain null.");
+            }
         } catch (IOException e) {
             logger.warning("Error reading from jsonFile file " + filePath + ": " + e);
             throw new DataLoadingException(e);
