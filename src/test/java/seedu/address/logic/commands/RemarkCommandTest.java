@@ -57,7 +57,7 @@ public class RemarkCommandTest {
         for (String remark : List.of(REMARK_STUB, "")) {
             Model filteredModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
             Person original = filteredModel.getAddressBook().getPersonList().get(1);
-            Person target = new PersonBuilder(original).withRemark("Existing remark").withBudget("1500000")
+            Person target = new PersonBuilder(original).withRemark("Existing remark")
                     .withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
             filteredModel.setPerson(original, target);
             showPersonAtIndex(filteredModel, INDEX_SECOND_PERSON);

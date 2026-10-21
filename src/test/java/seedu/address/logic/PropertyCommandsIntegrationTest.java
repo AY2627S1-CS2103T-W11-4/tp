@@ -47,7 +47,7 @@ public class PropertyCommandsIntegrationTest {
         storage = new JsonAddressBookStorage(temporaryFolder.resolve("clients.json"));
         logic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
-        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com b/900000");
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
         logic.execute("add n/Ben Ong p/92345678 e/ben@example.com");
     }
 
@@ -91,17 +91,15 @@ public class PropertyCommandsIntegrationTest {
                 new PropertyLocation("Bishan"), new PropertyPrice("1500000"), PropertyStatus.CLOSING),
                 client(0).getProperties().get(0));
         assertEquals(ClientIntention.SELLER, client(0).getIntention());
-        assertEquals("900000", client(0).getBudget().orElseThrow().toString());
         assertSaved();
     }
 
     @Test
-    public void execute_editEmptyPrice_clearsPriceAndKeepsBudget() throws Exception {
+    public void execute_editEmptyPrice_clearsOnlySelectedPropertyPrice() throws Exception {
         logic.execute("addp 1 t/HDB i/Buying l/Clementi pr/800000");
         logic.execute("editp 1 1 pr/");
 
         assertTrue(client(0).getProperties().get(0).getPrice().isEmpty());
-        assertEquals("900000", client(0).getBudget().orElseThrow().toString());
         assertSaved();
     }
 
@@ -277,7 +275,7 @@ public class PropertyCommandsIntegrationTest {
         logic.execute("addp 1 t/HDB i/Buying l/Clementi pr/800000 s/Completed");
         List<Property> properties = client(0).getProperties();
 
-        logic.execute("edit 1 n/Alice Lim b/950000");
+        logic.execute("edit 1 n/Alice Lim");
         logic.execute("remark 1 r/Arrange viewing");
 
         assertEquals(properties, client(0).getProperties());
@@ -316,6 +314,16 @@ public class PropertyCommandsIntegrationTest {
 
     private Person client(int index) {
         return model.getAddressBook().getPersonList().get(index);
+    }
+
+    @Test
+    public void execute_removedClientBudget_keepsPropertyAmountsStatusesAndDerivedRole() throws Exception {
+        logic.execute("addp 1 t/HDB i/Buying l/Clementi pr/800000 s/Viewing");
+        Person original = client(0);
+        assertRejectedWithoutChanges("add n/Carol p/92345678 e/carol@example.com b/900000", ParseException.class);
+        assertRejectedWithoutChanges("edit 1 n/Alice Lim B/950000", ParseException.class);
+        assertEquals(original, client(0));
+        assertSaved();
     }
 
     private void assertSaved() throws Exception {

@@ -1,7 +1,6 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_BUDGET;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
@@ -17,7 +16,6 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -37,8 +35,7 @@ public class EditCommand extends Command {
             + "Parameters: INDEX (must be a positive integer) "
             + "[" + PREFIX_NAME + "NAME] "
             + "[" + PREFIX_PHONE + "PHONE] "
-            + "[" + PREFIX_EMAIL + "EMAIL] "
-            + "[" + PREFIX_BUDGET + "BUDGET]\n"
+            + "[" + PREFIX_EMAIL + "EMAIL]\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";
@@ -100,10 +97,9 @@ public class EditCommand extends Command {
         Phone updatedPhone = editPersonDescriptor.getPhone().orElse(personToEdit.getPhone());
         Email updatedEmail = editPersonDescriptor.getEmail().orElse(personToEdit.getEmail());
         Remark updatedRemark = personToEdit.getRemark();
-        Budget updatedBudget = editPersonDescriptor.getBudget().orElse(personToEdit.getBudget().orElse(null));
 
         return new Person(updatedName, updatedPhone, updatedEmail,
-                updatedRemark, updatedBudget, personToEdit.getProperties());
+                updatedRemark, personToEdit.getProperties());
     }
 
     @Override
@@ -137,7 +133,6 @@ public class EditCommand extends Command {
         private Name name;
         private Phone phone;
         private Email email;
-        private Budget budget;
 
         public EditPersonDescriptor() {}
 
@@ -148,14 +143,13 @@ public class EditCommand extends Command {
             setName(toCopy.name);
             setPhone(toCopy.phone);
             setEmail(toCopy.email);
-            setBudget(toCopy.budget);
         }
 
         /**
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, budget);
+            return CollectionUtil.isAnyNonNull(name, phone, email);
         }
 
         public void setName(Name name) {
@@ -182,14 +176,6 @@ public class EditCommand extends Command {
             return Optional.ofNullable(email);
         }
 
-        public void setBudget(Budget budget) {
-            this.budget = budget;
-        }
-
-        public Optional<Budget> getBudget() {
-            return Optional.ofNullable(budget);
-        }
-
         @Override
         public boolean equals(Object other) {
             if (other == this) {
@@ -203,8 +189,7 @@ public class EditCommand extends Command {
 
             return Objects.equals(name, otherEditPersonDescriptor.name)
                     && Objects.equals(phone, otherEditPersonDescriptor.phone)
-                    && Objects.equals(email, otherEditPersonDescriptor.email)
-                    && Objects.equals(budget, otherEditPersonDescriptor.budget);
+                    && Objects.equals(email, otherEditPersonDescriptor.email);
         }
 
         @Override
@@ -213,7 +198,6 @@ public class EditCommand extends Command {
                     .add("name", name)
                     .add("phone", phone)
                     .add("email", email)
-                    .add("budget", budget)
                     .toString();
         }
     }

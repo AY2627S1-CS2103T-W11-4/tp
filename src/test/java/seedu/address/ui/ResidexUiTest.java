@@ -41,7 +41,6 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -92,7 +91,7 @@ public class ResidexUiTest {
         runOnFxThread(() -> {
             Region card = new PersonDetailsCard(new PersonBuilder().build()).getRoot();
             styleCard(card);
-            assertEquals("Not recorded", label(card, "budget").getText());
+            assertNull(card.lookup("#budget"));
             assertEquals("Not recorded", label(card, "remark").getText());
             assertEquals("No properties recorded", label(card, "emptyProperties").getText());
         });
@@ -106,7 +105,7 @@ public class ResidexUiTest {
             Property viewingHdb = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
                     CLEMENTI_HDB.getLocation(), CLEMENTI_HDB.getPrice().orElse(null), PropertyStatus.VIEWING);
             Person selected = new PersonBuilder().withName("Bob Choo").withPhone("91234567")
-                    .withEmail("bob@example.com").withBudget("1500000")
+                    .withEmail("bob@example.com")
                     .withRemark("Call after 6 pm. ".repeat(25))
                     .withProperties(viewingHdb, TAMPINES_CONDO, CLEMENTI_HDB).build();
             model.addPerson(first);
@@ -133,7 +132,7 @@ public class ResidexUiTest {
                 assertEquals("91234567", label(card, "phone").getText());
                 assertEquals("bob@example.com", label(card, "email").getText());
                 assertEquals("Buyer / Seller", label(card, "intention").getText());
-                assertEquals("$1,500,000", label(card, "budget").getText());
+                assertNull(card.lookup("#budget"));
                 assertEquals(selected.getRemark().value, label(card, "remark").getText());
                 assertTrue(label(card, "remark").getHeight() > 30);
                 assertEquals(3, ((VBox) card.lookup("#properties")).getChildren().size());
@@ -266,35 +265,20 @@ public class ResidexUiTest {
     }
 
     @Test
-    public void clientCards_showIntentionOptionalFieldsAndBudgetBands() throws Exception {
+    public void clientCards_showDerivedIntentionAndRemarkWithoutClientBudget() throws Exception {
         runOnFxThread(() -> {
-            String[] amounts = {"800000", "800001", "2500000", "2500001"};
-            String[] displays = {"$800,000", "$800,001", "$2,500,000", "$2,500,001"};
-            Color[] colours = {Color.web("#e74c3c"), Color.web("#f1c40f"),
-                Color.web("#f1c40f"), Color.web("#2ecc71")};
-            for (int i = 0; i < amounts.length; i++) {
-                Person person = new PersonBuilder().withProperties(CLEMENTI_HDB).withBudget(amounts[i]).build();
-                Region card = new PersonCard(person, i + 1).getRoot();
-                styleCard(card);
-                Label budget = label(card, "budget");
-                Label intention = label(card, "intention");
-                assertEquals("Intention: Buyer", intention.getText());
-                assertEquals((i + 1) + ". ", label(card, "id").getText());
-                assertEquals(displays[i], budget.getText());
-                assertEquals(colours[i], budget.getTextFill());
-                assertTrue(budget.isManaged());
-                assertTrue(budget.localToScene(budget.getBoundsInLocal()).getMinY()
-                        > intention.localToScene(intention.getBoundsInLocal()).getMaxY());
-                assertFalse(label(card, "remark").isManaged());
-            }
+            Region buyer = new PersonCard(new PersonBuilder().withProperties(CLEMENTI_HDB).build(), 1).getRoot();
+            styleCard(buyer);
+            assertEquals("Intention: Buyer", label(buyer, "intention").getText());
+            assertEquals("1. ", label(buyer, "id").getText());
+            assertNull(buyer.lookup("#budget"));
+            assertFalse(label(buyer, "remark").isManaged());
 
             Region seller = new PersonCard(new PersonBuilder().withProperties(TAMPINES_CONDO)
-                    .withRemark("Call after 6 pm").build(), 1).getRoot();
+                    .withRemark("Call after 6 pm").build(), 2).getRoot();
             styleCard(seller);
             assertEquals("Intention: Seller", label(seller, "intention").getText());
-            assertFalse(label(seller, "budget").isVisible());
-            assertFalse(label(seller, "budget").isManaged());
-            assertTrue(label(seller, "remark").isManaged());
+            assertNull(seller.lookup("#budget"));
             assertEquals("Call after 6 pm", label(seller, "remark").getText());
         });
     }
@@ -390,7 +374,7 @@ public class ResidexUiTest {
     public void commands_runAndEnterUpdateCountCardsAndFeedback() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
-            model.addPerson(new PersonBuilder().withName("Alice Pauline").withBudget("750000").build());
+            model.addPerson(new PersonBuilder().withName("Alice Pauline").build());
             model.addPerson(new PersonBuilder().withName("Bob Choo").withProperties(TAMPINES_CONDO).build());
             MainWindow window = createWindow(model);
             Region root = layoutWindow(window, 1100, 900);
@@ -406,12 +390,11 @@ public class ResidexUiTest {
             assertEquals("Filtered clients", label(root, "clientListHeading").getText());
             assertFalse(result.getText().isEmpty());
 
-            command.setText("edit 1 b/3000000");
+            command.setText("edit 1 e/updated@example.com");
             command.fireEvent(new ActionEvent());
             root.applyCss();
             root.layout();
-            assertEquals("$3,000,000", label(root, "budget").getText());
-            assertEquals(Color.web("#2ecc71"), label(root, "budget").getTextFill());
+            assertEquals("updated@example.com", label(root, "email").getText());
 
             command.setText("delete 1");
             run.fire();
@@ -424,7 +407,7 @@ public class ResidexUiTest {
             assertEquals("1 of 1 clients", label(root, "clientCount").getText());
             assertEquals("All clients", label(root, "clientListHeading").getText());
 
-            command.setText("add n/Carol p/91234567 e/carol@example.com b/900000");
+            command.setText("add n/Carol p/91234567 e/carol@example.com");
             run.fire();
             assertEquals("2 of 2 clients", label(root, "clientCount").getText());
             command.setText("invalidcommand");
@@ -448,13 +431,11 @@ public class ResidexUiTest {
                 "93210283", "91031282", "92492021", "92624417"};
             String[] emails = {"alice", "bobc", "alexyeoh", "berniceyu",
                 "charlotte", "lidavid", "irfan", "roybal"};
-            String[] budgets = {"750000", "1500000", "3200000", "800000",
-                "2500000", "2800000", "650000", "1800000"};
             for (int i = 0; i < names.length; i++) {
                 model.addPerson(new PersonBuilder().withName(names[i]).withPhone(phones[i])
                         .withEmail(emails[i] + "@example.com")
                         .withProperties(i % 2 == 0 ? CLEMENTI_HDB : TAMPINES_CONDO)
-                        .withBudget(budgets[i]).build());
+                        .build());
             }
             MainWindow window = createWindow(model);
             Region root = layoutWindow(window, 1100, 1430);

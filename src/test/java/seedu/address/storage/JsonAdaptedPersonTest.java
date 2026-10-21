@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
-import seedu.address.model.person.Budget;
 import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
@@ -47,8 +46,26 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void json_legacyClientBudget_ignoredWithoutChangingPropertyPricesStatusesOrDerivedRole() throws Exception {
+        Property viewingHdb = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
+                CLEMENTI_HDB.getLocation(), CLEMENTI_HDB.getPrice().orElse(null), PropertyStatus.VIEWING);
+        Person expected = new PersonBuilder(BENSON).withRemark("Call next week")
+                .withProperties(viewingHdb, TAMPINES_CONDO).build();
+        String currentJson = JsonUtil.toJsonString(new JsonAdaptedPerson(expected));
+        for (String legacyBudget : new String[] {"\"900000\"", "null", "\"invalid\"", "-1"}) {
+            String legacyJson = currentJson.replaceFirst("\\{", "{\"budget\":" + legacyBudget + ",");
+            Person loaded = JsonUtil.fromJsonString(legacyJson, JsonAdaptedPerson.class).toModelType();
+            assertEquals(expected, loaded);
+            assertEquals(expected.getIntention(), loaded.getIntention());
+            String savedJson = JsonUtil.toJsonString(new JsonAdaptedPerson(loaded));
+            assertFalse(savedJson.contains("\"budget\""));
+            assertEquals(expected, JsonUtil.fromJsonString(savedJson, JsonAdaptedPerson.class).toModelType());
+        }
+    }
+
+    @Test
     public void json_propertiesRoundTrip_preservesOrderDuplicatesAndUnrelatedClientFields() throws Exception {
-        Person person = new PersonBuilder(BENSON).withBudget("1800000")
+        Person person = new PersonBuilder(BENSON)
                 .withRemark("Call next week")
                 .withProperties(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB, BUKIT_TIMAH_LANDED).build();
         String json = JsonUtil.toJsonString(new JsonAdaptedPerson(person));
@@ -74,7 +91,7 @@ public class JsonAdaptedPersonTest {
     public void constructor_mutableProperties_copiesList() throws Exception {
         List<JsonAdaptedProperty> input = new ArrayList<>(List.of(new JsonAdaptedProperty(CLEMENTI_HDB)));
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
-                "", null, input);
+                "", input);
         input.clear();
         assertEquals(List.of(CLEMENTI_HDB), person.toModelType().getProperties());
     }
@@ -82,7 +99,7 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_nullPropertyEntry_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
-                "", null, Arrays.asList(new JsonAdaptedProperty(CLEMENTI_HDB), null));
+                "", Arrays.asList(new JsonAdaptedProperty(CLEMENTI_HDB), null));
         assertThrows(IllegalValueException.class, String.format(JsonAdaptedPerson.MESSAGE_NULL_PROPERTY_FORMAT, 2),
                 person::toModelType);
     }
@@ -90,7 +107,7 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_invalidProperty_reportsItsIndexAndConstraint() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
-                "", null, List.of(new JsonAdaptedProperty(CLEMENTI_HDB),
+                "", List.of(new JsonAdaptedProperty(CLEMENTI_HDB),
                         new JsonAdaptedProperty("flat", "Buyer", "Clementi", null)));
         String expectedMessage = String.format(JsonAdaptedPerson.MESSAGE_INVALID_PROPERTY_FORMAT, 2,
                 PropertyType.MESSAGE_CONSTRAINTS);
@@ -100,32 +117,11 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_invalidPropertyIntention_reportsItsIndexAndConstraint() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
-                "", null, List.of(new JsonAdaptedProperty(CLEMENTI_HDB),
+                "", List.of(new JsonAdaptedProperty(CLEMENTI_HDB),
                         new JsonAdaptedProperty("HDB", "Both", "Clementi", null)));
         String expectedMessage = String.format(JsonAdaptedPerson.MESSAGE_INVALID_PROPERTY_FORMAT, 2,
                 JsonAdaptedProperty.MESSAGE_INVALID_INTENTION);
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
-    }
-
-    @Test
-    public void toModelType_budget_roundTrip() throws Exception {
-        Person buyer = new PersonBuilder(BENSON).withBudget("1800000").build();
-        assertEquals(buyer, new JsonAdaptedPerson(buyer).toModelType());
-    }
-
-    @Test
-    public void toModelType_missingBudget_returnsPersonWithoutBudget() throws Exception {
-        String json = "{\"name\":\"" + VALID_NAME + "\",\"phone\":\"" + VALID_PHONE + "\","
-                + "\"email\":\"" + VALID_EMAIL + "\",\"intention\":\"" + VALID_INTENTION + "\"}";
-        JsonAdaptedPerson person = JsonUtil.fromJsonString(json, JsonAdaptedPerson.class);
-        assertEquals(BENSON, person.toModelType());
-    }
-
-    @Test
-    public void toModelType_invalidBudget_throwsIllegalValueException() {
-        JsonAdaptedPerson person = new JsonAdaptedPerson(
-                VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION, "", "800,000");
-        assertThrows(IllegalValueException.class, Budget.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test
@@ -141,7 +137,7 @@ public class JsonAdaptedPersonTest {
             assertEquals(BENSON, empty.toModelType());
             assertEquals(ClientIntention.UNSPECIFIED, empty.toModelType().getIntention());
             JsonAdaptedPerson buying = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, value,
-                    "", null, List.of(new JsonAdaptedProperty(CLEMENTI_HDB)));
+                    "", List.of(new JsonAdaptedProperty(CLEMENTI_HDB)));
             assertEquals(ClientIntention.BUYER, buying.toModelType().getIntention());
         }
     }
@@ -158,8 +154,8 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void json_roundTrip_preservesRemarkAndBudgetWithoutTags() throws Exception {
-        Person person = new PersonBuilder(BENSON).withRemark("Call next week").withBudget("1800000").build();
+    public void json_roundTrip_preservesRemarkWithoutTags() throws Exception {
+        Person person = new PersonBuilder(BENSON).withRemark("Call next week").build();
         String json = JsonUtil.toJsonString(new JsonAdaptedPerson(person));
 
         assertFalse(json.contains("\"tags\""));
@@ -227,7 +223,7 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_invalidPropertyStatus_reportsItsIndexAndConstraint() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_INTENTION,
-                "", null, List.of(new JsonAdaptedProperty(CLEMENTI_HDB),
+                "", List.of(new JsonAdaptedProperty(CLEMENTI_HDB),
                         new JsonAdaptedProperty("HDB", "Buyer", "Clementi", null, "Cancelled")));
         String expectedMessage = String.format(JsonAdaptedPerson.MESSAGE_INVALID_PROPERTY_FORMAT, 2,
                 PropertyStatus.MESSAGE_CONSTRAINTS);

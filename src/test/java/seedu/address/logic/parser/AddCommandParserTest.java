@@ -1,10 +1,8 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.commands.CommandTestUtil.BUDGET_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_BOB;
-import static seedu.address.logic.commands.CommandTestUtil.INVALID_BUDGET_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_EMAIL_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_NAME_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_PHONE_DESC;
@@ -14,11 +12,9 @@ import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.PREAMBLE_NON_EMPTY;
 import static seedu.address.logic.commands.CommandTestUtil.PREAMBLE_WHITESPACE;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_BUDGET_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_BUDGET;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
@@ -31,7 +27,6 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddCommand;
-import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -42,12 +37,23 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_removedClientBudget_failure() {
+        String details = NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY;
+        for (String budget : new String[] {" b/900000", " B/900000", " b/", " b/invalid", " b/1 B/2"}) {
+            assertParseFailure(parser, details + budget, Messages.MESSAGE_CLIENT_BUDGET_NOT_SUPPORTED);
+            assertParseFailure(parser, budget + details, Messages.MESSAGE_CLIENT_BUDGET_NOT_SUPPORTED);
+            assertParseFailure(parser, NAME_DESC_AMY + budget + PHONE_DESC_AMY + EMAIL_DESC_AMY,
+                    Messages.MESSAGE_CLIENT_BUDGET_NOT_SUPPORTED);
+        }
+    }
+
+    @Test
     public void parse_allFieldsPresent_success() {
-        Person expectedPerson = new PersonBuilder(BOB).withBudget(VALID_BUDGET_BOB).build();
+        Person expectedPerson = new PersonBuilder(BOB).build();
 
         // whitespace only preamble
-        assertParseSuccess(parser, PREAMBLE_WHITESPACE + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + BUDGET_DESC_BOB, new AddCommand(expectedPerson));
+        assertParseSuccess(parser, PREAMBLE_WHITESPACE + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB,
+                new AddCommand(expectedPerson));
     }
 
     @Test
@@ -122,27 +128,7 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_optionalBudget_success() {
-        Person expectedPerson = new PersonBuilder(AMY).withBudget(VALID_BUDGET_BOB).build();
-        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY + BUDGET_DESC_BOB,
-                new AddCommand(expectedPerson));
-    }
-
-    @Test
-    public void parse_invalidBudget_failure() {
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + INVALID_BUDGET_DESC,
-                Budget.MESSAGE_CONSTRAINTS);
-    }
-
-    @Test
-    public void parse_repeatedBudget_failure() {
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + BUDGET_DESC_BOB + BUDGET_DESC_BOB,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_BUDGET));
-    }
-
-    @Test
-    public void parse_optionalFieldsMissing_success() {
-        // no budget
+    public void parse_requiredFieldsOnly_success() {
         Person expectedPerson = new PersonBuilder(AMY).build();
         assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY,
                 new AddCommand(expectedPerson));

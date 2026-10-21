@@ -39,7 +39,6 @@ public class PersonDetailsCard extends UiPart<Region> {
         addField(fields, "Phone", person.getPhone().value, "phone");
         addField(fields, "Email", person.getEmail().value, "email");
         addField(fields, "Intention", person.getIntention().toString(), "intention");
-        addField(fields, "Budget", person.getBudget().map(value -> value.toDisplay()).orElse(NOT_RECORDED), "budget");
         addField(fields, "Remark", person.getRemark().value.isEmpty()
                 ? NOT_RECORDED : person.getRemark().value, "remark");
         clientDetails.getChildren().add(fields);

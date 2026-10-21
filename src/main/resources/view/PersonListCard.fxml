@@ -29,6 +29,5 @@
   </VBox>
   <VBox spacing="12" alignment="TOP_RIGHT" minWidth="-Infinity">
     <Label fx:id="intention" styleClass="intention-badge" />
-    <Label fx:id="budget" styleClass="budget-amount" />
   </VBox>
 </HBox>
