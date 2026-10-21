@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
 import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
@@ -47,6 +48,7 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
@@ -83,6 +85,133 @@ public class ResidexUiTest {
     @AfterAll
     public static void stopToolkit() {
         Platform.exit();
+    }
+
+    @Test
+    public void clientDetails_missingOptionalFields_showsExplicitPlaceholders() throws Exception {
+        runOnFxThread(() -> {
+            Region card = new PersonDetailsCard(new PersonBuilder().build()).getRoot();
+            styleCard(card);
+            assertEquals("Not recorded", label(card, "budget").getText());
+            assertEquals("Not recorded", label(card, "remark").getText());
+            assertEquals("No properties recorded", label(card, "emptyProperties").getText());
+        });
+    }
+
+    @Test
+    public void viewCommand_showsEveryFieldAndListRestoresClients() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Person first = new PersonBuilder().withName("Alice Pauline").build();
+            Property viewingHdb = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
+                    CLEMENTI_HDB.getLocation(), CLEMENTI_HDB.getPrice().orElse(null), PropertyStatus.VIEWING);
+            Person selected = new PersonBuilder().withName("Bob Choo").withPhone("91234567")
+                    .withEmail("bob@example.com").withBudget("1500000")
+                    .withRemark("Call after 6 pm. ".repeat(25))
+                    .withProperties(viewingHdb, TAMPINES_CONDO, CLEMENTI_HDB).build();
+            model.addPerson(first);
+            model.addPerson(selected);
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 900, 1050);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                command.setText("find n/Bob");
+                run.fire();
+                command.setText("view 1");
+                command.fireEvent(new ActionEvent());
+                root.applyCss();
+                root.layout();
+
+                assertEquals(List.of(selected), model.getFilteredPersonList());
+                assertEquals("Client details", label(root, "clientListHeading").getText());
+                assertEquals(ViewCommand.MESSAGE_RETURN_TO_LIST, label(root, "returnToListHint").getText());
+                assertTrue(label(root, "returnToListHint").isVisible());
+                Region card = (Region) root.lookup("#personDetailsCard");
+                assertNotNull(card);
+                assertEquals("Bob Choo", label(card, "name").getText());
+                assertEquals("91234567", label(card, "phone").getText());
+                assertEquals("bob@example.com", label(card, "email").getText());
+                assertEquals("Buyer / Seller", label(card, "intention").getText());
+                assertEquals("$1,500,000", label(card, "budget").getText());
+                assertEquals(selected.getRemark().value, label(card, "remark").getText());
+                assertTrue(label(card, "remark").getHeight() > 30);
+                assertEquals(3, ((VBox) card.lookup("#properties")).getChildren().size());
+                assertEquals("HDB", label(card, "propertyType1").getText());
+                assertEquals("Buying", label(card, "propertyIntention1").getText());
+                assertEquals("Clementi Ave 3", label(card, "propertyLocation1").getText());
+                assertEquals("$800,000", label(card, "propertyPrice1").getText());
+                assertEquals("Viewing", label(card, "propertyStatus1").getText());
+                assertEquals("Not specified", label(card, "propertyStatus2").getText());
+                assertEquals("Condominium", label(card, "propertyType2").getText());
+                assertEquals("Selling", label(card, "propertyIntention2").getText());
+                assertEquals("Tampines", label(card, "propertyLocation2").getText());
+                assertEquals("Not recorded", label(card, "propertyPrice2").getText());
+                assertEquals("$800,000", label(card, "propertyPrice3").getText());
+                saveSnapshot(root, "client-details");
+
+                command.setText("view 2");
+                run.fire();
+                assertTrue(label(root, "returnToListHint").isVisible());
+                assertEquals(List.of(selected), model.getFilteredPersonList());
+
+                command.setText("list");
+                run.fire();
+                root.applyCss();
+                root.layout();
+                assertEquals(List.of(first, selected), model.getFilteredPersonList());
+                assertEquals("All clients", label(root, "clientListHeading").getText());
+                assertFalse(label(root, "returnToListHint").isManaged());
+                assertTrue(root.lookupAll("#personDetailsCard").isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void listAfterView_immediatelyReplacesDetailCardsWithClientCards() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            model.addPerson(new PersonBuilder().withName("Alice Pauline").build());
+            model.addPerson(new PersonBuilder().withName("Bob Choo").withProperties(CLEMENTI_HDB).build());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 900, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                for (int index : new int[] {2, 1, 2}) {
+                    command.setText("view " + index);
+                    run.fire();
+                    root.applyCss();
+                    root.layout();
+                    ListCell<?> detailCell = root.lookupAll(".list-cell").stream()
+                            .filter(ListCell.class::isInstance).map(ListCell.class::cast)
+                            .filter(cell -> !cell.isEmpty()).findFirst().orElseThrow();
+                    assertEquals("personDetailsCard", detailCell.getGraphic().getId());
+
+                    command.setText("list");
+                    run.fire();
+                    // Check the existing cell before a layout pulse can mask a stale detail graphic.
+                    assertEquals("cardPane", detailCell.getGraphic().getId());
+                    root.applyCss();
+                    root.layout();
+                    assertTrue(root.lookupAll("#personDetailsCard").isEmpty());
+                    for (Node node : root.lookupAll(".list-cell")) {
+                        ListCell<?> cell = (ListCell<?>) node;
+                        if (!cell.isEmpty()) {
+                            assertEquals("cardPane", cell.getGraphic().getId());
+                            assertNull(cell.getText());
+                            assertEquals(((Person) cell.getItem()).getName().fullName,
+                                    label((Region) cell.getGraphic(), "name").getText());
+                        }
+                    }
+                    assertFalse(label(root, "returnToListHint").isVisible());
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
     }
 
     @Test

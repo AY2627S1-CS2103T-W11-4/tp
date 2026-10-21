@@ -12,6 +12,7 @@
     <Region HBox.hgrow="ALWAYS" />
     <Label fx:id="clientCount" styleClass="client-count" />
   </HBox>
+  <Label fx:id="returnToListHint" styleClass="muted-label" wrapText="true" visible="false" managed="false" />
   <ListView fx:id="personListView" minHeight="0" VBox.vgrow="ALWAYS" accessibleText="Clients">
     <placeholder>
       <Label text="No clients to display" styleClass="muted-label" />
