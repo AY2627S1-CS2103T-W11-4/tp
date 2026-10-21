@@ -31,6 +31,8 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 
    * `list` : Lists all contacts.
 
+   * `view 1` : Shows every recorded field of the first displayed client. Use `list` to return to all clients.
+
    * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000` : Adds a buyer named `John Doe` with a budget of $1,500,000.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
@@ -114,6 +116,34 @@ Back up the file and resolve these duplicates before opening it with this versio
 Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000`
 * `add n/Betsy Crowe e/betsycrowe@example.com i/Seller p/1234567`
+
+### Viewing a client's full details: `view`
+
+Shows only the selected client, with their name as the heading and labelled phone, email, intention, budget and remark fields.
+Every property is numbered in its stored order and shows its type, intention, location and price separately.
+Long values wrap onto additional lines; scroll down to see details that do not fit in the window.
+
+Format: `view INDEX`
+
+* `INDEX` must be a positive integer referring to the **currently displayed** client list, including search results.
+  Supply exactly one index, with no prefixes or extra arguments.
+* Other clients are hidden. The selected client is now the only displayed client, at index **1**;
+  subsequent commands that take a client index use this displayed index.
+* Missing budget, remark or property price is shown as `Not recorded`.
+  A client without properties shows `No properties recorded`.
+* A line above the details says `Type list to return to the original list`.
+  `list` restores **all stored clients** in their original order, even if you ran `view` from search results.
+  To repeat the earlier search instead, enter the same `find` command again.
+* Viewing does not change stored client information. An invalid or out-of-range index displays an error
+  and keeps the current display unchanged.
+* Other successful client commands return to the usual client card layout and follow their own filtering rules.
+  `help` keeps the detail view open.
+
+Examples:
+
+* `list`, then `view 2`: displays all fields of the second client and hides the other clients.
+* `find n/Betsy`, then `view 1`: displays the first client from those search results.
+* `view 1`, then `list`: returns to the complete client list.
 
 ### Listing all clients: `list`
 
@@ -357,5 +387,6 @@ Action     | Format, Examples
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]`<br> e.g., `editp 1 2 l/Toa Payoh`
 **Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`
 **List**   | `list`
+**View**   | `view INDEX`<br> e.g., `view 2`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
 **Help**   | `help`

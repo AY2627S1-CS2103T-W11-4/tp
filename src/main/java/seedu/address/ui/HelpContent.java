@@ -21,6 +21,7 @@ import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.person.Budget;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
@@ -104,6 +105,12 @@ final class HelpContent {
                             "Prefix-like words ending in / are reserved for fields; use t/, i/, l/ and pr/ only."),
                     List.of("editp 1 2 l/Toa Payoh", "editp 1 2 t/Landed i/Selling pr/3200000", "editp 1 2 pr/",
                             "editp 1 2 i/Buying")),
+            new CommandHelp(ViewCommand.COMMAND_WORD, "Show all fields of one client.", "view INDEX",
+                    List.of(INDEX_NOTE, "Only the selected client is displayed, now at index 1.",
+                            "Shows name, phone, email, intention, budget, remark and every property field.",
+                            "Missing optional values are shown as Not recorded.",
+                            "Type list to return to all clients, including after viewing a search result."),
+                    List.of("view 1", "view 2")),
             new CommandHelp(FindCommand.COMMAND_WORD, "Find clients by name, email, phone, location or intention.",
                     FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"

@@ -366,6 +366,34 @@ The property list is hidden when empty, and `PersonListPanel` measures each card
 Type, property intention, location and a known price are displayed together; an unknown price has no amount.
 `HelpContent` includes the three property commands and its examples are parsed by `HelpContentTest`.
 
+### Viewing complete client details
+
+`ViewCommandParser` delegates index validation to `ParserUtil.parseIndex`. `ViewCommand` resolves that index
+against `Model#getFilteredPersonList()` before changing the filter, so search-result indexes are respected.
+An out-of-range index raises `CommandException` without changing the filter. A valid request filters by the
+selected client's identity and returns a `CommandResult` with `showClientDetails` enabled. No client records
+are changed. `list` uses the existing show-all predicate to restore all clients in stored order.
+
+`MainWindow` passes the display flag to `PersonListPanel`. Each cell observes that flag with a weak listener
+and immediately replaces its graphic with `PersonDetailsCard` or the usual `PersonCard`, including when
+JavaFX reuses cells after `list`. This avoids leaving detail cards visible until a later layout pulse.
+The panel displays the return hint above the scrollable list. The detail card uses the client's name as its heading
+and lays out the other five scalar client fields and every property's four fields in labelled, wrapping rows.
+Missing optional values use explicit placeholders.
+Other successful client commands use the normal card layout; help and failed commands preserve the current layout.
+The single displayed client has index 1, consistent with other filtered lists.
+
+Assertions check the internal postcondition that viewing yields exactly the selected client and the UI precondition
+that detail mode receives one client. User input errors are handled with exceptions, following the
+[SE-EDU assertion guidance](https://se-education.org/se-book/errorHandling/index.html).
+`ViewCommand` uses `LogsCenter` and `java.util.logging` at `FINE` level for the selected displayed index and
+out-of-range failures, following the [SE-EDU logging conventions](https://se-education.org/guides/conventions/java/logging.html).
+These messages omit client field values. `gradlew run` and the test task already enable assertions.
+
+Parser and command tests cover malformed arguments, filtered and unfiltered indexes, empty lists, read-only
+behaviour, repeated viewing and restoration. `ResidexUiTest` checks the actual command wiring, all field values,
+optional placeholders, property order, wrapping and the return hint.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -668,6 +696,46 @@ delete information, invalid input is rejected without changing that information.
 
   Use case ends.
 
+**Use case: UC11 — View a client's full details**
+
+**MSS**
+
+1. Property agent requests to list or find clients.
+2. RESIDEX displays the corresponding client list with indexes.
+3. Property agent requests to view a client using their displayed index (`view INDEX`).
+4. RESIDEX displays only that client's name, phone, email, intention, budget, remark and all property fields.
+   Missing optional values are explicitly indicated. RESIDEX displays
+   `Type list to return to the original list`.
+5. Property agent requests to list all clients (`list`).
+6. RESIDEX restores the complete client list in its original order.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The displayed list is empty.
+
+  Use case ends.
+
+* 3a. The index is missing, malformed, non-positive or outside the displayed list, or extra arguments are supplied.
+
+  * 3a1. RESIDEX explains the input or selection error and keeps the current display and stored data unchanged.
+
+  Use case resumes at step 3.
+
+* 4a. The details exceed the available window height.
+
+  * 4a1. Property agent scrolls to review the remaining fields.
+
+  Use case resumes at step 5.
+
+* 5a. Property agent wants the earlier search results instead of all clients.
+
+  * 5a1. Property agent repeats the earlier search.
+  * 5a2. RESIDEX displays its matching clients.
+
+  Use case ends.
+
 **Use case: UC03 — Filter clients for follow-up**
 
 **MSS**
@@ -939,10 +1007,12 @@ They are documented for future reference, without committing to their implementa
 * **Buying**: A property intention describing a client's interest in purchasing that property.
 * **Buying status**: How close a client is to agreeing on a property.
 * **Client**: A buyer or seller whose details a property agent stores in RESIDEX.
+* **Client detail view**: The single-client display opened by `view INDEX`, showing every stored client and property field, including placeholders for missing optional values. The displayed client has index 1; `list` returns to all clients.
+* **Client index**: A client's one-based position in the currently displayed list, including search results or the detail view. It is not a permanent identifier.
 * **Client information history**: Previously recorded information or changes associated with a client, available for review.
 * **Client profile**: The stored information about a client, including contact details, requirements, buying status, priority and associated properties.
 * **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
-* **Filtered client list**: The clients currently displayed after a search. Each `find` command searches all stored clients and replaces this list; `list` restores all clients.
+* **Filtered client list**: The clients currently displayed after `find` or `view`. Each `find` searches all stored clients; `view` selects one client from the displayed list. `list` restores all clients in their stored order.
 * **Follow-up**: A planned next contact with a client. A follow-up may be upcoming or overdue.
 * **Intention**: Whether a client or property is on the buying or selling side.
 * **Internal note**: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
@@ -1029,6 +1099,29 @@ testers are expected to do more *exploratory* testing.
 
    1. Click **Copy URL** and paste the clipboard contents into a text editor.<br>
       Expected: `https://ay2627s1-cs2103t-w11-4.github.io/tp/UserGuide.html` is pasted.
+
+### Viewing complete client details
+
+Prerequisite: At least two clients exist. Choose one with a budget, remark and multiple properties,
+including a property without a price.
+
+1. Run `list`, then `view 2`.<br>
+   Expected: Only the second client is shown, now at index 1, under **Client details**.
+   The client's name is the heading; phone, email, intention, budget and remark are labelled below it.
+   Every property is numbered in order
+   and shows type, intention, location and price. An absent price reads `Not recorded`.
+   The line `Type list to return to the original list` appears above the details.
+2. Resize the window and scroll through the details.<br>
+   Expected: Long field values wrap and every field remains accessible by scrolling.
+3. Run `view 2`, `view 0`, `view`, and `view 1 extra`.<br>
+   Expected: Each command reports an error and preserves the current details and stored data.
+4. Run `view 1`, then `list`.<br>
+   Expected: Viewing again succeeds; `list` restores all clients in their previous order and hides the hint.
+5. Run a `find` command, then `view 1`.<br>
+   Expected: The first search result is shown. Run `list`; all stored clients return, including those
+   outside the earlier search results.
+6. View a client with no budget, remark or properties.<br>
+   Expected: Budget and remark read `Not recorded`, and properties read `No properties recorded`.
 
 ### Detecting duplicate clients
 

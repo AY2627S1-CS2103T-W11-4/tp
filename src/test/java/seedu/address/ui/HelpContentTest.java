@@ -26,6 +26,7 @@ import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.EmailContainsKeywordsPredicate;
@@ -55,6 +56,7 @@ public class HelpContentTest {
             Map.entry(EditPropertyCommand.COMMAND_WORD, EditPropertyCommand.class),
             Map.entry(FindCommand.COMMAND_WORD, FindCommand.class),
             Map.entry(ListCommand.COMMAND_WORD, ListCommand.class),
+            Map.entry(ViewCommand.COMMAND_WORD, ViewCommand.class),
             Map.entry(DeleteCommand.COMMAND_WORD, DeleteCommand.class),
             Map.entry(RemarkCommand.COMMAND_WORD, RemarkCommand.class),
             Map.entry(HelpCommand.COMMAND_WORD, HelpCommand.class),
