@@ -341,6 +341,8 @@ The diagnostic contains no client name, phone, email, location or full command/d
 Same-status edits, changes to other fields, rejected indexes and failed model mutations produce no transition record.
 The existing default INFO level is unchanged. `EditPropertyStatusLoggingTest` temporarily attaches a FINE handler,
 checks that mutation precedes the record, and restores logger settings after each test.
+The handler verifies the underlying source client, including when a parsed status edit removes that client
+from `find s/viewing` results. The regression checks the original displayed indexes and a single PII-free record.
 
 The add-property command applies the immutable model update after validating the displayed client index:
 

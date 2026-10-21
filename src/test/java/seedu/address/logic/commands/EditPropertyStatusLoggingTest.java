@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
@@ -25,8 +26,10 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditPropertyCommand.EditPropertyDescriptor;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.testutil.PersonBuilder;
@@ -38,13 +41,13 @@ public class EditPropertyStatusLoggingTest {
     private Level originalLevel;
     private boolean originalUseParentHandlers;
     private EditPropertyCommand statusEdit;
+    private Runnable assertTransitionApplied;
 
     private final Handler handler = new Handler() {
         @Override
         public void publish(LogRecord record) {
             // A transition must already be applied before a success diagnostic is emitted.
-            assertEquals(PropertyStatus.VIEWING, model.getFilteredPersonList().get(1).getProperties().get(1)
-                    .getStatus());
+            assertTransitionApplied.run();
             records.add(record);
         }
 
@@ -63,6 +66,8 @@ public class EditPropertyStatusLoggingTest {
         model.addPerson(BENSON);
         model.addPerson(new PersonBuilder(CARL).withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build());
         model.updateFilteredPersonList(person -> !person.isSamePerson(ALICE));
+        assertTransitionApplied = () -> assertEquals(PropertyStatus.VIEWING,
+                model.getAddressBook().getPersonList().get(2).getProperties().get(1).getStatus());
         EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
         descriptor.setStatus(PropertyStatus.VIEWING);
         statusEdit = new EditPropertyCommand(INDEX_SECOND_PERSON, INDEX_SECOND_PERSON, descriptor);
@@ -92,6 +97,42 @@ public class EditPropertyStatusLoggingTest {
         assertEquals("Property status changed for displayed client 2, property 2: UNSPECIFIED -> VIEWING",
                 records.get(0).getMessage());
         assertEquals(CARL.getName(), model.getAddressBook().getPersonList().get(2).getName());
+    }
+
+    @Test
+    public void execute_statusEditRemovesFilteredClient_logsOriginalIndexesAfterMutation() throws Exception {
+        Property viewing = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
+                CLEMENTI_HDB.getLocation(), CLEMENTI_HDB.getPrice().orElse(null), PropertyStatus.VIEWING);
+        Person target = new PersonBuilder(CARL).withRemark("Private viewing follow up").withProperties(viewing).build();
+        model.setPerson(model.getAddressBook().getPersonList().get(2), target);
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("find s/viewing").execute(model);
+        assertEquals(List.of(target), model.getFilteredPersonList());
+        int displayedIndex = model.getFilteredPersonList().indexOf(target) + 1;
+        assertEquals(1, displayedIndex);
+
+        Property completed = new Property(viewing.getType(), viewing.getIntention(), viewing.getLocation(),
+                viewing.getPrice().orElse(null), PropertyStatus.COMPLETED);
+        Person expected = new PersonBuilder(target).withProperties(completed).build();
+        assertTransitionApplied = () -> {
+            assertEquals(expected, model.getAddressBook().getPersonList().get(2));
+            assertTrue(model.getFilteredPersonList().isEmpty());
+        };
+
+        parser.parseCommand("editp " + displayedIndex + " 1 s/Completed").execute(model);
+
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        assertEquals(expected, model.getAddressBook().getPersonList().get(2));
+        assertEquals(1, records.size());
+        LogRecord record = records.get(0);
+        assertEquals(Level.FINE, record.getLevel());
+        String message = record.getMessage();
+        assertEquals("Property status changed for displayed client " + displayedIndex
+                + ", property 1: VIEWING -> COMPLETED", message);
+        for (String personalData : List.of(target.getName().fullName, target.getPhone().value,
+                target.getEmail().value, target.getRemark().value, viewing.getLocation().value)) {
+            assertFalse(message.contains(personalData));
+        }
     }
 
     @Test
