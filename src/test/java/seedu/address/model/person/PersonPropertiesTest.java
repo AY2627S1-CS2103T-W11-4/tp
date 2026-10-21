@@ -23,12 +23,12 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonPropertiesTest {
 
     private static final Person BASE_PERSON = new PersonBuilder(ALICE).withIntention(Intention.SELLER)
-            .withBudget("1500000").withRemark("Call next week").build();
+            .withRemark("Call next week").build();
 
     @Test
     public void constructor_noProperties_defaultsToEmptyList() {
         Person person = new Person(BASE_PERSON.getName(), BASE_PERSON.getPhone(), BASE_PERSON.getEmail(),
-                BASE_PERSON.getIntention(), BASE_PERSON.getRemark(), BASE_PERSON.getBudget().orElse(null));
+                BASE_PERSON.getIntention(), BASE_PERSON.getRemark());
         assertEquals(List.of(), person.getProperties());
         assertEquals(person, personWithProperties(List.of()));
         assertEquals(person.hashCode(), personWithProperties(List.of()).hashCode());
@@ -139,14 +139,13 @@ public class PersonPropertiesTest {
     }
 
     @Test
-    public void propertyOperations_noBudget_preservesAbsence() {
+    public void propertyOperations_preserveOtherClientFields() {
         Person original = new PersonBuilder().build();
         Person added = original.withAddedProperty(CLEMENTI_HDB);
         Person updated = added.withUpdatedProperty(Index.fromOneBased(1), TAMPINES_CONDO);
         Person removed = updated.withoutProperty(Index.fromOneBased(1));
         for (Person person : List.of(added, updated, removed)) {
             assertOtherFieldsUnchanged(original, person);
-            assertTrue(person.getBudget().isEmpty());
         }
     }
 
@@ -196,7 +195,7 @@ public class PersonPropertiesTest {
 
     private static Person personWithProperties(List<Property> properties) {
         return new Person(BASE_PERSON.getName(), BASE_PERSON.getPhone(), BASE_PERSON.getEmail(),
-                BASE_PERSON.getIntention(), BASE_PERSON.getRemark(), BASE_PERSON.getBudget().orElse(null), properties);
+                BASE_PERSON.getIntention(), BASE_PERSON.getRemark(), properties);
     }
 
     private static void assertOtherFieldsUnchanged(Person expected, Person actual) {
@@ -205,6 +204,5 @@ public class PersonPropertiesTest {
         assertEquals(expected.getEmail(), actual.getEmail());
         assertEquals(expected.getIntention(), actual.getIntention());
         assertEquals(expected.getRemark(), actual.getRemark());
-        assertEquals(expected.getBudget(), actual.getBudget());
     }
 }

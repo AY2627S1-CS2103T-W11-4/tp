@@ -13,6 +13,8 @@ import seedu.address.model.person.Person;
 public class Messages {
 
     public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
+    public static final String MESSAGE_CLIENT_BUDGET_NOT_SUPPORTED =
+            "Client budgets are no longer supported. Remove all b/ arguments and try again.";
     public static final String MESSAGE_TAGS_NOT_SUPPORTED =
             "Tags are no longer supported. Remove all t/ arguments and try again.";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
@@ -50,7 +52,6 @@ public class Messages {
                 .append(person.getEmail())
                 .append("; Remark: ")
                 .append(person.getRemark());
-        person.getBudget().ifPresent(budget -> builder.append("; Budget: ").append(budget.toDisplay()));
         return builder.toString();
     }
 

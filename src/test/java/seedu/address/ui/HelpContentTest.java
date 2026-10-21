@@ -100,10 +100,10 @@ public class HelpContentTest {
     }
 
     @Test
-    public void addExamples_recordBuyerWithBudgetAndSellerWithoutBudget() throws ParseException {
+    public void addExamples_recordBuyerAndSeller() throws ParseException {
         List<String> examples = getExamples(AddCommand.COMMAND_WORD);
         AddCommand buyer = new AddCommand(new PersonBuilder().withName("John Doe").withPhone("98765432")
-                .withEmail("john@example.com").withIntention(Intention.BUYER).withBudget("1500000").build());
+                .withEmail("john@example.com").withIntention(Intention.BUYER).build());
         AddCommand seller = new AddCommand(new PersonBuilder().withName("Jane Lee").withPhone("91234567")
                 .withEmail("jane@example.com").withIntention(Intention.SELLER).build());
 
@@ -112,9 +112,9 @@ public class HelpContentTest {
     }
 
     @Test
-    public void editBudgetExample_updatesOnlyBudget() throws ParseException {
+    public void editNameExample_updatesOnlyName() throws ParseException {
         EditCommand expectedCommand = new EditCommand(Index.fromOneBased(1),
-                new EditPersonDescriptorBuilder().withBudget("900000").build());
+                new EditPersonDescriptorBuilder().withName("John Tan").build());
 
         assertEquals(expectedCommand, parser.parseCommand(getExamples(EditCommand.COMMAND_WORD).get(1)));
     }

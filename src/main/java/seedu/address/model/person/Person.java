@@ -6,7 +6,6 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
@@ -26,31 +25,29 @@ public class Person {
     private final Email email;
     private final Intention intention;
     private final Remark remark;
-    private final Budget budget;
     private final List<Property> properties;
 
     /**
-     * Constructs a person with no properties. The budget may be null when the client has none.
+     * Constructs a person with no properties.
      */
     public Person(Name name, Phone phone, Email email, Intention intention,
-            Remark remark, Budget budget) {
-        this(name, phone, email, intention, remark, budget, List.of());
+            Remark remark) {
+        this(name, phone, email, intention, remark, List.of());
     }
 
     /**
      * Constructs a person with an ordered, defensively copied property list.
-     * Every field except {@code budget} must be non-null, and the list must not contain null entries.
+     * Every field must be non-null, and the list must not contain null entries.
      * Equal property entries are allowed. Each entry's position is its index within this client.
      */
     public Person(Name name, Phone phone, Email email, Intention intention,
-            Remark remark, Budget budget, List<Property> properties) {
+            Remark remark, List<Property> properties) {
         requireAllNonNull(name, phone, email, intention, remark, properties);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.intention = intention;
         this.remark = remark;
-        this.budget = budget;
         this.properties = List.copyOf(properties);
     }
 
@@ -68,13 +65,6 @@ public class Person {
 
     public Intention getIntention() {
         return intention;
-    }
-
-    /**
-     * Returns the client's budget, or an empty optional when none has been recorded.
-     */
-    public Optional<Budget> getBudget() {
-        return Optional.ofNullable(budget);
     }
 
     public Remark getRemark() {
@@ -127,7 +117,7 @@ public class Person {
     }
 
     private Person copyWithProperties(List<Property> updatedProperties) {
-        return new Person(name, phone, email, intention, remark, budget, updatedProperties);
+        return new Person(name, phone, email, intention, remark, updatedProperties);
     }
 
     /**
@@ -173,14 +163,13 @@ public class Person {
                 && email.equals(otherPerson.email)
                 && intention == otherPerson.intention
                 && remark.equals(otherPerson.remark)
-                && Objects.equals(budget, otherPerson.budget)
                 && properties.equals(otherPerson.properties);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, intention, remark, budget, properties);
+        return Objects.hash(name, phone, email, intention, remark, properties);
     }
 
     @Override
@@ -191,7 +180,6 @@ public class Person {
                 .add("email", email)
                 .add("intention", intention)
                 .add("remark", remark)
-                .add("budget", budget)
                 .add("properties", properties)
                 .toString();
     }

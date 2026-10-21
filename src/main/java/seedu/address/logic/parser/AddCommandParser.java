@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.Messages.MESSAGE_CLIENT_BUDGET_NOT_SUPPORTED;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_TAGS_NOT_SUPPORTED;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_BUDGET;
@@ -13,7 +14,6 @@ import java.util.stream.Stream;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
@@ -36,6 +36,10 @@ public class AddCommandParser implements Parser<AddCommand> {
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
                         PREFIX_INTENTION, PREFIX_BUDGET, PREFIX_TAG);
 
+        if (!argMultimap.getAllValues(PREFIX_BUDGET).isEmpty()) {
+            throw new ParseException(MESSAGE_CLIENT_BUDGET_NOT_SUPPORTED);
+        }
+
         if (!argMultimap.getAllValues(PREFIX_TAG).isEmpty()) {
             throw new ParseException(MESSAGE_TAGS_NOT_SUPPORTED);
         }
@@ -45,16 +49,12 @@ public class AddCommandParser implements Parser<AddCommand> {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
         }
 
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                PREFIX_INTENTION, PREFIX_BUDGET);
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_INTENTION);
         Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
         Phone phone = ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get());
         Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
         Intention intention = ParserUtil.parseIntention(argMultimap.getValue(PREFIX_INTENTION).get());
-        Budget budget = argMultimap.getValue(PREFIX_BUDGET).isPresent()
-                ? ParserUtil.parseBudget(argMultimap.getValue(PREFIX_BUDGET).get())
-                : null;
-        Person person = new Person(name, phone, email, intention, new Remark(""), budget);
+        Person person = new Person(name, phone, email, intention, new Remark(""));
 
         return new AddCommand(person);
     }

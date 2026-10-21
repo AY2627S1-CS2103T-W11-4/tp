@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
-import seedu.address.model.person.Budget;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Intention;
 import seedu.address.model.person.Name;
@@ -30,15 +29,14 @@ class JsonAdaptedPerson {
     private final String email;
     private final String intention;
     private final String remark;
-    private final String budget;
     private final List<JsonAdaptedProperty> properties;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
      */
     public JsonAdaptedPerson(String name, String phone, String email, String intention,
-            String remark, String budget) {
-        this(name, phone, email, intention, remark, budget, List.of());
+            String remark) {
+        this(name, phone, email, intention, remark, List.of());
     }
 
     /**
@@ -48,14 +46,13 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("intention") String intention,
-            @JsonProperty("remark") String remark, @JsonProperty("budget") String budget,
+            @JsonProperty("remark") String remark,
             @JsonProperty("properties") List<JsonAdaptedProperty> properties) {
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.intention = intention;
         this.remark = remark;
-        this.budget = budget;
         this.properties = properties == null ? List.of() : new ArrayList<>(properties);
     }
 
@@ -63,7 +60,7 @@ class JsonAdaptedPerson {
      * Constructs a {@code JsonAdaptedPerson} without a remark, used by tests.
      */
     public JsonAdaptedPerson(String name, String phone, String email, String intention) {
-        this(name, phone, email, intention, "", null);
+        this(name, phone, email, intention, "");
     }
 
     /**
@@ -75,7 +72,6 @@ class JsonAdaptedPerson {
         email = source.getEmail().value;
         intention = source.getIntention().toString();
         remark = source.getRemark().value;
-        budget = source.getBudget().map(Budget::toString).orElse(null);
         properties = source.getProperties().stream().map(JsonAdaptedProperty::new).toList();
     }
 
@@ -122,15 +118,6 @@ class JsonAdaptedPerson {
 
         final Remark modelRemark = new Remark(remark == null ? "" : remark);
 
-        final Budget modelBudget;
-        if (budget == null) {
-            modelBudget = null;
-        } else if (!Budget.isValidBudget(budget)) {
-            throw new IllegalValueException(Budget.MESSAGE_CONSTRAINTS);
-        } else {
-            modelBudget = new Budget(budget);
-        }
-
         List<Property> modelProperties = new ArrayList<>();
         for (int i = 0; i < properties.size(); i++) {
             JsonAdaptedProperty property = properties.get(i);
@@ -145,7 +132,7 @@ class JsonAdaptedPerson {
             }
         }
 
-        return new Person(modelName, modelPhone, modelEmail, modelIntention, modelRemark, modelBudget, modelProperties);
+        return new Person(modelName, modelPhone, modelEmail, modelIntention, modelRemark, modelProperties);
     }
 
 }

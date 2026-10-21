@@ -80,7 +80,7 @@ public class JsonAddressBookStorageTest {
     public void readAndSaveAddressBook_mixedPropertyIntentions_migratesOnlyPropertyValues() throws Exception {
         Path filePath = testFolder.resolve("mixedPropertyIntentions.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
-        Person expected = new PersonBuilder(ALICE).withIntention(Intention.SELLER).withBudget("900000")
+        Person expected = new PersonBuilder(ALICE).withIntention(Intention.SELLER)
                 .withRemark("Call next week")
                 .withProperties(CLEMENTI_HDB, TAMPINES_CONDO, CLEMENTI_HDB, TAMPINES_CONDO).build();
         List<JsonAdaptedProperty> properties = List.of(
@@ -89,7 +89,7 @@ public class JsonAddressBookStorageTest {
                 new JsonAdaptedProperty("HDB", "Buying", "Clementi Ave 3", "800000"),
                 new JsonAdaptedProperty("Condominium", "Selling", "Tampines", null));
         JsonAdaptedPerson person = new JsonAdaptedPerson(expected.getName().fullName, expected.getPhone().value,
-                expected.getEmail().value, "Seller", "Call next week", "900000", properties);
+                expected.getEmail().value, "Seller", "Call next week", properties);
         JsonUtil.saveJsonFile(new JsonSerializableAddressBook(List.of(person)), filePath);
         String originalContents = Files.readString(filePath);
 
@@ -232,7 +232,7 @@ public class JsonAddressBookStorageTest {
             List<JsonAdaptedProperty> properties = new ArrayList<>(validProperties);
             properties.add(invalid);
             JsonAdaptedPerson person = new JsonAdaptedPerson("Alice", "91234567", "alice@example.com", "Buyer",
-                    "", null, properties);
+                    "", properties);
             JsonSerializableAddressBook data = new JsonSerializableAddressBook(List.of(person));
             JsonUtil.saveJsonFile(data, filePath);
             String originalContents = Files.readString(filePath);

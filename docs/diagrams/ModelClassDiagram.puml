@@ -19,7 +19,6 @@ Class Email
 Class Name
 Class Phone
 Class Intention <<enumeration>>
-Class Budget
 Class Remark
 Class Property
 Class PropertyIntention <<enumeration>> {
@@ -53,7 +52,6 @@ Person *--> Name
 Person *--> Phone
 Person *--> Email
 Person --> Intention
-Person *--> "0..1" Budget
 Person *--> Remark
 Person *--> "0..* ordered" Property
 Property --> PropertyType

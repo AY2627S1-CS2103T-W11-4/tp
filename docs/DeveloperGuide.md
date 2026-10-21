@@ -199,52 +199,17 @@ Both commands use the shared `Messages.MESSAGE_DUPLICATE_PERSON` format to ident
 The feedback does not use an index from the unfiltered list, since it could identify a different client in the displayed results.
 Conflicts throw `CommandException` before any model update or save occurs.
 
-### Budget feature
+### Client fields and property amounts
 
-#### Implementation
+Clients store their name, phone, email, intention, remark and ordered properties. Monetary amounts belong
+only to property entries, through `PropertyPrice` and `pr/`. `add` and `edit` explicitly reject the removed
+client `b/` prefix with `MESSAGE_CLIENT_BUDGET_NOT_SUPPORTED`, including when valid client fields are supplied.
+This prevents a removed prefix from being accepted as part of another field's value.
 
-A client's budget is optional.
-`Budget` stores a non-negative whole-dollar amount.
-`BudgetBand` classifies that amount.
-
-The bands are:
-
-* **Low:** $800,000 and below.
-* **Middle:** above $800,000, up to and including $2,500,000.
-* **High:** above $2,500,000.
-
-`add` and `edit` accept the amount with the `b/` prefix.
-Omitting `b/` on `add` stores no budget.
-Omitting `b/` on `edit` keeps the client's current budget.
-An invalid amount, such as a decimal, a comma, or a leading zero, is rejected and the stored client is left unchanged.
-
-`JsonAdaptedPerson` writes the amount as a whole-dollar string.
-A saved client with no `budget` field loads with no budget.
-`PersonCard` shows the amount on the right of the card.
-Low is red, Middle is yellow, and High is green.
-A client with no budget has no amount on the card.
-
-`RemarkCommand` copies the existing budget onto the updated client, so adding a remark does not remove it.
-
-#### Design considerations
-
-**Aspect: Whether every client must have a budget**
-
-* **Alternative 1 (current choice):** The budget is optional.
-  * Pros: Sellers and existing saved files can omit it. Old data files still load.
-  * Cons: The card does not show an amount for every client.
-* **Alternative 2:** Require a budget in every `add` command.
-  * Pros: Every card shows a coloured amount.
-  * Cons: Existing data files without a budget cannot be loaded, and a seller must be given an amount that may not mean anything.
-
-**Aspect: How the amount is stored**
-
-* **Alternative 1 (current choice):** Store the whole-dollar amount and derive the colour from `BudgetBand`.
-  * Pros: The user can enter any valid amount. The colour stays consistent with the thresholds.
-  * Cons: The colour is not stored, so changing a threshold changes the colour of existing clients.
-* **Alternative 2:** Store the colour the user picks.
-  * Pros: The displayed colour stays as the user left it.
-  * Cons: The colour can disagree with the amount.
+`JsonAdaptedPerson` no longer stores or writes client budgets. The existing JSON reader ignores unknown fields,
+so older `budget` entries are discarded when loading and disappear on the next save. Other client fields,
+property order and property prices are preserved. There is no client budget amount or colour band in either
+client list cards or the detail view.
 
 ### Client property model
 
@@ -265,7 +230,7 @@ Each entry describes one client's interest in buying or selling a property.
 
 Use the three-argument `Property` constructor when the price is unknown, or pass `null` as the fourth argument.
 `getPrice()` returns `Optional.empty()` for an unknown price. Zero is invalid for a property price.
-The existing client budget remains a separate field with its existing validation.
+Amounts are stored only on property entries; there is no client budget field.
 
 `PropertyIntention` describes an individual property's buying or selling action.
 It is separate from the client's `Intention.BUYER`/`Intention.SELLER` role.
@@ -378,7 +343,7 @@ are changed. `list` uses the existing show-all predicate to restore all clients 
 and immediately replaces its graphic with `PersonDetailsCard` or the usual `PersonCard`, including when
 JavaFX reuses cells after `list`. This avoids leaving detail cards visible until a later layout pulse.
 The panel displays the return hint above the scrollable list. The detail card uses the client's name as its heading
-and lays out the other five scalar client fields and every property's four fields in labelled, wrapping rows.
+and lays out the other four scalar client fields and every property's four fields in labelled, wrapping rows.
 Missing optional values use explicit placeholders.
 Other successful client commands use the normal card layout; help and failed commands preserve the current layout.
 The single displayed client has index 1, consistent with other filtered lists.
@@ -596,7 +561,6 @@ The general user story for updating client information is an epic that is furthe
 | `* * *`  | property agent                       | update a client's information, such as interests or status | keep the client's record accurate                             |
 | `* * *`  | property agent                       | record a client's contact details                          | contact the client when needed                                |
 | `* * *`  | property agent                       | record a client's preferred property type and location     | recommend properties that match the client's preferences      |
-| `* * *`  | property agent                       | record a buyer's budget                                    | recommend properties within the buyer's budget                |
 | `* * *`  | property agent                       | record a buyer's preferred number of bedrooms              | exclude properties that do not meet the buyer's requirements |
 | `* * *`  | property agent                       | record property information under a client's profile       | keep track of the properties relevant to that client         |
 | `* * *`  | property agent                       | remove selected optional information from a client's profile | correct outdated information without deleting the client   |
@@ -622,7 +586,7 @@ A client is a buyer or seller. Two clients are duplicates when both their normal
 normalised phone numbers match, following the Add Client feature specification.
 Names are compared case-insensitively after trimming surrounding spaces and replacing consecutive spaces with one space.
 Phone input is trimmed during parsing; valid phone numbers contain only digits and are compared exactly, including leading zeros.
-Email, intention, budget and remark do not affect duplicate detection.
+Email, intention and remark do not affect duplicate detection.
 `Person#isSamePerson(Person)` applies this rule to additions, edits and loading saved data.
 `Person#equals(Object)` still compares all stored fields exactly.
 A client selected for an operation must belong to the currently displayed list. For deletion,
@@ -703,7 +667,7 @@ delete information, invalid input is rejected without changing that information.
 1. Property agent requests to list or find clients.
 2. RESIDEX displays the corresponding client list with indexes.
 3. Property agent requests to view a client using their displayed index (`view INDEX`).
-4. RESIDEX displays only that client's name, phone, email, intention, budget, remark and all property fields.
+4. RESIDEX displays only that client's name, phone, email, intention, remark and all property fields.
    Missing optional values are explicitly indicated. RESIDEX displays
    `Type list to return to the original list`.
 5. Property agent requests to list all clients (`list`).
@@ -776,7 +740,7 @@ delete information, invalid input is rejected without changing that information.
 1. Property agent requests to list clients.
 2. RESIDEX displays the client list.
 3. Property agent requests to update a listed client, supplying the new information,
-   such as contact details, budget, preferred location, property type, required number of bedrooms,
+   such as contact details, preferred location, property type, required number of bedrooms,
    buying status, priority or associated property details.
 4. RESIDEX updates the client's information and displays the updated details.
 
@@ -1001,8 +965,6 @@ They are documented for future reference, without committing to their implementa
 
 * **Active property listing**: A property listing recorded under a seller's client profile that is currently available for sale.
 * **Associated property**: A property linked to a client's profile, such as a property the client is interested in or is selling.
-* **Budget**: The amount of money a buyer is prepared to spend on a property.
-* **Budget band**: The category derived from a client's recorded budget: Low ($800,000 and below), Middle (above $800,000, up to and including $2,500,000), or High (above $2,500,000).
 * **Buyer**: A client who wants to purchase a property.
 * **Buying**: A property intention describing a client's interest in purchasing that property.
 * **Buying status**: How close a client is to agreeing on a property.
@@ -1030,12 +992,12 @@ They are documented for future reference, without committing to their implementa
 * **Property intention**: The Buying or Selling action recorded for one property, independent of the client's Buyer or Seller role.
 * **Property listing**: A record containing information about a property available for sale or rent
 * **Property location**: Nonblank descriptive text stored on a property entry, such as `Clementi Ave 3`. The `find l/` search checks these locations.
-* **Property price**: An optional, positive whole-dollar amount recorded for a property, separate from the client's budget.
+* **Property price**: An optional, positive whole-dollar amount recorded for a property.
 * **Property type**: The HDB, Condominium or Landed category of a property entry.
 * **Property viewing**: An appointment for a client to inspect a property
 * **Purpose**: A client's reason for engaging the property agent, recorded as Buyer or Seller.
 * **Remark**: Text recorded for a client using the `remark` command and displayed on the client card.
-* **Requirement**: A condition a client wants in a property, such as budget, preferred location, property type, or number of bedrooms.
+* **Requirement**: A condition a client wants in a property, such as preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
 * **Selling**: A property intention describing a client's interest in selling that property.
 * **Substring matching**: Matching text that contains a keyword anywhere, ignoring case; for example, `clementi` matches both `Clementi Ave 3` and `Woodlands Clementi`.
@@ -1102,12 +1064,12 @@ testers are expected to do more *exploratory* testing.
 
 ### Viewing complete client details
 
-Prerequisite: At least two clients exist. Choose one with a budget, remark and multiple properties,
+Prerequisite: At least two clients exist. Choose one with a remark and multiple properties,
 including a property without a price.
 
 1. Run `list`, then `view 2`.<br>
    Expected: Only the second client is shown, now at index 1, under **Client details**.
-   The client's name is the heading; phone, email, intention, budget and remark are labelled below it.
+   The client's name is the heading; phone, email, intention and remark are labelled below it.
    Every property is numbered in order
    and shows type, intention, location and price. An absent price reads `Not recorded`.
    The line `Type list to return to the original list` appears above the details.
@@ -1120,8 +1082,8 @@ including a property without a price.
 5. Run a `find` command, then `view 1`.<br>
    Expected: The first search result is shown. Run `list`; all stored clients return, including those
    outside the earlier search results.
-6. View a client with no budget, remark or properties.<br>
-   Expected: Budget and remark read `Not recorded`, and properties read `No properties recorded`.
+6. View a client with no remark or properties.<br>
+   Expected: Remark reads `Not recorded`, and properties read `No properties recorded`.
 
 ### Detecting duplicate clients
 
@@ -1166,12 +1128,12 @@ Run these steps in order; client indexes below refer to the filtered list.
 
 1. Adding properties
 
-   1. Enter `add n/Property Test Client p/91009001 e/propertytest@example.com i/Buyer b/900000`, then `find p/91009001`.<br>
+   1. Enter `add n/Property Test Client p/91009001 e/propertytest@example.com i/Buyer`, then `find p/91009001`.<br>
       Expected: Exactly one client is shown, with displayed index 1.
 
    1. Enter `ADDP 1 T/h I/buying L/Clementi Ave 3 PR/800000`.<br>
       Expected: Property 1 appears under this client as HDB, Buying, Clementi Ave 3, $800,000.
-      The client filter remains active and the client's budget remains $900,000.
+      The client filter remains active.
 
    1. Enter `addp 1 t/c i/Selling l/Bishan`.<br>
       Expected: Property 2 appears as Condominium, Selling, Bishan with no price.
@@ -1188,7 +1150,7 @@ Run these steps in order; client indexes below refer to the filtered list.
    1. Enter `editp 1 2 i/BUYING`, then `editp 1 2 i/sElLiNg`.<br>
       Expected: Property 2 changes from Selling to Buying and back to Selling.
       Its type, Toa Payoh location, unknown price and position remain unchanged.
-      Property 1 and the client's Buyer role and $900,000 budget are retained.
+      Property 1 and the client's Buyer role are retained.
 
    1. Enter `editp 1 2 l/Toa Payoh`.<br>
       Expected: The feedback reports an unchanged property and the original entry is retained.
@@ -1215,7 +1177,7 @@ Run these steps in order; client indexes below refer to the filtered list.
 
    1. Exit and relaunch the app, then enter `find p/91009001`.<br>
       Expected: The single Condominium/Selling/Toa Payoh entry remains, without a price.
-      The client's contact details, Buyer intention and $900,000 budget are retained.
+      The client's contact details and Buyer intention are retained.
 
 1. Loading legacy property intentions
 
@@ -1235,39 +1197,17 @@ Run these steps in order; client indexes below refer to the filtered list.
       Missing, blank or noncanonical property intentions such as `"buying"` must also fail.
       Close the app without issuing commands and restore the valid backup before continuing.
 
-### Recording a budget
+### Rejecting removed client budgets
 
-1. Adding a client with a budget
-
-   1. Test case: `add n/Chloe Tan p/91234567 e/chloe@example.com i/Buyer b/500000`<br>
-      Expected: Chloe is added. `$500,000` is shown on the right of the card in red.
-
-   1. Test case: `add n/Marcus Lim p/92345678 e/marcus@example.com i/Buyer b/1500000`<br>
-      Expected: `$1,500,000` is shown in yellow.
-
-   1. Test case: `add n/Ava Ng p/93456789 e/ava@example.com i/Seller b/3000000`<br>
-      Expected: `$3,000,000` is shown in green.
-
-   1. Test case: `add n/Ben Ong p/94567890 e/ben@example.com i/Seller`<br>
-      Expected: Ben is added. The card shows no budget amount.
-
-   1. Test case: `add n/Invalid Budget p/95678901 e/bad@example.com i/Buyer b/800,000`<br>
-      Expected: No client is added. The error states that the budget must be a whole-dollar amount without commas.
-
-1. Editing a budget
-
-   1. Prerequisites: At least one client is shown.
-
-   1. Test case: `edit 1 b/900000`<br>
-      Expected: The first client's amount becomes `$900,000` in yellow. The other fields stay the same.
-
-   1. Test case: `edit 1 p/90000000`<br>
-      Expected: The phone number changes. The budget stays as it was.
-
-1. Saving a budget
-
-   1. Add or edit a budget, exit, and launch the app again.<br>
-      Expected: The same amount and colour are still shown.
+1. Enter `add n/Budget Test p/95678901 e/budgettest@example.com i/Buyer b/800000`.<br>
+   Expected: RESIDEX explains that client budgets are no longer supported. No client is added.
+2. With a client displayed, enter `edit 1 n/Changed Name b/900000`.<br>
+   Expected: The same error is shown. The client's name and properties remain unchanged.
+3. Add or edit a property using `pr/800000` and restart the app.<br>
+   Expected: The property price is retained and displayed; there is no separate client amount.
+4. Back up a valid data file and add an obsolete `"budget": "900000"` field to a client, then restart.<br>
+   Expected: All clients and property prices load. After the next successful command saves the file,
+   the obsolete client field is absent and property prices are unchanged.
 
 ### Deleting a person
 

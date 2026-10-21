@@ -205,23 +205,6 @@
     -fx-alignment: center;
 }
 
-.budget-amount {
-    -fx-font-size: 22px;
-    -fx-font-weight: bold;
-}
-
-.budget-low {
-    -fx-text-fill: #e74c3c;
-}
-
-.budget-middle {
-    -fx-text-fill: #f1c40f;
-}
-
-.budget-high {
-    -fx-text-fill: #2ecc71;
-}
-
 .status-bar {
     -fx-background-color: #f1f3f5;
     -fx-border-color: #ced5df transparent transparent transparent;

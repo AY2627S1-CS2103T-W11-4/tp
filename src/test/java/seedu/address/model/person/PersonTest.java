@@ -47,7 +47,7 @@ public class PersonTest {
 
         // same name and phone, all other attributes different -> returns true
         Person editedAlice = new PersonBuilder(ALICE).withEmail(VALID_EMAIL_BOB).withIntention(Intention.SELLER)
-                .withRemark("Call next week").withBudget("900000").build();
+                .withRemark("Call next week").build();
         assertTrue(ALICE.isSamePerson(editedAlice));
 
         // same name, different phone -> returns false
@@ -120,9 +120,6 @@ public class PersonTest {
         editedAlice = new PersonBuilder(ALICE).withRemark("Likes baseball").build();
         assertFalse(ALICE.equals(editedAlice));
 
-        // different budget -> returns false
-        editedAlice = new PersonBuilder(ALICE).withBudget("1500000").build();
-        assertFalse(ALICE.equals(editedAlice));
     }
 
     @Test
@@ -130,7 +127,7 @@ public class PersonTest {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", email=" + ALICE.getEmail() + ", intention=" + ALICE.getIntention()
                 + ", remark=" + ALICE.getRemark()
-                + ", budget=" + ALICE.getBudget().orElse(null) + ", properties=" + ALICE.getProperties() + "}";
+                + ", properties=" + ALICE.getProperties() + "}";
         assertEquals(expected, ALICE.toString());
     }
 }

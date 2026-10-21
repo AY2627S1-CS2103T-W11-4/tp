@@ -59,8 +59,8 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_addSeller_savesIntentionAndBudget() throws Exception {
-        Person seller = new PersonBuilder(AMY).withIntention(Intention.SELLER).withBudget("1500000").build();
+    public void execute_addSeller_savesIntention() throws Exception {
+        Person seller = new PersonBuilder(AMY).withIntention(Intention.SELLER).build();
 
         logic.execute(PersonUtil.getAddCommand(seller));
 
@@ -84,11 +84,11 @@ public class LogicManagerTest {
 
     @Test
     public void execute_addNormalisedDuplicate_doesNotChangeModelOrStorage() throws Exception {
-        logic.execute("add n/Alice   Tan p/91234567 e/alice@example.com i/Buyer b/500000");
+        logic.execute("add n/Alice   Tan p/91234567 e/alice@example.com i/Buyer");
         Path dataFile = temporaryFolder.resolve("addressBook.json");
         String savedData = Files.readString(dataFile);
 
-        assertCommandException("add n/ALICE TAN p/91234567 e/other@example.com i/Seller b/900000",
+        assertCommandException("add n/ALICE TAN p/91234567 e/other@example.com i/Seller",
                 String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, "Alice   Tan", "91234567"));
 
         assertEquals(savedData, Files.readString(dataFile));

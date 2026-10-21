@@ -33,7 +33,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 
    * `view 1` : Shows every recorded field of the first displayed client. Use `list` to return to all clients.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000` : Adds a buyer named `John Doe` with a budget of $1,500,000.
+   * `add n/John Doe p/98765432 e/johnd@example.com i/Buyer` : Adds a buyer named `John Doe`.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -56,7 +56,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
 * Items in square brackets are optional.<br>
-  For example, `n/NAME [b/BUDGET]` can be used as `n/John Doe b/1500000` or as `n/John Doe`.
+  For example, `addp 1 t/HDB i/Buying l/Clementi [pr/PRICE]` can include `pr/800000` or omit the price.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
@@ -87,14 +87,14 @@ Format: `help`
 
 Adds a client to RESIDEX.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION`
 
 A client is a duplicate only when both their name and phone number match an existing client.
 Name matching ignores capitalisation, surrounding spaces and repeated spaces between words.
 For example, `Alice Tan` and `ALICE   TAN` match when their phone numbers are the same.
 Phone input is trimmed, then compared digit for digit, including leading zeros.
 Clients may share a name if their phone numbers differ, or share a phone number if their names differ.
-Different email addresses, intentions, budgets or remarks do not make an otherwise duplicate client distinct.
+Different email addresses, intentions or remarks do not make an otherwise duplicate client distinct.
 If an add or edit would create a duplicate, the error identifies the existing client's stored name and phone number and explains how names are matched.
 The conflicting client may be outside the current search results.
 A rejected command leaves all client information unchanged.
@@ -102,10 +102,10 @@ A rejected command leaves all client information unchanged.
 Client intention is required and must be `Buyer` or `Seller` (case-sensitive). For example, use `i/Buyer`.
 Existing `edit` and `remark` commands preserve client intention; changing it through `edit` is not supported yet.
 
-Budget is optional. It is a whole-dollar amount with no commas and no decimal point, such as `b/1500000`.
-The client card shows that amount on the right.
-$800,000 and below is red, above $800,000 up to $2,500,000 is yellow, and above $2,500,000 is green.
-A saved file that has no budget still opens.
+Client budgets are no longer stored. Both `add` and `edit` reject the old `b/` option.
+Record property amounts with `pr/` on `addp` or `editp`.
+Existing saved client `budget` fields are ignored when loading and omitted on the next save;
+property prices are preserved.
 
 **Existing data:** Before using this version, back up `data/addressbook.json`. Each client needs an
 `"intention": "Buyer"` or `"intention": "Seller"` field matching their actual intention.
@@ -114,12 +114,12 @@ Saved files containing duplicate name-and-phone pairs under the rule above also 
 Back up the file and resolve these duplicates before opening it with this version.
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com i/Buyer b/1500000`
+* `add n/John Doe p/98765432 e/johnd@example.com i/Buyer`
 * `add n/Betsy Crowe e/betsycrowe@example.com i/Seller p/1234567`
 
 ### Viewing a client's full details: `view`
 
-Shows only the selected client, with their name as the heading and labelled phone, email, intention, budget and remark fields.
+Shows only the selected client, with their name as the heading and labelled phone, email, intention and remark fields.
 Every property is numbered in its stored order and shows its type, intention, location and price separately.
 Long values wrap onto additional lines; scroll down to see details that do not fit in the window.
 
@@ -129,7 +129,7 @@ Format: `view INDEX`
   Supply exactly one index, with no prefixes or extra arguments.
 * Other clients are hidden. The selected client is now the only displayed client, at index **1**;
   subsequent commands that take a client index use this displayed index.
-* Missing budget, remark or property price is shown as `Not recorded`.
+* A missing remark or property price is shown as `Not recorded`.
   A client without properties shows `No properties recorded`.
 * A line above the details says `Type list to return to the original list`.
   `list` restores **all stored clients** in their original order, even if you ran `view` from search results.
@@ -155,27 +155,25 @@ Format: `list`
 
 Edits an existing client in RESIDEX.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [b/BUDGET]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * Client edits preserve all property entries.
   Use `editp` to change a property.
-* `b/BUDGET` replaces the client's budget. Leaving `b/` out keeps the existing budget.
 * The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
   Changing only the capitalisation or spacing of the selected client's own name is allowed.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 1 b/900000` Sets the 1st person's budget to $900,000, shown in yellow.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
 
 ### Managing a client's properties
 
 Each client can have an ordered list of properties, shown as numbered entries on their client card.
 Each property has one type, one buying or selling intention, one location, and an optional price.
-Property intentions and prices are independent of the client's intention and budget.
+Property intentions are independent of the client's intention.
 
 * `CLIENT_INDEX` selects a client in the currently displayed list, including search results.
 * `PROPERTY_INDEX` selects a numbered property under that client, starting from 1.
@@ -189,7 +187,7 @@ Property intentions and prices are independent of the client's intention and bud
   `Buyer`, `Seller` and `Both` are rejected in property commands.
 * Location is nonblank text, for example `Clementi Ave 3`.
   Surrounding whitespace is removed; capitalisation and internal spaces are preserved.
-* `pr/PRICE` is the property's price in whole Singapore dollars, separate from `b/BUDGET` on the client.
+* `pr/PRICE` is the property's price in whole Singapore dollars, recorded on that property.
   A supplied price must be positive, no greater than `9223372036854775807`, and contain no commas, decimals or leading zeros.
   Use `pr/` rather than `p/` for property prices.
 * Whitespace-separated words ending in `/` are treated as field prefixes in property commands.
@@ -246,7 +244,7 @@ Format: `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [
 * All supplied values and both indexes are checked before anything changes.
   Invalid input leaves the original property unchanged.
 * An edit that produces the same stored values reports that the property is unchanged.
-* Editing a property keeps its position and does not change other properties, client details or the client's budget.
+* Editing a property keeps its position and does not change other properties, client details.
 
 Examples:
 
@@ -319,7 +317,7 @@ Format: `remark INDEX r/[REMARK]`
 
 * `INDEX` is a positive integer referring to the client in the currently displayed list, including search results.
 * The supplied remark replaces the existing remark. Enter `r/` without text to remove it.
-* Contact details, intention, budget and properties are kept.
+* Contact details, intention and properties are kept.
 
 Examples:
 
@@ -379,9 +377,9 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION [b/BUDGET]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer b/1500000`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL i/INTENTION` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com i/Buyer`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [b/BUDGET]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE]`<br> e.g., `editp 1 2 l/Toa Payoh`

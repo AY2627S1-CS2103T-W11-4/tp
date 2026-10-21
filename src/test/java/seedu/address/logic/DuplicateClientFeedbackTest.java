@@ -39,7 +39,7 @@ public class DuplicateClientFeedbackTest {
         dataFile = temporaryFolder.resolve("clients.json");
         logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataFile),
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
-        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer b/900000");
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com i/Buyer");
         logic.execute("add n/ALICE   TAN p/92345678 e/anotheralice@example.com i/Seller");
         logic.execute("add n/Ben Ong p/91234567 e/ben@example.com i/Buyer");
     }

@@ -10,16 +10,16 @@ import seedu.address.testutil.PersonBuilder;
 public class MessagesTest {
 
     @Test
-    public void format_personWithBudget_includesRemarkAndBudget() {
-        Person person = new PersonBuilder().withRemark("Call next week").withBudget("1500000").build();
+    public void format_personWithRemark_includesRemark() {
+        Person person = new PersonBuilder().withRemark("Call next week").build();
 
         assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
-                + "Remark: Call next week; Budget: $1,500,000",
+                + "Remark: Call next week",
                 Messages.format(person));
     }
 
     @Test
-    public void format_personWithoutBudget_omitsBudget() {
+    public void format_personWithoutRemark_includesEmptyRemark() {
         Person person = new PersonBuilder().build();
 
         assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; "

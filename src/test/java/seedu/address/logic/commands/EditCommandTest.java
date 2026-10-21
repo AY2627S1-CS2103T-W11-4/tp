@@ -41,7 +41,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_editPhone_preservesOtherFields() throws Exception {
-        Person seller = new PersonBuilder().withIntention(Intention.SELLER).withBudget("1500000")
+        Person seller = new PersonBuilder().withIntention(Intention.SELLER)
                 .withRemark("Call next week").withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
         Model sellerModel = new ModelManager(new AddressBook(), new UserPrefs());
         sellerModel.addPerson(seller);
@@ -65,11 +65,11 @@ public class EditCommandTest {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
 
         Person expectedPerson = new PersonBuilder(target).withName("Updated Client").withPhone(VALID_PHONE_BOB)
-                .withEmail("updated@example.com").withBudget("2000000").build();
+                .withEmail("updated@example.com").build();
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(target, expectedPerson);
         EditCommand command = new EditCommand(INDEX_FIRST_PERSON,
-                new EditPersonDescriptorBuilder(expectedPerson).withBudget("2000000").build());
+                new EditPersonDescriptorBuilder(expectedPerson).build());
         String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS,
                 Messages.format(expectedPerson));
 
