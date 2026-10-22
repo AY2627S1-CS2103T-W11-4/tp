@@ -17,6 +17,7 @@ package "AddressBook Storage" #F4F6F6{
 Class JsonAddressBookStorage
 Class JsonSerializableAddressBook
 Class JsonAdaptedPerson
+Class JsonAdaptedProperty
 }
 
 }
@@ -30,5 +31,7 @@ StorageManager -down-> "1" JsonAddressBookStorage
 
 JsonAddressBookStorage ..> JsonSerializableAddressBook
 JsonSerializableAddressBook --> "*" JsonAdaptedPerson
+JsonAdaptedPerson --> "*" JsonAdaptedProperty
+note right of JsonAdaptedProperty: saves type, intention, location,\nprice and status of one property
 
 @enduml
