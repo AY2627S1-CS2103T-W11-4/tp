@@ -23,7 +23,7 @@ public class AddCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a client to RESIDEX. "
             + "Parameters: "
             + PREFIX_NAME + "NAME "
-            + PREFIX_PHONE + "PHONE "
+            + PREFIX_PHONE + "PHONE_NUMBER "
             + PREFIX_EMAIL + "EMAIL\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + "John Doe "
