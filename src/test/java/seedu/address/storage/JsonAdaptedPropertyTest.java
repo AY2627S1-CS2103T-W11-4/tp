@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
@@ -158,6 +159,30 @@ public class JsonAdaptedPropertyTest {
             "viewing completed", "s/viewing"}) {
             JsonAdaptedProperty property = new JsonAdaptedProperty("HDB", "Buyer", "Clementi", null, status);
             assertThrows(IllegalValueException.class, PropertyStatus.MESSAGE_CONSTRAINTS, property::toModelType);
+        }
+    }
+
+    @Test
+    public void json_bedrooms_roundTripsAndOldFilesLoadAsUnknown() throws Exception {
+        Property expected = new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi"),
+                null, PropertyStatus.VIEWING, new PropertyBedrooms("3"));
+        String savedJson = JsonUtil.toJsonString(new JsonAdaptedProperty(expected));
+        assertEquals("3", JsonUtil.fromJsonString(savedJson, JsonNode.class).get("bedrooms").asText());
+        assertEquals(expected, JsonUtil.fromJsonString(savedJson, JsonAdaptedProperty.class).toModelType());
+
+        for (String bedroomsField : new String[]{"", ", \"bedrooms\": null"}) {
+            String json = "{\"type\":\"HDB\",\"intention\":\"Buying\",\"location\":\"Clementi\""
+                    + bedroomsField + "}";
+            assertTrue(JsonUtil.fromJsonString(json, JsonAdaptedProperty.class).toModelType()
+                    .getBedrooms().isEmpty());
+        }
+    }
+
+    @Test
+    public void toModelType_invalidBedrooms_throwsIllegalValueException() {
+        for (String bedrooms : new String[]{"", "0", "21", "03", "-1", "two", " 3"}) {
+            JsonAdaptedProperty property = new JsonAdaptedProperty("HDB", "Buying", "Clementi", null, null, bedrooms);
+            assertThrows(IllegalValueException.class, PropertyBedrooms.MESSAGE_CONSTRAINTS, property::toModelType);
         }
     }
 }

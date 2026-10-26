@@ -49,7 +49,15 @@ deactivate AddressBookParser
 LogicManager -> DeleteCommand : execute(m)
 activate DeleteCommand
 
-DeleteCommand -> Model : deletePerson(1)
+DeleteCommand -> Model : getFilteredPersonList()
+activate Model
+
+Model --> DeleteCommand : lastShownList
+deactivate Model
+
+note right of DeleteCommand: Select the first displayed client\nas personToDelete (index 0).
+
+DeleteCommand -> Model : deletePerson(personToDelete)
 activate Model
 
 Model --> DeleteCommand

@@ -22,7 +22,9 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
@@ -83,33 +85,38 @@ final class HelpContent {
                                     + PREFIX_EMAIL + "johndoe@example.com",
                             EditCommand.COMMAND_WORD + " 1 " + PREFIX_NAME + "John Tan")),
             new CommandHelp(AddPropertyCommand.COMMAND_WORD, "Add a property to a client.",
-                    "addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]",
+                    "addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]",
                     List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE, PROPERTY_INTENTION_NOTE,
-                            "Type, property intention and location are required. Price and status are optional.",
+                            "Type, property intention and location are required. "
+                                    + "Price, bedrooms and status are optional.",
                             "Types: HDB (h), Condominium (c), Landed (l).",
                             PROPERTY_STATUS_NOTE,
                             "Omit s/ for Not specified. Empty s/ is rejected; use s/unspecified explicitly.",
                             "Location must not be blank. Supply each field once, in any order.",
                             "pr/PRICE is a positive whole-dollar amount without commas, decimals or leading zeros.",
                             "Omit pr/ when adding an unknown price.",
+                            "bd/BEDROOMS is a whole number from 1 to 20. Omit bd/ if the number is unknown.",
                             "Identical entries are allowed and are independent, including across clients.",
                             "The property is appended. The current client filter is kept."),
                     List.of("addp 1 t/HDB i/Buying l/Clementi pr/800000",
                             "addp 1 t/Condominium i/Selling l/Bishan",
-                            "addp 1 t/HDB i/Buying l/Clementi s/Viewing")),
+                            "addp 1 t/HDB i/Buying l/Clementi s/Viewing",
+                            "addp 1 t/Condominium i/Buying l/Bishan bd/3")),
             new CommandHelp(DeletePropertyCommand.COMMAND_WORD, "Delete one property from a client.",
                     "delp CLIENT_INDEX PROPERTY_INDEX",
                     List.of(PROPERTY_INDEX_NOTE,
                             "Deletes the whole selected property. Location cannot be removed on its own.",
                             "Later properties shift down by one index. Other clients' properties are unchanged.",
                             "The client role is recalculated. Deleting the final property gives Not specified.",
-                            PROPERTY_FILTER_NOTE, "There is no undo command."),
+                            PROPERTY_FILTER_NOTE, "Use undo to restore a deleted property."),
                     List.of("delp 1 2")),
             new CommandHelp(EditPropertyCommand.COMMAND_WORD, "Edit selected fields of a client's property.",
-                    "editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]",
+                    "editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [bd/BEDROOMS] "
+                            + "[s/STATUS]",
                     List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE, PROPERTY_INTENTION_NOTE,
                             "Supply at least one field, once each. Omitted fields keep their current values.",
-                            "Empty pr/ removes the price. Empty t/, i/, l/ and s/ are rejected.",
+                            "Empty pr/ removes the price and empty bd/ removes the bedrooms. "
+                                    + "Empty t/, i/, l/ and s/ are rejected.",
                             PROPERTY_STATUS_NOTE, "Use s/unspecified to reset the property's stage.",
                             "Stages may move backward. Completed stays editable and does not remove any record.",
                             "Status does not affect the derived client role.",
@@ -117,10 +124,11 @@ final class HelpContent {
                             "A role change can move or remove a client in search results. Check the indexes again.",
                             "Invalid input keeps the original property. An identical edit reports no change.",
                             "The property keeps its position.", PROPERTY_FILTER_NOTE,
-                            "Prefix-like words ending in / are reserved for fields; use t/, i/, l/, pr/ and s/ only."),
+                            "Prefix-like words ending in / are reserved for fields; "
+                                    + "use t/, i/, l/, pr/, bd/ and s/ only."),
                     List.of("editp 1 2 l/Toa Payoh", "editp 1 2 t/Landed i/Selling pr/3200000", "editp 1 2 pr/",
                             "editp 1 2 i/Buying", "editp 1 2 s/Negotiating",
-                            "editp 1 2 s/unspecified")),
+                            "editp 1 2 s/unspecified", "editp 1 2 bd/4", "editp 1 2 bd/")),
             new CommandHelp(ViewCommand.COMMAND_WORD, "Show all fields of one client.", "view INDEX",
                     List.of(INDEX_NOTE, "Only the selected client is displayed, now at index 1.",
                             "Shows name, phone, email, intention, remark and every property field,"
@@ -175,7 +183,7 @@ final class HelpContent {
                     List.of(ListCommand.COMMAND_WORD)),
             new CommandHelp(DeleteCommand.COMMAND_WORD, "Delete a client.", DeleteCommand.COMMAND_WORD + " INDEX",
                     List.of(INDEX_NOTE, "After a search, the index refers to the search results.",
-                            "The selected client and their recorded details are removed. There is no undo command."),
+                            "The selected client and their recorded details are removed. Use undo to restore them."),
                     List.of(DeleteCommand.COMMAND_WORD + " 1")),
             new CommandHelp(RemarkCommand.COMMAND_WORD, "Set or remove a client's remark.",
                     RemarkCommand.COMMAND_WORD + " INDEX " + PREFIX_REMARK + "[REMARK]",
@@ -184,6 +192,19 @@ final class HelpContent {
                             "Contact details, intention and properties are kept."),
                     List.of(RemarkCommand.COMMAND_WORD + " 1 " + PREFIX_REMARK + "Call next week",
                             RemarkCommand.COMMAND_WORD + " 1 " + PREFIX_REMARK)),
+            new CommandHelp(UndoCommand.COMMAND_WORD, "Undo the last change to client data.",
+                    UndoCommand.COMMAND_WORD,
+                    List.of("No parameters are needed. Undo reverses the latest add, edit, delete, remark, "
+                                    + "addp, editp or delp command.",
+                            "Searches, list, view and help are not undone, and the list is reset to show all clients.",
+                            "The last 100 changes can be undone. Changes made before RESIDEX was started "
+                                    + "cannot be undone."),
+                    List.of(UndoCommand.COMMAND_WORD)),
+            new CommandHelp(RedoCommand.COMMAND_WORD, "Redo the last undone change.", RedoCommand.COMMAND_WORD,
+                    List.of("No parameters are needed. Redo re-applies the change that undo reversed most recently.",
+                            "A new change after an undo clears what can be redone.",
+                            "The list is reset to show all clients."),
+                    List.of(RedoCommand.COMMAND_WORD)),
             new CommandHelp(HelpCommand.COMMAND_WORD, "Show the command reference.", HelpCommand.COMMAND_WORD,
                     List.of("No parameters are needed. You can also press F1 to open help.",
                             "The command reference is available without an internet connection."),

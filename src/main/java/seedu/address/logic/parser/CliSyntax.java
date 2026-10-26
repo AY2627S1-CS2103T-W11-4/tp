@@ -17,5 +17,6 @@ public class CliSyntax {
     public static final Prefix PREFIX_PROPERTY_LOCATION = new Prefix("l/");
     public static final Prefix PREFIX_PROPERTY_PRICE = new Prefix("pr/");
     public static final Prefix PREFIX_PROPERTY_STATUS = new Prefix("s/");
+    public static final Prefix PREFIX_PROPERTY_BEDROOMS = new Prefix("bd/");
 
 }

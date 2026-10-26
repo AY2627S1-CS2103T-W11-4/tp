@@ -17,6 +17,7 @@ import seedu.address.logic.commands.EditPropertyCommand.EditPropertyDescriptor;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
@@ -206,6 +207,39 @@ public class PropertyCommandParserTest {
                     "addp 1 t/HDB i/Buying l/Clementi s/" + status));
             assertThrows(ParseException.class, PropertyStatus.MESSAGE_CONSTRAINTS, () -> parser.parseCommand(
                     "editp 1 1 s/" + status));
+        }
+    }
+
+    @Test
+    public void parse_addWithBedrooms_success() throws Exception {
+        Property expected = new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
+                new PropertyLocation("Bishan"), null, PropertyStatus.UNSPECIFIED, new PropertyBedrooms("3"));
+        assertEquals(new AddPropertyCommand(Index.fromOneBased(1), expected),
+                parser.parseCommand("addp 1 t/c i/Buying l/Bishan bd/3"));
+        assertEquals(new AddPropertyCommand(Index.fromOneBased(1), expected),
+                parser.parseCommand("ADDP 1 T/c I/buying L/Bishan BD/3"));
+    }
+
+    @Test
+    public void parse_editBedrooms_setsOrClearsBedrooms() throws Exception {
+        EditPropertyDescriptor setBedrooms = new EditPropertyDescriptor();
+        setBedrooms.setBedrooms(new PropertyBedrooms("4"));
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), setBedrooms),
+                parser.parseCommand("editp 1 2 bd/4"));
+
+        EditPropertyDescriptor clearBedrooms = new EditPropertyDescriptor();
+        clearBedrooms.setBedrooms(null);
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), clearBedrooms),
+                parser.parseCommand("editp 1 2 bd/"));
+    }
+
+    @Test
+    public void parse_invalidOrRepeatedBedrooms_throwsParseException() {
+        for (String command : List.of("addp 1 t/HDB i/Buying l/Clementi bd/0", "addp 1 t/HDB i/Buying l/Clementi bd/21",
+                "addp 1 t/HDB i/Buying l/Clementi bd/abc", "addp 1 t/HDB i/Buying l/Clementi bd/",
+                "addp 1 t/HDB i/Buying l/Clementi bd/2 bd/3", "editp 1 1 bd/0", "editp 1 1 bd/two",
+                "editp 1 1 bd/2 BD/3")) {
+            assertThrows(ParseException.class, () -> parser.parseCommand(command));
         }
     }
 }

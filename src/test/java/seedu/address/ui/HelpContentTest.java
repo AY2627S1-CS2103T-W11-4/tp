@@ -25,7 +25,9 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -40,6 +42,7 @@ import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.PropertyTypeMatchesPredicate;
 import seedu.address.model.person.Remark;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
@@ -63,6 +66,8 @@ public class HelpContentTest {
             Map.entry(ViewCommand.COMMAND_WORD, ViewCommand.class),
             Map.entry(DeleteCommand.COMMAND_WORD, DeleteCommand.class),
             Map.entry(RemarkCommand.COMMAND_WORD, RemarkCommand.class),
+            Map.entry(UndoCommand.COMMAND_WORD, UndoCommand.class),
+            Map.entry(RedoCommand.COMMAND_WORD, RedoCommand.class),
             Map.entry(HelpCommand.COMMAND_WORD, HelpCommand.class),
             Map.entry(ExitCommand.COMMAND_WORD, ExitCommand.class));
 
@@ -194,5 +199,21 @@ public class HelpContentTest {
                 parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(4)));
         assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), unspecified),
                 parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(5)));
+    }
+
+    @Test
+    public void propertyBedroomExamples_setAndClearBedrooms() throws ParseException {
+        Property threeBedrooms = new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
+                new PropertyLocation("Bishan"), null, PropertyStatus.UNSPECIFIED, new PropertyBedrooms("3"));
+        assertEquals(new AddPropertyCommand(Index.fromOneBased(1), threeBedrooms),
+                parser.parseCommand(getExamples(AddPropertyCommand.COMMAND_WORD).get(3)));
+        EditPropertyDescriptor setFour = new EditPropertyDescriptor();
+        setFour.setBedrooms(new PropertyBedrooms("4"));
+        EditPropertyDescriptor clear = new EditPropertyDescriptor();
+        clear.setBedrooms(null);
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), setFour),
+                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(6)));
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), clear),
+                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(7)));
     }
 }

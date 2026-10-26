@@ -315,6 +315,7 @@ Each entry describes one client's interest in buying or selling a property.
 | Intention | `PropertyIntention` | Required: `BUYING` or `SELLING`. `parse` accepts `Buying` or `Selling`, ignoring case and surrounding whitespace. Client-role values are invalid. Property directions determine the derived `ClientIntention`. |
 | Location | `PropertyLocation` | Required, nonblank text. Surrounding whitespace is removed; case and internal whitespace are preserved. |
 | Price | `PropertyPrice` | Optional. A supplied price must be a positive whole-dollar SGD amount up to `Long.MAX_VALUE`, without commas, decimals, leading zeros, or surrounding whitespace. |
+| Bedrooms | `PropertyBedrooms` | Optional. A whole number from 1 to 20 without leading zeros, a decimal point or a sign. `getBedrooms()` returns `Optional.empty()` when unknown. |
 | Status | `PropertyStatus` | Always non-null internally. The six tokens ignore case and outer whitespace; omitted creation status defaults to `UNSPECIFIED`. Empty input is invalid. |
 
 Use the three-argument `Property` constructor when the price is unknown, or pass `null` as the fourth argument.
@@ -368,20 +369,20 @@ identity as determined by `isSamePerson()`.
 
 `AddressBookParser` normalises command words with `Locale.ROOT`, making command words case-insensitive.
 `AddPropertyCommandParser`, `DeletePropertyCommandParser` and `EditPropertyCommandParser` parse the three property commands.
-`PropertyParserUtil` recognises `t/`, `i/`, `l/`, `pr/` and `s/` case-insensitively without changing field values.
+`PropertyParserUtil` recognises `t/`, `i/`, `l/`, `pr/`, `bd/` and `s/` case-insensitively without changing field values.
 Unknown and repeated fields are rejected, including repeated prefixes with different capitalisation.
 Whitespace-separated alphabetic words ending in `/` are reserved as prefixes and cannot be used as literal location text.
 Property type aliases and Buying/Selling values ignore case in property commands.
 `PropertyParserUtil.parseIntention` delegates to `PropertyIntention.parse` and translates invalid values into
 `ParseException`. `Buyer`, `Seller`, `Both` and blank values are rejected; legacy values are accepted only by storage.
 
-`addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]` requires a type, intention and nonblank location.
+`addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]` requires a type, intention and nonblank location.
 The parser validates every field before constructing a complete `Property`; an omitted price is unknown.
-An omitted status defaults to `UNSPECIFIED`. Supplied empty price or status is invalid when adding.
+An omitted status defaults to `UNSPECIFIED`, and omitted bedrooms are unknown. A supplied empty price, bedrooms or status is invalid when adding.
 `delp CLIENT_INDEX PROPERTY_INDEX` accepts exactly two positive indexes and no field arguments.
-`editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]` requires at least one field.
-`EditPropertyDescriptor` copies the requested edits and distinguishes an omitted price from an explicitly cleared price.
-An empty `pr/` clears the price on edit, while empty required fields are rejected.
+`editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [bd/BEDROOMS] [s/STATUS]` requires at least one field.
+`EditPropertyDescriptor` copies the requested edits and distinguishes an omitted price or bedroom count from an explicitly cleared one.
+An empty `pr/` clears the price and an empty `bd/` clears the bedrooms on edit, while empty required fields are rejected.
 Omitted `s/` preserves status; empty `s/` is rejected. `s/unspecified` explicitly resets the stage.
 The descriptor copies a supplied non-null status and accepts status-only or combined edits.
 Invalid status tokens are translated from `IllegalArgumentException` to `ParseException` with the cause preserved.
@@ -439,6 +440,7 @@ Each saved client has a `properties` array. `JsonAdaptedProperty` stores `type`,
 `price` as a whole-dollar string or `null` when unknown, and `status` as a canonical enum name such as `VIEWING`.
 Property order and duplicate entries survive saving and loading. A missing `price` also loads as unknown.
 Missing or null legacy status loads as `UNSPECIFIED`; otherwise the status must be a recognised token.
+`bedrooms` is saved as a whole-number string, or `null` when unknown; a missing `bedrooms` field also loads as unknown, so older files still open. An invalid saved value is rejected like any other invalid property field.
 The adapter retains its four-argument convenience constructor for old callers and uses a five-field JSON creator.
 New saves always write a status for each property. Loading alone does not rewrite the file.
 
@@ -506,11 +508,11 @@ optional placeholders, property order, transaction status, wrapping and the retu
 client details are absent. `ViewCommandTest` also simulates a model that fails to filter and verifies that
 the runtime assertion detects the invalid display state. Ranked intention-search results are covered separately.
 
-### \[Proposed\] Undo/redo feature
+### Undo/redo feature
 
-#### Proposed Implementation
+#### Implementation
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+The undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as a `states` list and a `currentStatePointer`. Additionally, it implements the following operations:
 
 * `VersionedAddressBook#commit()` -- Saves the current client data state in its history.
 * `VersionedAddressBook#undo()` -- Restores the previous client data state from its history.
@@ -518,23 +520,25 @@ The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It ex
 
 These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
 
+Each data-changing command (`add`, `edit`, `delete`, `remark`, `addp`, `editp` and `delp`) calls `Model#commitAddressBook()` after it succeeds. A command that fails, or an `editp` that leaves the property unchanged, does not commit. `edit` and `remark` also skip the commit when the edited client equals the original, so an edit that changes nothing does not clear what can be redone. The history keeps the `VersionedAddressBook#MAX_UNDOABLE_CHANGES` (100) most recent changes, which is 101 saved states including the current one, dropping the oldest first. The `undo` and `redo` commands also reset the displayed list to show all clients.
+
 Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
 
 Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial client data state, and the `currentStatePointer` pointing to that single client data state.
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
-Step 2. The user executes `delete 5` command to delete the 5th person in RESIDEX. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the client data after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted client data state.
+Step 2. The user executes `delete 5` command to delete the 5th person in RESIDEX. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the client data after the `delete 5` command executes to be saved in the `states`, and the `currentStatePointer` is shifted to the newly inserted client data state.
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified client data state to be saved into the `addressBookStateList`.
+Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified client data state to be saved into the `states`.
 
 <puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
 
 <box type="info" seamless>
 
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the client data state will not be saved into the `addressBookStateList`.
+**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the client data state will not be saved into the `states`.
 </box>
 
 Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous client data state, and restores the client data to that state.
@@ -565,14 +569,14 @@ The `redo` command does the opposite — it calls `Model#redoAddressBook()`, whi
 
 <box type="info" seamless>
 
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest client data state, then there are no undone client data states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
+**Note:** If the `currentStatePointer` is at index `states.size() - 1`, pointing to the latest client data state, then there are no undone client data states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
 </box>
 
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the client data, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
+Step 5. The user then decides to execute the command `list`. Commands that do not modify the client data, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `states` remains unchanged.
 
 <puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
 
-Step 6. The user executes `delete 1`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all client data states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
+Step 6. The user executes `delete 1`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `states`, all client data states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
 
 <puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
 
@@ -1297,6 +1301,9 @@ Run these steps in order; client indexes below refer to the filtered list.
 
    1. Enter `editp 1 2 pr/`.<br>
       Expected: Property 2's price is removed; all other fields remain unchanged.
+
+   1. Enter `editp 1 2 bd/3`, then `editp 1 2 bd/`.<br>
+      Expected: Property 2 shows 3 bedrooms, then the bedrooms are removed. Try `bd/0`, `bd/21` and `bd/abc`; each is rejected and nothing changes.
 
    1. Enter `editp 1 2 i/BUYING`, then `editp 1 2 i/sElLiNg`.<br>
       Expected: Property 2 changes from Selling to Buying and back to Selling.

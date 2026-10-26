@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
@@ -25,6 +26,7 @@ class JsonAdaptedProperty {
     private final String location;
     private final String price;
     private final String status;
+    private final String bedrooms;
 
     /**
      * Constructs an adapted property from saved fields. A missing or null price means unknown.
@@ -36,15 +38,23 @@ class JsonAdaptedProperty {
     /**
      * Constructs an adapted property. Missing or null legacy status means no stage has been recorded.
      */
+    public JsonAdaptedProperty(String type, String intention, String location, String price, String status) {
+        this(type, intention, location, price, status, null);
+    }
+
+    /**
+     * Constructs an adapted property. A missing or null bedroom count means it is unknown.
+     */
     @JsonCreator
     public JsonAdaptedProperty(@JsonProperty("type") String type, @JsonProperty("intention") String intention,
             @JsonProperty("location") String location, @JsonProperty("price") String price,
-            @JsonProperty("status") String status) {
+            @JsonProperty("status") String status, @JsonProperty("bedrooms") String bedrooms) {
         this.type = type;
         this.intention = intention;
         this.location = location;
         this.price = price;
         this.status = status;
+        this.bedrooms = bedrooms;
     }
 
     /**
@@ -56,6 +66,7 @@ class JsonAdaptedProperty {
         location = source.getLocation().value;
         price = source.getPrice().map(PropertyPrice::toString).orElse(null);
         status = source.getStatus().name();
+        bedrooms = source.getBedrooms().map(PropertyBedrooms::toString).orElse(null);
     }
 
     /**
@@ -108,6 +119,15 @@ class JsonAdaptedProperty {
             throw new IllegalValueException(PropertyStatus.MESSAGE_CONSTRAINTS, e);
         }
 
-        return new Property(modelType, modelIntention, modelLocation, modelPrice, modelStatus);
+        final PropertyBedrooms modelBedrooms;
+        if (bedrooms == null) {
+            modelBedrooms = null;
+        } else if (!PropertyBedrooms.isValidBedrooms(bedrooms)) {
+            throw new IllegalValueException(PropertyBedrooms.MESSAGE_CONSTRAINTS);
+        } else {
+            modelBedrooms = new PropertyBedrooms(bedrooms);
+        }
+
+        return new Property(modelType, modelIntention, modelLocation, modelPrice, modelStatus, modelBedrooms);
     }
 }
