@@ -34,6 +34,7 @@ public class VersionedAddressBook extends AddressBook {
             states.remove(0);
             currentStatePointer--;
         }
+        assert isPointerValid() : "The current state pointer must identify a saved state";
     }
 
     /**
@@ -46,6 +47,7 @@ public class VersionedAddressBook extends AddressBook {
             throw new NoUndoableStateException();
         }
         currentStatePointer--;
+        assert isPointerValid() : "The current state pointer must identify a saved state";
         resetData(states.get(currentStatePointer));
     }
 
@@ -59,6 +61,7 @@ public class VersionedAddressBook extends AddressBook {
             throw new NoRedoableStateException();
         }
         currentStatePointer++;
+        assert isPointerValid() : "The current state pointer must identify a saved state";
         resetData(states.get(currentStatePointer));
     }
 
@@ -74,6 +77,10 @@ public class VersionedAddressBook extends AddressBook {
      */
     public boolean canRedo() {
         return currentStatePointer < states.size() - 1;
+    }
+
+    private boolean isPointerValid() {
+        return currentStatePointer >= 0 && currentStatePointer < states.size();
     }
 
     /**
