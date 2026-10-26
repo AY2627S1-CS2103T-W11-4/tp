@@ -1,7 +1,9 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -111,5 +113,72 @@ public class FindTypeAndPriceIntegrationTest {
         search("find pr/1-");
         search("list");
         assertEquals(5, model.getFilteredPersonList().size());
+    }
+
+    /**
+     * Builds clients whose stored order is [both, buyer, seller], so that {@code find i/buyer}
+     * displays [buyer, both] and the ranked order differs from the stored order.
+     */
+    private Person[] useRankedClients() {
+        Person both = new PersonBuilder().withName("Role Both").withPhone("92000001")
+                .withProperties(rankedProperty(PropertyIntention.BUYING, "600000"),
+                        rankedProperty(PropertyIntention.SELLING, "700000")).build();
+        Person buyer = new PersonBuilder().withName("Role Buyer").withPhone("92000002")
+                .withProperties(rankedProperty(PropertyIntention.BUYING, "650000")).build();
+        Person seller = new PersonBuilder().withName("Role Seller").withPhone("92000003")
+                .withProperties(new Property(PropertyType.LANDED, PropertyIntention.SELLING,
+                        new PropertyLocation("Sentosa"), new PropertyPrice("3000000"), PropertyStatus.UNSPECIFIED))
+                .build();
+        AddressBook addressBook = new AddressBook();
+        for (Person person : List.of(both, buyer, seller)) {
+            addressBook.addPerson(person);
+        }
+        model = new ModelManager(addressBook, new UserPrefs());
+        return new Person[]{both, buyer, seller};
+    }
+
+    private static Property rankedProperty(PropertyIntention intention, String price) {
+        return new Property(PropertyType.HDB, intention, new PropertyLocation("Clementi"),
+                new PropertyPrice(price), PropertyStatus.UNSPECIFIED);
+    }
+
+    @Test
+    public void findType_afterRankedIntentionSearch_restoresNormalOrderAndIndexes() throws Exception {
+        Person[] clients = useRankedClients();
+        Person both = clients[0];
+        Person buyer = clients[1];
+
+        search("find i/buyer");
+        assertEquals(List.of(buyer, both), model.getFilteredPersonList());
+
+        search("find t/hdb");
+        assertEquals(List.of(both, buyer), model.getFilteredPersonList());
+
+        parser.parseCommand("remark 1 r/checked").execute(model);
+        assertEquals("checked", findByName("Role Both").getRemark().value);
+        assertFalse(findByName("Role Buyer").getRemark().value.equals("checked"));
+    }
+
+    @Test
+    public void findPrice_afterRankedIntentionSearch_restoresNormalOrderAndIndexes() throws Exception {
+        Person[] clients = useRankedClients();
+        Person both = clients[0];
+        Person buyer = clients[1];
+
+        search("find i/buyer");
+        assertEquals(List.of(buyer, both), model.getFilteredPersonList());
+
+        search("find pr/600000-650000");
+        assertEquals(List.of(both, buyer), model.getFilteredPersonList());
+
+        parser.parseCommand("delete 1").execute(model);
+        assertTrue(model.getAddressBook().getPersonList().stream()
+                .noneMatch(person -> person.getName().fullName.equals("Role Both")));
+        assertEquals(2, model.getAddressBook().getPersonList().size());
+    }
+
+    private Person findByName(String name) {
+        return model.getAddressBook().getPersonList().stream()
+                .filter(person -> person.getName().fullName.equals(name)).findFirst().orElseThrow();
     }
 }
