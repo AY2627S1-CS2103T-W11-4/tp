@@ -103,7 +103,7 @@ final class HelpContent {
                             "Deletes the whole selected property. Location cannot be removed on its own.",
                             "Later properties shift down by one index. Other clients' properties are unchanged.",
                             "The client role is recalculated. Deleting the final property gives Not specified.",
-                            PROPERTY_FILTER_NOTE, "There is no undo command."),
+                            PROPERTY_FILTER_NOTE, "Use undo to restore a deleted property."),
                     List.of("delp 1 2")),
             new CommandHelp(EditPropertyCommand.COMMAND_WORD, "Edit selected fields of a client's property.",
                     "editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]",
