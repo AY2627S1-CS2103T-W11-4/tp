@@ -60,7 +60,6 @@
         "client-property-model": "Client property model",
         "viewing-complete-client-details": "Viewing complete client details",
         "undo-redo-feature": "Undo/redo feature",
-        "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
         "viewing-application-logs-in-vs-code-or-cursor": "Viewing application logs in VS Code or Cursor",
         "appendix-requirements": "Appendix: Requirements",
@@ -80,7 +79,8 @@
         "finding-clients-by-property-type-and-price": "Finding clients by property type and price",
         "finding-clients-by-number-of-bedrooms": "Finding clients by number of bedrooms",
         "rejecting-removed-client-budgets": "Rejecting removed client budgets",
-        "deleting-a-person": "Deleting a person",
+        "deleting-a-client": "Deleting a client",
+        "undoing-and-redoing-changes": "Undoing and redoing changes",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -140,7 +140,7 @@
         "adding-a-property-addp": "Adding a property: addp",
         "deleting-a-property-delp": "Deleting a property: delp",
         "editing-a-property-editp": "Editing a property: editp",
-        "locating-persons-by-name-email-phone-location-intention-property-status-type-price-or-bedrooms-find": "Locating persons by name, email, phone, location, intention, property status, type, price or bedrooms: find",
+        "locating-clients-by-name-email-phone-location-intention-property-status-type-price-or-bedrooms-find": "Locating clients by name, email, phone, location, intention, property status, type, price or bedrooms: find",
         "deleting-a-client-delete": "Deleting a client: delete",
         "setting-or-removing-a-remark-remark": "Setting or removing a remark: remark",
         "undoing-the-last-change-undo": "Undoing the last change: undo",
@@ -149,7 +149,6 @@
         "saving-the-data": "Saving the data",
         "editing-the-data-file": "Editing the data file",
         "recovering-from-a-data-loading-error": "Recovering from a data loading error",
-        "archiving-data-files-coming-in-v2-0": "Archiving data files [coming in v2.0]",
         "faq": "FAQ",
         "known-issues": "Known issues",
         "command-summary": "Command summary"
