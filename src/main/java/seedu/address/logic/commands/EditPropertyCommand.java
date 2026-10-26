@@ -13,6 +13,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
@@ -26,8 +27,9 @@ public class EditPropertyCommand extends Command {
     public static final String COMMAND_WORD = "editp";
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Edits a property belonging to the displayed client.\n"
-            + "Parameters: CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]\n"
-            + "Supply at least one field. Empty pr/ removes the price.\n"
+            + "Parameters: CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] "
+            + "[bd/BEDROOMS] [s/STATUS]\n"
+            + "Supply at least one field. Empty pr/ removes the price; empty bd/ removes the bedrooms.\n"
             + "Use s/unspecified to reset status; empty s/ is rejected.\n"
             + "Example: " + COMMAND_WORD + " 1 2 l/Toa Payoh pr/600000";
     public static final String MESSAGE_NOT_EDITED = "Supply at least one property field to edit.";
@@ -106,7 +108,9 @@ public class EditPropertyCommand extends Command {
         private PropertyLocation location;
         private PropertyPrice price;
         private PropertyStatus status;
+        private PropertyBedrooms bedrooms;
         private boolean priceEdited;
+        private boolean bedroomsEdited;
 
         public EditPropertyDescriptor() {
         }
@@ -121,7 +125,9 @@ public class EditPropertyCommand extends Command {
             location = source.location;
             price = source.price;
             status = source.status;
+            bedrooms = source.bedrooms;
             priceEdited = source.priceEdited;
+            bedroomsEdited = source.bedroomsEdited;
         }
 
         public void setType(PropertyType type) {
@@ -148,8 +154,17 @@ public class EditPropertyCommand extends Command {
             priceEdited = true;
         }
 
+        /**
+         * Sets the number of bedrooms, or explicitly removes it if {@code bedrooms} is null.
+         */
+        public void setBedrooms(PropertyBedrooms bedrooms) {
+            this.bedrooms = bedrooms;
+            bedroomsEdited = true;
+        }
+
         public boolean isAnyFieldEdited() {
-            return type != null || intention != null || location != null || priceEdited || status != null;
+            return type != null || intention != null || location != null || priceEdited || status != null
+                    || bedroomsEdited;
         }
 
         private Property applyTo(Property original) {
@@ -157,7 +172,8 @@ public class EditPropertyCommand extends Command {
                     intention == null ? original.getIntention() : intention,
                     location == null ? original.getLocation() : location,
                     priceEdited ? price : original.getPrice().orElse(null),
-                    status == null ? original.getStatus() : status);
+                    status == null ? original.getStatus() : status,
+                    bedroomsEdited ? bedrooms : original.getBedrooms().orElse(null));
         }
 
         @Override
@@ -171,13 +187,16 @@ public class EditPropertyCommand extends Command {
                     && Objects.equals(location, otherDescriptor.location)
                     && Objects.equals(price, otherDescriptor.price)
                     && status == otherDescriptor.status
-                    && priceEdited == otherDescriptor.priceEdited;
+                    && Objects.equals(bedrooms, otherDescriptor.bedrooms)
+                    && priceEdited == otherDescriptor.priceEdited
+                    && bedroomsEdited == otherDescriptor.bedroomsEdited;
         }
 
         @Override
         public String toString() {
             return new ToStringBuilder(this).add("type", type).add("intention", intention).add("location", location)
-                    .add("price", price).add("priceEdited", priceEdited).add("status", status).toString();
+                    .add("price", price).add("priceEdited", priceEdited).add("status", status)
+                    .add("bedrooms", bedrooms).add("bedroomsEdited", bedroomsEdited).toString();
         }
     }
 }

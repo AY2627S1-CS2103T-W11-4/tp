@@ -19,6 +19,7 @@ public final class Property {
     private final PropertyLocation location;
     private final PropertyPrice price;
     private final PropertyStatus status;
+    private final PropertyBedrooms bedrooms;
 
     /**
      * Constructs a property with an unknown price.
@@ -43,12 +44,25 @@ public final class Property {
      */
     public Property(PropertyType type, PropertyIntention intention, PropertyLocation location, PropertyPrice price,
             PropertyStatus status) {
+        this(type, intention, location, price, status, null);
+    }
+
+    /**
+     * Constructs a property with a recorded status and bedroom count. {@code price} and {@code bedrooms}
+     * are optional; all other fields are required.
+     *
+     * @param price The price, or null if unknown.
+     * @param bedrooms The number of bedrooms, or null if unknown.
+     */
+    public Property(PropertyType type, PropertyIntention intention, PropertyLocation location, PropertyPrice price,
+            PropertyStatus status, PropertyBedrooms bedrooms) {
         requireAllNonNull(type, intention, location, status);
         this.type = type;
         this.intention = intention;
         this.location = location;
         this.price = price;
         this.status = status;
+        this.bedrooms = bedrooms;
     }
 
     public PropertyType getType() {
@@ -71,12 +85,17 @@ public final class Property {
         return status;
     }
 
+    public Optional<PropertyBedrooms> getBedrooms() {
+        return Optional.ofNullable(bedrooms);
+    }
+
     /**
      * Returns the property details for client cards and command feedback.
      */
     public String toDisplay() {
         return type + " | " + intention + " | " + location
-                + getPrice().map(value -> " | " + value.toDisplay()).orElse("") + " | " + status;
+                + getPrice().map(value -> " | " + value.toDisplay()).orElse("")
+                + getBedrooms().map(value -> " | " + value.toDisplay()).orElse("") + " | " + status;
     }
 
     @Override
@@ -91,12 +110,13 @@ public final class Property {
                 && intention == otherProperty.intention
                 && location.equals(otherProperty.location)
                 && Objects.equals(price, otherProperty.price)
-                && status == otherProperty.status;
+                && status == otherProperty.status
+                && Objects.equals(bedrooms, otherProperty.bedrooms);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, intention, location, price, status);
+        return Objects.hash(type, intention, location, price, status, bedrooms);
     }
 
     @Override
@@ -107,6 +127,7 @@ public final class Property {
                 .add("location", location)
                 .add("price", price)
                 .add("status", status)
+                .add("bedrooms", bedrooms)
                 .toString();
     }
 }

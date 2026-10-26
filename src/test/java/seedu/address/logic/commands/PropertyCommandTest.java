@@ -189,7 +189,7 @@ public class PropertyCommandTest {
         String expectedDescriptor = EditPropertyDescriptor.class.getCanonicalName()
                 + "{type=" + CLEMENTI_HDB.getType() + ", intention=" + CLEMENTI_HDB.getIntention()
                 + ", location=" + CLEMENTI_HDB.getLocation() + ", price=" + CLEMENTI_HDB.getPrice().orElseThrow()
-                + ", priceEdited=true, status=Viewing}";
+                + ", priceEdited=true, status=Viewing, bedrooms=null, bedroomsEdited=false}";
         assertEquals(expectedDescriptor, descriptor.toString());
 
         EditPropertyCommand edit = new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON, descriptor);

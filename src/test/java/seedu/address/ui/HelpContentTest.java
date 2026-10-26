@@ -38,6 +38,7 @@ import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.Remark;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
@@ -188,5 +189,21 @@ public class HelpContentTest {
                 parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(4)));
         assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), unspecified),
                 parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(5)));
+    }
+
+    @Test
+    public void propertyBedroomExamples_setAndClearBedrooms() throws ParseException {
+        Property threeBedrooms = new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
+                new PropertyLocation("Bishan"), null, PropertyStatus.UNSPECIFIED, new PropertyBedrooms("3"));
+        assertEquals(new AddPropertyCommand(Index.fromOneBased(1), threeBedrooms),
+                parser.parseCommand(getExamples(AddPropertyCommand.COMMAND_WORD).get(3)));
+        EditPropertyDescriptor setFour = new EditPropertyDescriptor();
+        setFour.setBedrooms(new PropertyBedrooms("4"));
+        EditPropertyDescriptor clear = new EditPropertyDescriptor();
+        clear.setBedrooms(null);
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), setFour),
+                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(6)));
+        assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), clear),
+                parser.parseCommand(getExamples(EditPropertyCommand.COMMAND_WORD).get(7)));
     }
 }

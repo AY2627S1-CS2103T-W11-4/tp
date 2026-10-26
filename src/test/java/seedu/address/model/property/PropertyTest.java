@@ -108,11 +108,33 @@ public class PropertyTest {
     @Test
     public void toString_includesFieldsAndOptionalPrice() {
         String expected = Property.class.getCanonicalName()
-                + "{type=HDB, intention=Buying, location=Clementi Ave 3, price=800000, status=Not specified}";
+                + "{type=HDB, intention=Buying, location=Clementi Ave 3, price=800000, status=Not specified, "
+                + "bedrooms=null}";
         assertEquals(expected, new Property(PropertyType.HDB, PropertyIntention.BUYING, LOCATION, PRICE).toString());
         String expectedUnknownPrice = Property.class.getCanonicalName()
-                + "{type=HDB, intention=Buying, location=Clementi Ave 3, price=null, status=Not specified}";
+                + "{type=HDB, intention=Buying, location=Clementi Ave 3, price=null, status=Not specified, "
+                + "bedrooms=null}";
         assertEquals(expectedUnknownPrice,
                 new Property(PropertyType.HDB, PropertyIntention.BUYING, LOCATION).toString());
+    }
+
+    @Test
+    public void bedrooms_optionalAndPartOfEquality() {
+        Property withoutBedrooms = new Property(PropertyType.HDB, PropertyIntention.BUYING, LOCATION, PRICE);
+        assertTrue(withoutBedrooms.getBedrooms().isEmpty());
+
+        Property withBedrooms = new Property(PropertyType.HDB, PropertyIntention.BUYING, LOCATION, PRICE,
+                PropertyStatus.VIEWING, new PropertyBedrooms("3"));
+        assertEquals(new PropertyBedrooms("3"), withBedrooms.getBedrooms().orElseThrow());
+        assertEquals("HDB | Buying | Clementi Ave 3 | $800,000 | 3 bedrooms | Viewing", withBedrooms.toDisplay());
+
+        Property sameWithBedrooms = new Property(PropertyType.HDB, PropertyIntention.BUYING, LOCATION, PRICE,
+                PropertyStatus.VIEWING, new PropertyBedrooms("3"));
+        assertEquals(withBedrooms, sameWithBedrooms);
+        assertEquals(withBedrooms.hashCode(), sameWithBedrooms.hashCode());
+        assertFalse(withBedrooms.equals(new Property(PropertyType.HDB, PropertyIntention.BUYING, LOCATION, PRICE,
+                PropertyStatus.VIEWING, new PropertyBedrooms("4"))));
+        assertFalse(withBedrooms.equals(new Property(PropertyType.HDB, PropertyIntention.BUYING, LOCATION, PRICE,
+                PropertyStatus.VIEWING)));
     }
 }
