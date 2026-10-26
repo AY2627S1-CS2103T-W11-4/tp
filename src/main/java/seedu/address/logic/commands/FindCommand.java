@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_BEDROOMS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_PRICE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
@@ -16,6 +17,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 
@@ -38,25 +40,27 @@ public class FindCommand extends Command {
             + "Property type search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_TYPE + "HDB|Condominium|Landed\n"
             + "Property price search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE
             + "MIN-MAX (either side optional)\n"
+            + "Property bedrooms search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "NUMBER\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_EMAIL + "alexyeoh@example.com";
 
     public static final String MESSAGE_INVALID_INTENTION =
             "Intention must be buyer, seller or both (case-insensitive).";
     public static final String MESSAGE_INVALID_STATUS = PropertyStatus.MESSAGE_CONSTRAINTS;
     public static final String MESSAGE_INVALID_TYPE = PropertyType.MESSAGE_CONSTRAINTS;
+    public static final String MESSAGE_INVALID_BEDROOMS = PropertyBedrooms.MESSAGE_CONSTRAINTS;
     public static final String MESSAGE_INVALID_PRICE_RANGE = "Price range must look like 500000-800000, 500000- "
             + "or -800000, using whole-dollar amounts without commas, and the minimum must not exceed the maximum.";
     public static final String MESSAGE_MISSING_ARGUMENTS = "Search field and search keyword are missing.";
     public static final String MESSAGE_MISSING_PROPERTY =
             "Search field is missing. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", " + PREFIX_INTENTION
-                    + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + ", or " + PREFIX_PROPERTY_PRICE
-                    + ".";
+                    + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + ", " + PREFIX_PROPERTY_PRICE
+                    + ", or " + PREFIX_PROPERTY_BEDROOMS + ".";
     public static final String MESSAGE_INVALID_PROPERTY =
             "Invalid search field. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", " + PREFIX_INTENTION
-                    + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + ", or " + PREFIX_PROPERTY_PRICE
-                    + ".";
+                    + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + ", " + PREFIX_PROPERTY_PRICE
+                    + ", or " + PREFIX_PROPERTY_BEDROOMS + ".";
     public static final String MESSAGE_MULTIPLE_PROPERTIES = "Specify exactly one search field.";
     public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.";
 
