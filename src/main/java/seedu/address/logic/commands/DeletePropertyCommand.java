@@ -44,6 +44,7 @@ public class DeletePropertyCommand extends Command {
         assert updated.getProperties().size() == original.getProperties().size() - 1
                 : "Deleting a property must decrease the property count by one";
         model.setPerson(original, updated);
+        model.commitAddressBook();
         logger.fine("Deleted property " + propertyIndex.getOneBased()
                 + " from displayed client " + clientIndex.getOneBased());
         return new CommandResult(String.format(MESSAGE_SUCCESS, propertyIndex.getOneBased(),

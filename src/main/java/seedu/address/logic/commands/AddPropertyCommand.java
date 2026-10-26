@@ -44,6 +44,7 @@ public class AddPropertyCommand extends Command {
         assert updated.getProperties().size() == original.getProperties().size() + 1
                 : "Adding a property must increase the property count by one";
         model.setPerson(original, updated);
+        model.commitAddressBook();
         logger.fine("Added property " + updated.getProperties().size()
                 + " to displayed client " + clientIndex.getOneBased());
         return new CommandResult(String.format(MESSAGE_SUCCESS, updated.getProperties().size(),

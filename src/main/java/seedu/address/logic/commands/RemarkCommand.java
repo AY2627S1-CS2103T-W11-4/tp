@@ -65,6 +65,7 @@ public class RemarkCommand extends Command {
 
         model.setPerson(personToEdit, editedPerson);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        model.commitAddressBook();
         return new CommandResult(generateSuccessMessage(editedPerson));
     }
 

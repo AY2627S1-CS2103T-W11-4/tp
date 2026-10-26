@@ -496,11 +496,11 @@ optional placeholders, property order, transaction status, wrapping and the retu
 client details are absent. `ViewCommandTest` also simulates a model that fails to filter and verifies that
 the runtime assertion detects the invalid display state. Ranked intention-search results are covered separately.
 
-### \[Proposed\] Undo/redo feature
+### Undo/redo feature
 
-#### Proposed Implementation
+#### Implementation
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+The undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as a `states` list and a `currentStatePointer`. Additionally, it implements the following operations:
 
 * `VersionedAddressBook#commit()` -- Saves the current client data state in its history.
 * `VersionedAddressBook#undo()` -- Restores the previous client data state from its history.
@@ -508,23 +508,25 @@ The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It ex
 
 These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
 
+Each data-changing command (`add`, `edit`, `delete`, `remark`, `addp`, `editp` and `delp`) calls `Model#commitAddressBook()` after it succeeds. A command that fails, or an `editp` that leaves the property unchanged, does not commit. The history keeps at most `VersionedAddressBook#MAX_STATES` (100) states, dropping the oldest first. The `undo` and `redo` commands also reset the displayed list to show all clients.
+
 Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
 
 Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial client data state, and the `currentStatePointer` pointing to that single client data state.
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
-Step 2. The user executes `delete 5` command to delete the 5th person in RESIDEX. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the client data after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted client data state.
+Step 2. The user executes `delete 5` command to delete the 5th person in RESIDEX. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the client data after the `delete 5` command executes to be saved in the `states`, and the `currentStatePointer` is shifted to the newly inserted client data state.
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified client data state to be saved into the `addressBookStateList`.
+Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified client data state to be saved into the `states`.
 
 <puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
 
 <box type="info" seamless>
 
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the client data state will not be saved into the `addressBookStateList`.
+**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the client data state will not be saved into the `states`.
 </box>
 
 Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous client data state, and restores the client data to that state.
@@ -555,14 +557,14 @@ The `redo` command does the opposite — it calls `Model#redoAddressBook()`, whi
 
 <box type="info" seamless>
 
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest client data state, then there are no undone client data states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
+**Note:** If the `currentStatePointer` is at index `states.size() - 1`, pointing to the latest client data state, then there are no undone client data states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
 </box>
 
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the client data, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
+Step 5. The user then decides to execute the command `list`. Commands that do not modify the client data, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `states` remains unchanged.
 
 <puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
 
-Step 6. The user executes `delete 1`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all client data states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
+Step 6. The user executes `delete 1`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `states`, all client data states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
 
 <puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
 

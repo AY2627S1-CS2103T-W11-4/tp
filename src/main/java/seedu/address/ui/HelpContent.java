@@ -20,7 +20,9 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
@@ -164,7 +166,7 @@ final class HelpContent {
                     List.of(ListCommand.COMMAND_WORD)),
             new CommandHelp(DeleteCommand.COMMAND_WORD, "Delete a client.", DeleteCommand.COMMAND_WORD + " INDEX",
                     List.of(INDEX_NOTE, "After a search, the index refers to the search results.",
-                            "The selected client and their recorded details are removed. There is no undo command."),
+                            "The selected client and their recorded details are removed. Use undo to restore them."),
                     List.of(DeleteCommand.COMMAND_WORD + " 1")),
             new CommandHelp(RemarkCommand.COMMAND_WORD, "Set or remove a client's remark.",
                     RemarkCommand.COMMAND_WORD + " INDEX " + PREFIX_REMARK + "[REMARK]",
@@ -173,6 +175,19 @@ final class HelpContent {
                             "Contact details, intention and properties are kept."),
                     List.of(RemarkCommand.COMMAND_WORD + " 1 " + PREFIX_REMARK + "Call next week",
                             RemarkCommand.COMMAND_WORD + " 1 " + PREFIX_REMARK)),
+            new CommandHelp(UndoCommand.COMMAND_WORD, "Undo the last change to client data.",
+                    UndoCommand.COMMAND_WORD,
+                    List.of("No parameters are needed. Undo reverses the latest add, edit, delete, remark, "
+                                    + "addp, editp or delp command.",
+                            "Searches, list, view and help are not undone, and the list is reset to show all clients.",
+                            "The last 100 changes can be undone. Changes made before RESIDEX was started "
+                                    + "cannot be undone."),
+                    List.of(UndoCommand.COMMAND_WORD)),
+            new CommandHelp(RedoCommand.COMMAND_WORD, "Redo the last undone change.", RedoCommand.COMMAND_WORD,
+                    List.of("No parameters are needed. Redo re-applies the change that undo reversed most recently.",
+                            "A new change after an undo clears what can be redone.",
+                            "The list is reset to show all clients."),
+                    List.of(RedoCommand.COMMAND_WORD)),
             new CommandHelp(HelpCommand.COMMAND_WORD, "Show the command reference.", HelpCommand.COMMAND_WORD,
                     List.of("No parameters are needed. You can also press F1 to open help.",
                             "The command reference is available without an internet connection."),

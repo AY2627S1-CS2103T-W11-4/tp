@@ -69,6 +69,7 @@ public class EditPropertyCommand extends Command {
         assert updated.getProperties().get(propertyIndex.getZeroBased()).equals(replacement)
                 : "Editing a property must apply the replacement at the selected index";
         model.setPerson(original, updated);
+        model.commitAddressBook();
         logger.fine("Edited property " + propertyIndex.getOneBased()
                 + " for displayed client " + clientIndex.getOneBased());
         if (current.getStatus() != replacement.getStatus()) {
