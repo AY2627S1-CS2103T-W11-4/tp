@@ -91,6 +91,21 @@ public class UndoRedoIntegrationTest {
     }
 
     @Test
+    public void editAndRemarkWithUnchangedData_doNotClearRedoHistory() throws Exception {
+        run("delete 1");
+        run("undo");
+        assertTrue(model.canRedoAddressBook());
+
+        String currentEmail = model.getFilteredPersonList().get(0).getEmail().value;
+        String currentRemark = model.getFilteredPersonList().get(0).getRemark().value;
+        run("edit 1 e/" + currentEmail);
+        run("remark 1 r/" + currentRemark);
+
+        assertTrue(model.canRedoAddressBook());
+        assertFalse(model.canUndoAddressBook());
+    }
+
+    @Test
     public void readOnlyCommands_doNotCreateUndoStates() throws Exception {
         run("find n/alice");
         run("list");

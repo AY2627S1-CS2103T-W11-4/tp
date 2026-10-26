@@ -429,6 +429,7 @@ Format: `undo`
 * Undo reverses the latest `add`, `edit`, `delete`, `remark`, `addp`, `editp` or `delp` command.
 * Commands that only show information, such as `find`, `list`, `view` and `help`, are not undone.
 * After an undo, the list is reset to show all clients.
+* Commands that change nothing, such as editing a field to the value it already has, are not counted as changes.
 * The last 100 changes can be undone. Changes made before RESIDEX was started cannot be undone.
 * If there is nothing to undo, an error message is shown and nothing changes.
 * The undone change is saved automatically, like any other change.

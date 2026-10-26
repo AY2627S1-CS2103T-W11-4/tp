@@ -508,7 +508,7 @@ The undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `Ad
 
 These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
 
-Each data-changing command (`add`, `edit`, `delete`, `remark`, `addp`, `editp` and `delp`) calls `Model#commitAddressBook()` after it succeeds. A command that fails, or an `editp` that leaves the property unchanged, does not commit. The history keeps at most `VersionedAddressBook#MAX_STATES` (100) states, dropping the oldest first. The `undo` and `redo` commands also reset the displayed list to show all clients.
+Each data-changing command (`add`, `edit`, `delete`, `remark`, `addp`, `editp` and `delp`) calls `Model#commitAddressBook()` after it succeeds. A command that fails, or an `editp` that leaves the property unchanged, does not commit. `edit` and `remark` also skip the commit when the edited client equals the original, so an edit that changes nothing does not clear what can be redone. The history keeps the `VersionedAddressBook#MAX_UNDOABLE_CHANGES` (100) most recent changes, which is 101 saved states including the current one, dropping the oldest first. The `undo` and `redo` commands also reset the displayed list to show all clients.
 
 Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
 

@@ -5,11 +5,12 @@ import java.util.List;
 
 /**
  * An {@code AddressBook} that keeps a history of its states so that changes can be undone and redone.
- * Only the client data is versioned. The history is capped at {@value #MAX_STATES} states.
+ * Only the client data is versioned. The history keeps the {@value #MAX_UNDOABLE_CHANGES} most recent changes,
+ * which is that many earlier states plus the current one.
  */
 public class VersionedAddressBook extends AddressBook {
 
-    public static final int MAX_STATES = 100;
+    public static final int MAX_UNDOABLE_CHANGES = 100;
 
     private final List<ReadOnlyAddressBook> states = new ArrayList<>();
     private int currentStatePointer;
@@ -30,7 +31,7 @@ public class VersionedAddressBook extends AddressBook {
         states.subList(currentStatePointer + 1, states.size()).clear();
         states.add(new AddressBook(this));
         currentStatePointer++;
-        if (states.size() > MAX_STATES) {
+        if (states.size() > MAX_UNDOABLE_CHANGES + 1) {
             states.remove(0);
             currentStatePointer--;
         }
