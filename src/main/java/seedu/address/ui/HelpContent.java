@@ -4,6 +4,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_BEDROOMS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_PRICE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
@@ -137,7 +138,7 @@ final class HelpContent {
                             "Type list to return to all clients, including after viewing a search result."),
                     List.of("view 1", "view 2")),
             new CommandHelp(FindCommand.COMMAND_WORD,
-                    "Find clients by name, email, phone, location, intention, property stage, type or price.",
+                    "Find clients by name, email, phone, location, intention, property stage, type, price or bedrooms.",
                     FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_PHONE + "KEYWORD [MORE_KEYWORDS]\n"
@@ -145,11 +146,13 @@ final class HelpContent {
                             + FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller|both\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS + "STATUS\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_TYPE + "TYPE\n"
-                            + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "MIN-MAX",
+                            + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "MIN-MAX\n"
+                            + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "NUMBER",
                     List.of("Choose exactly one short prefix: " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", " + PREFIX_INTENTION
-                                    + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + " or "
-                                    + PREFIX_PROPERTY_PRICE + ". Supply at least one keyword.",
+                                    + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + ", "
+                                    + PREFIX_PROPERTY_PRICE + " or " + PREFIX_PROPERTY_BEDROOMS
+                                    + ". Supply at least one keyword.",
                             "Prefixes and keywords are case-insensitive. Long search field aliases are not supported.",
                             "Name, email, phone and location use substring matching."
                                     + " Any matching keyword returns a client.",
@@ -166,6 +169,9 @@ final class HelpContent {
                             "Type requires one value: HDB, Condominium or Landed (h, c and l also work).",
                             "Price needs a range such as 500000-800000, 500000- (at least) or -800000 (at most).",
                             "Type and price match any property of a client. Properties without a price never match.",
+                            "Bedrooms needs one whole number from 1 to 20 and matches any property with exactly "
+                                    + "that many.",
+                            "Properties without a recorded number of bedrooms never match.",
                             "Each search checks all clients and replaces the previous filter. Use list to reset it."),
                     List.of(FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "alex david",
                             FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "gmail",
@@ -177,7 +183,8 @@ final class HelpContent {
                             FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS + "unspecified",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_TYPE + "HDB",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "500000-800000",
-                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "-800000")),
+                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "-800000",
+                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "3")),
             new CommandHelp(ListCommand.COMMAND_WORD, "Show all clients.", ListCommand.COMMAND_WORD,
                     List.of("No parameters are needed. This resets the current search filter."),
                     List.of(ListCommand.COMMAND_WORD)),

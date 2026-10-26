@@ -16,9 +16,11 @@ import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
+import seedu.address.model.person.PropertyBedroomsMatchesPredicate;
 import seedu.address.model.person.PropertyPriceInRangePredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.PropertyTypeMatchesPredicate;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
@@ -420,5 +422,27 @@ public class FindCommandParserTest {
         assertParseFailure(parser, "pr/1-2 3-4",
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "pr/1-2 s/viewing", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+    }
+
+    @Test
+    public void parse_bedroomsSelectors_returnsBedroomsFindCommand() {
+        for (String selector : List.of("bd/", "BD/", "Bd/")) {
+            assertParseSuccess(parser, selector + "3",
+                    new FindCommand(new PropertyBedroomsMatchesPredicate(new PropertyBedrooms("3"))));
+            assertParseSuccess(parser, " " + selector + " 20 ",
+                    new FindCommand(new PropertyBedroomsMatchesPredicate(new PropertyBedrooms("20"))));
+        }
+    }
+
+    @Test
+    public void parse_invalidBedrooms_throwsParseException() {
+        for (String bedrooms : List.of("0", "21", "03", "-1", "2.5", "abc", "1,0", "+2")) {
+            assertParseFailure(parser, "bd/" + bedrooms, FindCommand.MESSAGE_INVALID_BEDROOMS);
+        }
+        assertParseFailure(parser, "bd/", FindCommand.MESSAGE_MISSING_KEYWORD);
+        assertParseFailure(parser, "bd/2 3",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "bd/2 t/HDB", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        assertParseFailure(parser, "bd/2 BD/3", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
     }
 }

@@ -19,6 +19,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
@@ -180,5 +181,59 @@ public class FindTypeAndPriceIntegrationTest {
     private Person findByName(String name) {
         return model.getAddressBook().getPersonList().stream()
                 .filter(person -> person.getName().fullName.equals(name)).findFirst().orElseThrow();
+    }
+
+    @Test
+    public void findBedrooms_matchesExactCountOnAnyPropertyAndSkipsUnknown() throws Exception {
+        Person twoAndFour = new PersonBuilder().withName("Two And Four").withPhone("93000001")
+                .withProperties(withBedrooms("2"), withBedrooms("4")).build();
+        Person three = new PersonBuilder().withName("Just Three").withPhone("93000002")
+                .withProperties(withBedrooms("3")).build();
+        Person unknown = new PersonBuilder().withName("Unknown Count").withPhone("93000003")
+                .withProperties(withBedrooms(null)).build();
+        Person none = new PersonBuilder().withName("No Property").withPhone("93000004").build();
+        AddressBook addressBook = new AddressBook();
+        for (Person person : List.of(twoAndFour, three, unknown, none)) {
+            addressBook.addPerson(person);
+        }
+        model = new ModelManager(addressBook, new UserPrefs());
+
+        search("find bd/4");
+        assertEquals(List.of(twoAndFour), model.getFilteredPersonList());
+
+        search("find BD/3");
+        assertEquals(List.of(three), model.getFilteredPersonList());
+
+        search("find bd/5");
+        assertEquals(List.of(), model.getFilteredPersonList());
+
+        assertThrows(ParseException.class, () -> search("find bd/0"));
+        assertEquals(List.of(), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void findBedrooms_afterRankedIntentionSearch_restoresNormalOrderAndIndexes() throws Exception {
+        Person[] clients = useRankedClients();
+        Person both = clients[0];
+        Person buyer = clients[1];
+        Property selling = new Property(PropertyType.HDB, PropertyIntention.SELLING,
+                new PropertyLocation("Clementi"), null, PropertyStatus.UNSPECIFIED);
+        Person bothWithBedrooms = new PersonBuilder(both).withProperties(withBedrooms("3"), selling).build();
+        Person buyerWithBedrooms = new PersonBuilder(buyer).withProperties(
+                new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi"),
+                        null, PropertyStatus.UNSPECIFIED, new PropertyBedrooms("3"))).build();
+        model.setPerson(both, bothWithBedrooms);
+        model.setPerson(buyer, buyerWithBedrooms);
+
+        search("find i/buyer");
+        assertEquals(List.of(buyerWithBedrooms, bothWithBedrooms), model.getFilteredPersonList());
+
+        search("find bd/3");
+        assertEquals(List.of(bothWithBedrooms, buyerWithBedrooms), model.getFilteredPersonList());
+    }
+
+    private static Property withBedrooms(String bedrooms) {
+        return new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi"), null,
+                PropertyStatus.UNSPECIFIED, bedrooms == null ? null : new PropertyBedrooms(bedrooms));
     }
 }

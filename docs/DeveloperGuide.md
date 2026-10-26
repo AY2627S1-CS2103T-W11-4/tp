@@ -187,7 +187,7 @@ examples parse as the intended commands without executing them or starting JavaF
 
 ### Find command
 
-`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, `i/`, `s/`, `t/` or `pr/`.
+`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, `i/`, `s/`, `t/`, `pr/` or `bd/`.
 For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
 Name, email, phone, and location searches use case-insensitive substring matching with OR semantics across keywords.
 `LocationContainsKeywordsPredicate` checks every entry in `Person#getProperties()` and returns a client once if any
@@ -239,7 +239,10 @@ single `-`, validates each bound with `PropertyPrice.isValidPrice()`, and reject
 with `FindCommand#MESSAGE_INVALID_PRICE_RANGE`.
 `PropertyPriceInRangePredicate` compares the inclusive bounds with each property's price. Properties without a price
 never match, and a client appears once even if several properties match.
-Both predicates clear the intention comparator, so their results use normal client order.
+`find bd/` accepts exactly one number and validates it with `PropertyParserUtil.parseBedrooms()`, so it shares the
+1 to 20 range with `addp` and `editp`. `PropertyBedroomsMatchesPredicate` matches a client if any property has exactly
+that number of bedrooms; properties with unknown bedrooms never match.
+These predicates clear the intention comparator, so their results use normal client order.
 Replacing a property re-evaluates the active status predicate, so clients may leave the displayed results.
 `PropertyStatusSearchIntegrationTest` checks stages, selector coexistence, saved order and displayed-index targeting.
 
@@ -1576,6 +1579,31 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
    1. Enter `addp 1 t/HDB i/Buying l/Yishun`, then `find pr/1-`.<br>
       Expected: The property without a price never matches by itself; Type Test appears once because of its priced
       properties.
+
+### Finding clients by number of bedrooms
+
+1. Preparing the data
+
+   1. Enter `add n/Bedroom Test p/91008101 e/bedroomtest@example.com`, then `find p/91008101`.<br>
+      Expected: One client is shown at index 1.
+
+   1. Enter `addp 1 t/HDB i/Buying l/Clementi bd/3`, `addp 1 t/Condominium i/Buying l/Bishan bd/2` and
+      `addp 1 t/Landed i/Selling l/Sentosa`.<br>
+      Expected: Three properties are added. The Sentosa property has no number of bedrooms.
+
+1. Searching
+
+   1. Enter `list`, then `find bd/3`, `find bd/2` and `find BD/3`.<br>
+      Expected: Bedroom Test is listed each time, once.
+
+   1. Enter `find bd/4`.<br>
+      Expected: Bedroom Test is not listed, because no property has exactly 4 bedrooms.
+
+   1. Enter `editp 1 1 bd/`, then `find bd/3`.<br>
+      Expected: Bedroom Test is not listed, because the only 3-bedroom property no longer has bedrooms recorded.
+
+   1. Try `find bd/`, `find bd/0`, `find bd/21`, `find bd/abc`, `find bd/2 3` and `find bd/2 t/HDB`.<br>
+      Expected: Each is rejected with an error and the displayed list is unchanged.
 
 ### Rejecting removed client budgets
 

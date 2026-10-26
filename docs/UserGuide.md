@@ -331,7 +331,7 @@ Examples:
 * `editp 1 2 s/Negotiating` changes only its transaction stage.
 * `editp 1 2 s/unspecified` resets its stage without removing the property.
 
-### Locating persons by name, email, phone, location, intention, property status, type or price: `find`
+### Locating persons by name, email, phone, location, intention, property status, type, price or bedrooms: `find`
 
 Finds contacts using exactly one selected search field.
 
@@ -347,6 +347,7 @@ Intention | `i/`
 Property status | `s/`
 Property type | `t/`
 Property price | `pr/`
+Property bedrooms | `bd/`
 
 * Prefix letters and keywords are case-insensitive; `N/` and `n/` have the same effect.
 * Specify exactly one short prefix immediately after `find`, with `/` immediately after the letter.
@@ -379,7 +380,9 @@ Property price | `pr/`
   $500,000 up to and including $800,000), `500000-` (at least $500,000) or `-800000` (at most $800,000).
   The minimum must not be above the maximum. A client matches if **any property** has a price within the range.
   Properties without a price never match.
-* Type and price results retain normal client order.
+* Bedrooms searches require exactly one whole number from 1 to 20, such as `find bd/3`. A client matches if **any property**
+  has exactly that number of bedrooms. Properties without a recorded number of bedrooms never match.
+* Type, price and bedrooms results retain normal client order.
 * Status results retain normal client order. Client indexes refer to the currently displayed results.
   Use `list` to show all contacts again. Searches do not modify stored contacts.
 
@@ -401,6 +404,7 @@ Examples:
 * `find t/HDB` lists clients with at least one HDB property.
 * `find pr/500000-800000` lists clients with a property priced from $500,000 to $800,000.
 * `find pr/-800000` lists clients with a property priced at $800,000 or less.
+* `find bd/3` lists clients with at least one 3-bedroom property.
 
 The following example shows `find n/Alex David` using the sample clients:
 
@@ -523,7 +527,7 @@ Action     | Format, Examples
 **Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000 bd/3`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `editp 1 2 l/Toa Payoh`, `editp 1 2 bd/4`
-**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`, `find t/HDB`, `find pr/500000-800000`
+**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`, `find t/HDB`, `find pr/500000-800000`, `find bd/3`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
