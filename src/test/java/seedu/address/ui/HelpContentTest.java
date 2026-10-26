@@ -25,7 +25,9 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -61,6 +63,8 @@ public class HelpContentTest {
             Map.entry(ViewCommand.COMMAND_WORD, ViewCommand.class),
             Map.entry(DeleteCommand.COMMAND_WORD, DeleteCommand.class),
             Map.entry(RemarkCommand.COMMAND_WORD, RemarkCommand.class),
+            Map.entry(UndoCommand.COMMAND_WORD, UndoCommand.class),
+            Map.entry(RedoCommand.COMMAND_WORD, RedoCommand.class),
             Map.entry(HelpCommand.COMMAND_WORD, HelpCommand.class),
             Map.entry(ExitCommand.COMMAND_WORD, ExitCommand.class));
 

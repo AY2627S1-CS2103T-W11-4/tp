@@ -99,7 +99,7 @@ public class VersionedAddressBookTest {
 
     @Test
     public void commit_beyondMaximum_dropsOldestStates() {
-        for (int i = 0; i < VersionedAddressBook.MAX_STATES + 10; i++) {
+        for (int i = 0; i < VersionedAddressBook.MAX_UNDOABLE_CHANGES + 10; i++) {
             versionedAddressBook.addPerson(personNumber(i));
             versionedAddressBook.commit();
         }
@@ -110,8 +110,8 @@ public class VersionedAddressBookTest {
             undoCount++;
         }
 
-        assertEquals(VersionedAddressBook.MAX_STATES - 1, undoCount);
-        assertEquals(11, versionedAddressBook.getPersonList().size());
+        assertEquals(VersionedAddressBook.MAX_UNDOABLE_CHANGES, undoCount);
+        assertEquals(10, versionedAddressBook.getPersonList().size());
     }
 
     private static Person personNumber(int number) {

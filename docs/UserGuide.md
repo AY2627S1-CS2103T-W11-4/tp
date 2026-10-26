@@ -297,7 +297,7 @@ Format: `delp CLIENT_INDEX PROPERTY_INDEX`
 Deletes only the selected property, leaving the client and their other information intact.
 Later property entries shift down by one index.
 Location is required, so deleting only a property's location is not supported.
-Deletion has no undo command.
+Use `undo` to restore a deleted property.
 
 Example: `delp 1 2` deletes property 2 from the first displayed client.
 The former property 3, if any, becomes property 2.
@@ -399,6 +399,7 @@ Format: `delete INDEX`
 * Deletes the person at the specified `INDEX`.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
+* Use `undo` to bring back a client that was deleted by mistake.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd client in RESIDEX.
@@ -418,6 +419,34 @@ Examples:
 
 * `remark 1 r/Call next week` replaces the first displayed client's remark with `Call next week`.
 * `remark 1 r/` removes the first displayed client's remark.
+
+### Undoing the last change: `undo`
+
+Reverses the most recent change to your client data.
+
+Format: `undo`
+
+* Undo reverses the latest `add`, `edit`, `delete`, `remark`, `addp`, `editp` or `delp` command.
+* Commands that only show information, such as `find`, `list`, `view` and `help`, are not undone.
+* After an undo, the list is reset to show all clients.
+* Commands that change nothing, such as editing a field to the value it already has, are not counted as changes.
+* The last 100 changes can be undone. Changes made before RESIDEX was started cannot be undone.
+* If there is nothing to undo, an error message is shown and nothing changes.
+* The undone change is saved automatically, like any other change.
+
+Example: `delete 1` followed by `undo` brings back the client that was deleted.
+
+### Redoing an undone change: `redo`
+
+Re-applies the change that `undo` reversed most recently.
+
+Format: `redo`
+
+* You can redo only right after an `undo`. Making a new change after an undo clears what can be redone.
+* After a redo, the list is reset to show all clients.
+* If there is nothing to redo, an error message is shown and nothing changes.
+
+Example: `delete 1`, then `undo`, then `redo` deletes the first client again.
 
 ### Exiting the program: `exit`
 
@@ -482,4 +511,6 @@ Action     | Format, Examples
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
+**Undo**   | `undo`
+**Redo**   | `redo`
 **Help**   | `help`
