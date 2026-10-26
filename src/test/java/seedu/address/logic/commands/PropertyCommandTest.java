@@ -20,6 +20,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.testutil.PersonBuilder;
@@ -165,6 +166,113 @@ public class PropertyCommandTest {
             assertEquals(CLEMENTI_HDB.getPrice(), recorded.getPrice());
             assertEquals(status, recorded.getStatus());
         }
+    }
+
+    private static Property withBedrooms(Property source, PropertyBedrooms bedrooms) {
+        return new Property(source.getType(), source.getIntention(), source.getLocation(),
+                source.getPrice().orElse(null), source.getStatus(), bedrooms);
+    }
+
+    private static Property editedProperty(Property original, EditPropertyDescriptor descriptor) throws Exception {
+        Model model = new ModelManager();
+        model.addPerson(new PersonBuilder(ALICE).withProperties(original).build());
+        new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor).execute(model);
+        return model.getFilteredPersonList().get(0).getProperties().get(0);
+    }
+
+    @Test
+    public void execute_addPropertyWithBedrooms_keepsBedrooms() throws Exception {
+        Model model = new ModelManager();
+        model.addPerson(new PersonBuilder(ALICE).build());
+        Property threeBedrooms = withBedrooms(CLEMENTI_HDB, new PropertyBedrooms("3"));
+
+        new AddPropertyCommand(INDEX_FIRST_PERSON, threeBedrooms).execute(model);
+
+        assertEquals(threeBedrooms, model.getFilteredPersonList().get(0).getProperties().get(0));
+        assertEquals(new PropertyBedrooms("3"),
+                model.getFilteredPersonList().get(0).getProperties().get(0).getBedrooms().orElseThrow());
+    }
+
+    @Test
+    public void execute_editBedrooms_setsBedroomsAndPreservesOtherFields() throws Exception {
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setBedrooms(new PropertyBedrooms("4"));
+
+        Property updated = editedProperty(CLEMENTI_HDB, descriptor);
+
+        assertEquals(withBedrooms(CLEMENTI_HDB, new PropertyBedrooms("4")), updated);
+        assertEquals(CLEMENTI_HDB.getLocation(), updated.getLocation());
+        assertEquals(CLEMENTI_HDB.getPrice(), updated.getPrice());
+        assertEquals(CLEMENTI_HDB.getStatus(), updated.getStatus());
+    }
+
+    @Test
+    public void execute_editChangesExistingBedrooms_replacesThem() throws Exception {
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setBedrooms(new PropertyBedrooms("5"));
+
+        Property updated = editedProperty(withBedrooms(CLEMENTI_HDB, new PropertyBedrooms("2")), descriptor);
+
+        assertEquals(new PropertyBedrooms("5"), updated.getBedrooms().orElseThrow());
+    }
+
+    @Test
+    public void execute_editWithEmptyBedrooms_clearsBedroomsAndPreservesOtherFields() throws Exception {
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setBedrooms(null);
+
+        Property updated = editedProperty(withBedrooms(CLEMENTI_HDB, new PropertyBedrooms("3")), descriptor);
+
+        assertTrue(updated.getBedrooms().isEmpty());
+        assertEquals(CLEMENTI_HDB, updated);
+    }
+
+    @Test
+    public void execute_editOtherFields_preservesBedrooms() throws Exception {
+        Property original = withBedrooms(CLEMENTI_HDB, new PropertyBedrooms("3"));
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setLocation(new PropertyLocation("Bishan"));
+        descriptor.setPrice(null);
+        descriptor.setStatus(PropertyStatus.VIEWING);
+
+        Property updated = editedProperty(original, descriptor);
+
+        assertEquals(new PropertyBedrooms("3"), updated.getBedrooms().orElseThrow());
+        assertEquals("Bishan", updated.getLocation().value);
+        assertEquals(PropertyStatus.VIEWING, updated.getStatus());
+        assertTrue(updated.getPrice().isEmpty());
+    }
+
+    @Test
+    public void execute_editToSameBedrooms_reportsUnchanged() throws Exception {
+        Model model = new ModelManager();
+        Property original = withBedrooms(CLEMENTI_HDB, new PropertyBedrooms("3"));
+        Person client = new PersonBuilder(ALICE).withProperties(original).build();
+        model.addPerson(client);
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setBedrooms(new PropertyBedrooms("3"));
+
+        CommandResult result = new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor)
+                .execute(model);
+
+        assertEquals(String.format(EditPropertyCommand.MESSAGE_UNCHANGED, 1, client.getName()),
+                result.getFeedbackToUser());
+        assertEquals(client, model.getFilteredPersonList().get(0));
+    }
+
+    @Test
+    public void execute_editCopiesBedroomsFromDescriptor_ignoresLaterChanges() throws Exception {
+        Model model = new ModelManager();
+        model.addPerson(new PersonBuilder(ALICE).withProperties(CLEMENTI_HDB).build());
+        EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+        descriptor.setBedrooms(new PropertyBedrooms("2"));
+        EditPropertyCommand command = new EditPropertyCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor);
+        descriptor.setBedrooms(null);
+
+        command.execute(model);
+
+        assertEquals(new PropertyBedrooms("2"),
+                model.getFilteredPersonList().get(0).getProperties().get(0).getBedrooms().orElseThrow());
     }
 
     @Test
