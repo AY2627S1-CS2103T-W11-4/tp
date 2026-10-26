@@ -37,6 +37,34 @@ public interface Model {
     ReadOnlyAddressBook getAddressBook();
 
     /**
+     * Saves the current address book data as a new state that can be undone to.
+     * Any states that could still be redone are discarded.
+     */
+    void commitAddressBook();
+
+    /**
+     * Returns true if there is an earlier address book state to undo to.
+     */
+    boolean canUndoAddressBook();
+
+    /**
+     * Returns true if an undone address book state can be redone.
+     */
+    boolean canRedoAddressBook();
+
+    /**
+     * Restores the previous address book state.
+     * The model must be able to undo, as reported by {@link #canUndoAddressBook()}.
+     */
+    void undoAddressBook();
+
+    /**
+     * Applies the address book state that was undone most recently.
+     * The model must be able to redo, as reported by {@link #canRedoAddressBook()}.
+     */
+    void redoAddressBook();
+
+    /**
      * Returns true if a person with the same identity as {@code person} exists in the address book.
      */
     boolean hasPerson(Person person);
