@@ -13,7 +13,9 @@
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* RESIDEX is adapted from the [AddressBook-Level3 (AB3)](https://github.com/se-edu/addressbook-level3) project by the [SE-EDU initiative](https://se-education.org/). The overall architecture, the `Logic`/`Model`/`Storage`/`UI` split, the command parser structure and the undo/redo design follow AB3.
+* Third-party libraries: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for JSON storage, and [JUnit 5](https://github.com/junit-team/junit5) for testing.
+* Documentation tools: [MarkBind](https://markbind.org/) builds this guide and the [User Guide](UserGuide.md), and [PlantUML](https://plantuml.com/) draws the diagrams.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -110,7 +112,7 @@ How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
+1. The command can communicate with the `Model` when it is executed (e.g. to delete a client).<br>
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
@@ -531,11 +533,11 @@ Step 1. The user launches the application for the first time. The `VersionedAddr
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
-Step 2. The user executes `delete 5` command to delete the 5th person in RESIDEX. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the client data after the `delete 5` command executes to be saved in the `states`, and the `currentStatePointer` is shifted to the newly inserted client data state.
+Step 2. The user executes `delete 5` command to delete the 5th client in RESIDEX. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the client data after the `delete 5` command executes to be saved in the `states`, and the `currentStatePointer` is shifted to the newly inserted client data state.
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified client data state to be saved into the `states`.
+Step 3. The user executes `add n/David …​` to add a new client. The `add` command also calls `Model#commitAddressBook()`, causing another modified client data state to be saved into the `states`.
 
 <puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
 
@@ -544,7 +546,7 @@ Step 3. The user executes `add n/David …​` to add a new person. The `add` co
 **Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the client data state will not be saved into the `states`.
 </box>
 
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous client data state, and restores the client data to that state.
+Step 4. The user now decides that adding the client was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous client data state, and restores the client data to that state.
 
 <puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
 
@@ -597,15 +599,8 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 * **Alternative 2:** Individual command knows how to undo/redo by
   itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
+  * Pros: Will use less memory (e.g. for `delete`, just save the client being deleted).
   * Cons: We must ensure that the implementation of each individual command is correct.
-
-_{more aspects and alternatives to be added}_
-
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
-
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -690,11 +685,11 @@ Logging is available throughout RESIDEX through `LogsCenter`; the property comma
 
 * is a property agent who manages multiple clients and property listings
 * needs to record, search, and update client preferences and property details efficiently
-* tracks property viewings, follow-ups, leads, and ongoing transactions
+* tracks leads and ongoing transactions across several properties per client
 * prefers fast CLI-based interactions for managing information
-* needs to filter clients by categories such as buyer, seller, tenant, or landlord
+* needs to filter clients by categories such as buyer, seller, property type, price and number of bedrooms
 
-**Value proposition**: RESIDEX provides property agents with a fast and organised way to manage buyers, sellers, property listings, viewings, and follow-ups in one place. Its efficient CLI-based commands allow agents to quickly retrieve, update, and filter information, reducing administrative work and helping them organise clients by category.
+**Value proposition**: RESIDEX provides property agents with a fast and organised way to manage buyers, sellers, their properties and transaction stages in one place. Its efficient CLI-based commands allow agents to quickly retrieve, update and recover client information, without navigating through multiple screens.
 
 
 ### User stories
@@ -703,28 +698,37 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 The general user story for updating client information is an epic that is further refined by the more specific user stories below.
 
+#### Implemented
+
 | Priority | As a …                              | I want to …                                                | So that I can …                                               |
 |----------|--------------------------------------|------------------------------------------------------------|----------------------------------------------------------------|
 | `* * *`  | property agent who types quickly     | perform client-management actions through a CLI            | complete routine tasks quickly                                |
 | `* * *`  | property agent                       | add a new client                                           | keep track of the people I serve                              |
 | `* * *`  | property agent                       | identify whether a client buys, sells, both or neither       | manage the client according to their property needs           |
 | `* * *`  | property agent                       | view all the clients I am currently serving                | keep track of my active clients                               |
-| `* * *`  | property agent managing many clients | search for clients by name, phone number, or email         | retrieve their information quickly                            |
-| `* * *`  | property agent                       | filter clients by category, property stage, property requirements, or priority | focus on clients relevant to my current task       |
-| `* * *`  | property agent                       | view a client's profile                                    | review their contact details, requirements, priority, and each property's stage |
+| `* * *`  | property agent managing many clients | search for clients by name, phone number, email or property location | retrieve their information quickly                  |
+| `* * *`  | property agent                       | filter clients by buying or selling role, property stage, property type, price range or number of bedrooms | focus on clients relevant to my current task |
+| `* * *`  | property agent                       | view a client's profile                                    | review their contact details, remark and each property's details and stage |
 | `* * *`  | property agent                       | update a client's information, including each property's stage | keep the client's record accurate                          |
 | `* * *`  | property agent                       | record a client's contact details                          | contact the client when needed                                |
-| `* * *`  | property agent                       | record a client's preferred property type and location     | recommend properties that match the client's preferences      |
-| `* * *`  | property agent                       | record a buyer's preferred number of bedrooms              | exclude properties that do not meet the buyer's requirements |
+| `* * *`  | property agent                       | record the type, location, price and number of bedrooms of each property | recommend and track properties that match the client's needs |
 | `* * *`  | property agent                       | record property information under a client's profile       | keep track of the properties relevant to that client         |
 | `* * *`  | property agent                       | remove selected optional information from a client's profile | correct outdated information without deleting the client   |
-| `* * *`  | property agent                       | assign priorities to clients                               | determine which clients to focus on                           |
-| `* * *`  | property agent                       | set or update a client's next follow-up date               | know when I should contact the client again                   |
-| `* * *`  | property agent                       | view upcoming and overdue follow-ups                       | avoid missing important follow-up actions                     |
-| `* * *`  | property agent                       | view a client's recorded information history               | review how the client's information has changed over time     |
+| `* * *`  | property agent                       | undo and redo my recent changes                            | recover quickly from a mistaken command                       |
 | `* * *`  | property agent                       | delete a client                                            | remove client records that I no longer need                   |
 | `* * *`  | property agent                       | have my changes saved automatically                        | retain my client records between application sessions        |
 | `* * *`  | new property agent                   | view the available commands                                | learn how to use the application correctly                    |
+
+#### Planned (not yet implemented)
+
+These stories are not part of the current release. They are kept to record the product direction.
+
+| Priority | As a …                              | I want to …                                                | So that I can …                                               |
+|----------|--------------------------------------|------------------------------------------------------------|----------------------------------------------------------------|
+| `* * *`  | property agent                       | assign priorities to clients and filter by priority        | determine which clients to focus on                           |
+| `* * *`  | property agent                       | set or update a client's next follow-up date               | know when I should contact the client again                   |
+| `* * *`  | property agent                       | view upcoming and overdue follow-ups                       | avoid missing important follow-up actions                     |
+| `* * *`  | property agent                       | view a client's recorded information history               | review how the client's information has changed over time     |
 | `* *`    | property agent                       | schedule a property viewing for a client                   | keep track of the client's viewing appointment                |
 | `* *`    | property agent                       | attach an internal note to a client                        | retain useful details without displaying them in the client list |
 | `* *`    | property agent                       | view clients who are interested in a particular property   | identify potential leads for that property                    |
@@ -733,8 +737,8 @@ The general user story for updating client information is an epic that is furthe
 ### Use cases
 
 For all use cases below, the **System** is `RESIDEX` and the **Actor** is a `property agent`.
-`MSS` stands for Main Success Scenario. These use cases describe product requirements, including
-features planned for future iterations; they do not indicate that a feature is already implemented.
+`MSS` stands for Main Success Scenario. The MVP requirements describe features that are implemented. The section for requirements outside the MVP lists
+features that are planned but not yet implemented.
 
 A client can be Buyer, Seller, both or Not specified, derived from their properties.
 Two clients are duplicates when both their normalised names and
@@ -783,8 +787,9 @@ delete information, invalid input is rejected without changing that information.
 
 **MSS**
 
-1. Property agent requests to find clients by name, phone number, email, property location, derived intention or property transaction stage.
-   They supply keywords for contact/location fields, or one complete intention/stage value.
+1. Property agent requests to find clients by name, phone number, email, property location, derived intention,
+   property transaction stage, property type, price range or number of bedrooms.
+   They supply keywords for contact/location fields, or one complete value for the other fields.
 2. RESIDEX displays the matching clients and the number of matches.
 
    Use case ends.
@@ -854,16 +859,43 @@ delete information, invalid input is rejected without changing that information.
 
   Use case ends.
 
-**Use case: UC03 — Filter clients for follow-up**
+**Use case: UC12 — Undo and redo a change**
+
+**MSS**
+
+1. Property agent enters a command that changes client information, such as `delete`.
+2. RESIDEX applies the change.
+3. Property agent realises the change was a mistake and requests to undo it.
+4. RESIDEX restores the client information from before the change and shows all clients.
+5. Property agent optionally requests to redo the change.
+6. RESIDEX applies the change again and shows all clients.
+
+   Use case ends.
+
+**Extensions**
+
+* 3a. There is nothing to undo, for example because RESIDEX was only just started.
+
+  * 3a1. RESIDEX shows an error. No client information is changed.
+
+  Use case ends.
+
+* 5a. There is nothing to redo, for example because a new change was made after the undo.
+
+  * 5a1. RESIDEX shows an error. No client information is changed.
+
+  Use case ends.
+
+**Use case: UC03 — Filter clients**
 
 **MSS**
 
 1. Property agent requests to filter clients by criteria such as buyer/seller category,
-   property transaction stage, property requirements or priority.
+   property transaction stage, property type, price range or number of bedrooms.
 2. RESIDEX displays the clients satisfying the criteria.
 3. Property agent requests to view a listed client's profile.
-4. RESIDEX displays the client's details, including recorded requirements, each property's stage,
-   priority and associated property details.
+4. RESIDEX displays the client's details, including each property's type, location, price, number of bedrooms
+   and stage.
 
    Use case ends.
 
@@ -894,8 +926,8 @@ delete information, invalid input is rejected without changing that information.
 1. Property agent requests to list clients.
 2. RESIDEX displays the client list.
 3. Property agent requests to update a listed client, supplying the new information,
-   such as contact details, preferred location, property type, required number of bedrooms,
-   each property's transaction stage, priority or associated property details.
+   such as contact details, remark, or each property's type, location, price, number of bedrooms
+   or transaction stage.
 4. RESIDEX updates the client's information and displays the updated details.
 
    Use case ends.
@@ -1001,6 +1033,11 @@ delete information, invalid input is rejected without changing that information.
 
   Use case resumes at step 3.
 
+#### Requirements considered outside the MVP
+
+The following requirements were considered during ideation and are outside the current MVP.
+They are documented for future reference, without committing to their implementation.
+
 **Use case: UC07 — Review a client's information history**
 
 **MSS**
@@ -1055,11 +1092,6 @@ delete information, invalid input is rejected without changing that information.
 
   Use case resumes at step 3.
 
-#### Requirements considered outside the MVP
-
-The following requirements were considered during ideation and are outside the current MVP.
-They are documented for future reference, without committing to their implementation.
-
 **Use case: UC09 — Schedule a property viewing**
 
 **MSS**
@@ -1110,10 +1142,10 @@ They are documented for future reference, without committing to their implementa
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
+2.  Should be able to hold up to 1000 clients without noticeable sluggishness in performance for typical usage.
 3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+4.  Should store all data locally in a human-editable JSON file, and work without an internet connection.
+5.  Should not lose or overwrite existing client data when the data file cannot be loaded.
 
 ### Glossary
 
@@ -1126,22 +1158,23 @@ They are documented for future reference, without committing to their implementa
 * **Client intention**: The role derived from the client's property directions; no properties means Not specified, and both directions means Buyer / Seller.
 * **Client detail view**: The single-client display opened by `view INDEX`, showing every stored client and property field, including placeholders for missing optional values. The displayed client has index 1; `list` returns to all clients.
 * **Client index**: A client's one-based position in the currently displayed list, including search results or the detail view. It is not a permanent identifier.
-* **Client information history**: Previously recorded information or changes associated with a client, available for review.
-* **Client profile**: The stored information about a client, including contact details, requirements, priority and associated properties with their individual transaction stages.
+* **Client information history** _(planned, not yet implemented)_: Previously recorded information or changes associated with a client, available for review.
+* **Client profile**: The stored information about a client, including contact details, remark and associated properties with their individual transaction stages.
 * **Duplicate client**: A client whose normalised name and normalised phone number both match those of an existing client.
 * **Filtered client list**: The clients displayed after `find` or `view`. Each `find` searches all stored clients; `view` selects one displayed client. `list` restores all clients in stored order.
-* **Follow-up**: A planned next contact with a client. A follow-up may be upcoming or overdue.
+* **Follow-up** _(planned, not yet implemented)_: A planned next contact with a client. A follow-up may be upcoming or overdue.
 * **Intention**: Whether a client or property is on the buying or selling side.
-* **Internal note**: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
+* **Internal note** _(planned, not yet implemented)_: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
 * **Keyword**: A search term supplied after a `find` prefix. Whitespace separates keywords, and any matching keyword returns a client.
 * **Lead**: A potential client or transaction that the property agent is currently pursuing
 * **Mainstream OS**: Windows, Linux, Unix, or macOS.
 * **Minimum Viable Product (MVP)**: The initial version of RESIDEX containing the features selected to meet its core user needs.
 * **Prefix**: A field selector such as `n/` for a name or `l/` for a property location. The `find` command accepts exactly one selector.
-* **Priority**: An indication of a client's importance or urgency, assigned by the property agent to help decide whom to attend to first.
-* **Private client note**: A note attached to a client's profile whose contents are hidden from the client list.
+* **Priority** _(planned, not yet implemented)_: An indication of a client's importance or urgency, assigned by the property agent to help decide whom to attend to first.
+* **Private client note** _(planned, not yet implemented)_: A note attached to a client's profile whose contents are hidden from the client list.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 * **Property agent**: A user who manages buyers and sellers, and who prefers typing commands to using the mouse.
+* **Property bedrooms**: An optional whole number from 1 to 20 recording how many bedrooms a property has.
 * **Property entry**: A record in a client's ordered property list that stores information about an associated property.
 * **Property index**: The one-based position of a property entry within a selected client's property list. It is not a permanent identifier: deleting an earlier property shifts subsequent indexes down by one.
 * **Property intention**: The Buying or Selling action recorded for one property; these actions determine the client's derived role.
@@ -1150,14 +1183,16 @@ They are documented for future reference, without committing to their implementa
 * **Property price**: An optional, positive whole-dollar amount recorded for a property.
 * **Property type**: The HDB, Condominium or Landed category of a property entry.
 * **Property status**: A property's current recorded transaction stage: Not specified, Enquiring, Viewing, Negotiating, Closing or Completed. It can be corrected in either direction and is not a client-level field.
-* **Property viewing**: An appointment for a client to inspect a property
+* **Property viewing** _(planned, not yet implemented)_: An appointment for a client to inspect a property
 * **Purpose**: A client's buying or selling needs, represented by property intentions and summarised by the derived client role.
+* **Redo**: Re-applying a change that `undo` reversed.
 * **Remark**: Text recorded for a client using the `remark` command and displayed on the client card.
 * **Requirement**: A condition a client wants in a property, such as preferred location, property type, or number of bedrooms.
 * **Seller**: A client who wants to sell a property.
 * **Selling**: A property intention describing a client's interest in selling that property.
 * **Substring matching**: Matching text that contains a keyword anywhere, ignoring case; for example, `clementi` matches both `Clementi Ave 3` and `Woodlands Clementi`.
 * **Transaction**: The process of completing a property sale or rental
+* **Undo**: Reversing the most recent data-changing command. Up to 100 changes can be undone while RESIDEX is running.
 * **Viewing**: A property stage covering a buying client's assessment visit or the agent's visit to assess a seller's property before representation and marketing. It does not record an appointment date.
 
 
@@ -1177,19 +1212,17 @@ testers are expected to do more *exploratory* testing.
 
 1. Initial launch
 
-   1. Download the JAR file and copy it into an empty folder.
+   1. Download the JAR file and copy it into an empty folder that you can write to.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+   1. Open a terminal in that folder and run `java -jar Residex.jar`.<br>
+      Expected: The GUI opens with a set of sample clients. The window size may not be optimal.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar Residex.jar` from the same folder.<br>
        Expected: The most recent window size and location are retained.
-
-1. _{ more test cases … }_
 
 ### Viewing command help
 
@@ -1617,22 +1650,64 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
    Expected: All clients, property prices, statuses and derived roles load. After the next successful command
    saves the file, the obsolete client field is absent and property values are unchanged.
 
-### Deleting a person
+### Deleting a client
 
-1. Deleting a person while all persons are being shown
+1. Deleting a client while all clients are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Prerequisites: List all clients using the `list` command, with multiple clients in the list.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The first client is deleted from the list. The status message shows the deleted client's details.
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No client is deleted. The status message shows error details.
 
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
 
-1. _{ more test cases … }_
+### Undoing and redoing changes
+
+1. Undoing and redoing a deleted client
+
+   1. Prerequisites: Enter `list` and note the first client's name.
+
+   1. Enter `delete 1`, then `undo`.<br>
+      Expected: The first client is back in their original position, and all clients are shown.
+
+   1. Enter `redo`.<br>
+      Expected: The client is deleted again.
+
+1. Undoing property and client changes
+
+   1. Enter `addp 1 t/HDB i/Buying l/Clementi`, `editp 1 1 l/Bishan` and `remark 1 r/hello`.
+      Then enter `undo` three times.<br>
+      Expected: Each `undo` reverses one command, newest first. After the third, the client has no property and no remark.
+
+   1. Enter `redo` three times.<br>
+      Expected: The three changes are re-applied in order.
+
+1. Commands that are not undoable steps
+
+   1. Enter `list`, `find n/a`, `view 1` and `help`, then `undo`.<br>
+      Expected: These commands do not create undo steps. `undo` reverses the last data-changing command, or reports
+      "There is nothing to undo." if there was none since launch.
+
+   1. Enter `edit 1 n/<the first client's current name>`, then `undo`.<br>
+      Expected: An edit that changes nothing does not create an undo step.
+
+1. Errors and the redo history
+
+   1. Immediately after launching RESIDEX, enter `undo` and `redo`.<br>
+      Expected: "There is nothing to undo." and "There is nothing to redo." Nothing changes.
+
+   1. Enter `delete 1`, `undo`, then `remark 1 r/new`, then `redo`.<br>
+      Expected: `redo` reports "There is nothing to redo.", because the new change cleared the redo history.
+
+1. Saving and restarting
+
+   1. Enter `delete 1`, `undo`, then close and relaunch RESIDEX.<br>
+      Expected: The restored client is still present. Enter `undo`: it reports that there is nothing to undo,
+      because the undo history is not saved.
 
 ### Saving data
 

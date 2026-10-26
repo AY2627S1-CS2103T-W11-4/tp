@@ -6,7 +6,7 @@
 
 # RESIDEX User Guide
 
-RESIDEX is a **desktop application for property agents managing buyers and sellers, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, RESIDEX can help you manage contacts faster than traditional GUI applications.
+RESIDEX is a **desktop application for property agents managing buyers and sellers, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, RESIDEX can help you manage clients faster than traditional GUI applications.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -23,6 +23,8 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 1. Copy the file to the folder you want to use as the _home folder_ for RESIDEX.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar Residex.jar`.<br>
+   Launch RESIDEX from the terminal like this rather than by double-clicking the JAR file. Use a folder that you are allowed
+   to write to, because RESIDEX creates a `data` folder next to where you run it to save your clients.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
    ![RESIDEX client list with contact details, derived roles and property summaries](images/Ui.png)
 
@@ -31,13 +33,13 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list` : Lists all clients.
 
    * `view 1` : Shows all fields of the first displayed client. Use `list` to return to all clients.
 
    * `add n/John Doe p/98765432 e/johnd@example.com` : Adds a client named `John Doe` with intention Not specified.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+   * `delete 3` : Deletes the 3rd client shown in the current list.
 
    * `exit` : Exits the app.
 
@@ -77,7 +79,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, and `exit`, are ignored.<br>
+* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `undo`, `redo` and `exit`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -194,18 +196,19 @@ Edits an existing client in RESIDEX.
 
 Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`
 
-* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
+* Edits the client at the specified `INDEX`. The index refers to the index number shown in the displayed client list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * Client edits preserve all property entries.
   Use `editp` to change a property.
+* After a successful `edit`, the list is reset to show all clients.
 * Client intention cannot be edited directly. Any `i/` field is rejected without changing the client.
 * The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
   Changing only the capitalisation or spacing of the selected client's own name is allowed.
 
 Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
+*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st client to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 2 n/Betsy Crower` Edits the name of the 2nd client to be `Betsy Crower`.
 
 ### Managing a client's properties
 
@@ -231,10 +234,10 @@ Status is independent of the derived client role.
 * Location is nonblank text, for example `Clementi Ave 3`.
   Surrounding whitespace is removed; capitalisation and internal spaces are preserved.
 * `pr/PRICE` is the property's price in whole Singapore dollars, recorded on that property.
-* `bd/BEDROOMS` is the property's number of bedrooms, a whole number from 1 to 20 without leading zeros.
-  For a Buying property, it records the asking or current listing price; for a Seller property, the client's asking price.
+  For a Buying property, it records the asking or current listing price; for a Selling property, the client's asking price.
   A supplied price must be positive, no greater than `9223372036854775807`, and contain no commas, decimals or leading zeros.
   Use `pr/` rather than `p/` for property prices.
+* `bd/BEDROOMS` is the property's number of bedrooms, a whole number from 1 to 20 without leading zeros.
 * Whitespace-separated words ending in `/` are treated as field prefixes in property commands.
   Use only `t/`, `i/`, `l/`, `pr/`, `bd/` and `s/`; do not include prefix-like text such as `MRT/Exit` in a location.
 
@@ -331,9 +334,9 @@ Examples:
 * `editp 1 2 s/Negotiating` changes only its transaction stage.
 * `editp 1 2 s/unspecified` resets its stage without removing the property.
 
-### Locating persons by name, email, phone, location, intention, property status, type, price or bedrooms: `find`
+### Locating clients by name, email, phone, location, intention, property status, type, price or bedrooms: `find`
 
-Finds contacts using exactly one selected search field.
+Finds clients using exactly one selected search field.
 
 Format: `find FIELD/KEYWORD [MORE_KEYWORDS]`
 
@@ -355,7 +358,7 @@ Property bedrooms | `bd/`
   Long search field aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
 * Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
-* Multiple keywords use `OR` matching: a contact is returned if any keyword matches the selected search field.
+* Multiple keywords use `OR` matching: a client is returned if any keyword matches the selected search field.
 * Location searches check all property entries attached to each client. A client appears once if any location matches;
   clients without property entries do not match. Enter keywords without quotation marks.
 * Spaces separate location keywords. A multiword location search matches any of its keywords independently;
@@ -369,7 +372,7 @@ Property bedrooms | `bd/`
 * Name, email, phone and location searches restore normal client order. `list` also restores that order.
   Intention sorting does not change stored order.
 * Commands using client indexes always act on the currently displayed order, including sorted intention results.
-* Only the selected search field is searched. Each search filters the entire contact list, replacing any previous filter.
+* Only the selected search field is searched. Each search filters the entire client list, replacing any previous filter.
 
 * Status searches require exactly one complete stage: `unspecified`, `enquiring`, `viewing`, `negotiating`, `closing` or `completed`.
   A client matches if **any existing property** has that stage and appears only once even if several properties match.
@@ -384,7 +387,7 @@ Property bedrooms | `bd/`
   has exactly that number of bedrooms. Properties without a recorded number of bedrooms never match.
 * Type, price and bedrooms results retain normal client order.
 * Status results retain normal client order. Client indexes refer to the currently displayed results.
-  Use `list` to show all contacts again. Searches do not modify stored contacts.
+  Use `list` to show all clients again. Searches do not modify stored clients.
 
 Examples:
 
@@ -416,14 +419,14 @@ Deletes the specified client from RESIDEX.
 
 Format: `delete INDEX`
 
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
+* Deletes the client at the specified `INDEX`.
+* The index refers to the index number shown in the displayed client list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * Use `undo` to bring back a client that was deleted by mistake.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd client in RESIDEX.
-* `find n/Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+* `find n/Betsy` followed by `delete 1` deletes the 1st client in the results of the `find` command.
 
 ### Setting or removing a remark: `remark`
 
@@ -434,6 +437,7 @@ Format: `remark INDEX r/[REMARK]`
 * `INDEX` is a positive integer referring to the client in the currently displayed list, including search results.
 * The supplied remark replaces the existing remark. Enter `r/` without text to remove it.
 * Contact details, intention and properties are kept.
+* After a successful `remark`, the list is reset to show all clients.
 
 Examples:
 
@@ -497,10 +501,6 @@ If RESIDEX cannot load an existing client data file, it shows an error and close
 2. Repair the invalid data or replace the file with a valid backup, then restart RESIDEX.
 3. If you want to start fresh instead, move or rename the failed file before restarting. RESIDEX will start with sample clients, as it does when no data file exists. Keep the original file if you want to recover its contents later.
 
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## FAQ
@@ -508,12 +508,19 @@ _Details coming soon ..._
 **Q**: How do I transfer my data to another computer?<br>
 **A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous RESIDEX home folder.
 
+**Q**: I deleted or changed a client by mistake. Can I get it back?<br>
+**A**: Yes. Enter `undo` straight away to reverse the last change, and `redo` to apply it again. The last 100 changes can be undone, but not after you close RESIDEX.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+2. **Names** may contain only letters, digits and spaces, so names with hyphens or apostrophes (for example `Ng Wei-Ling`) cannot be entered.
+3. **Phone numbers** must have at least 3 digits, but there is no upper limit on their length.
+4. **Property locations** cannot contain a word followed by a slash, such as `N/A`, because it is read as a field prefix. Write `NA` instead. Numbers such as `1/2` are fine.
+5. **Undo history** is kept only while RESIDEX is running. After you close it, earlier changes cannot be undone.
+6. **If you minimize the Help Window** and then run the `help` command (or use the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -534,3 +541,4 @@ Action     | Format, Examples
 **Undo**   | `undo`
 **Redo**   | `redo`
 **Help**   | `help`
+**Exit**   | `exit`
