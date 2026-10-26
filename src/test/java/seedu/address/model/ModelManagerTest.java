@@ -109,4 +109,44 @@ public class ModelManagerTest {
         differentUserPrefs.setGuiSettings(new GuiSettings(1, 2, 3, 4));
         assertFalse(modelManager.equals(new ModelManager(addressBook, differentUserPrefs)));
     }
+
+    @Test
+    public void canUndoAndRedo_newModel_returnsFalse() {
+        assertFalse(modelManager.canUndoAddressBook());
+        assertFalse(modelManager.canRedoAddressBook());
+    }
+
+    @Test
+    public void undoAndRedoAddressBook_afterCommit_restoresDataAndDisplayedList() {
+        modelManager.addPerson(ALICE);
+        modelManager.commitAddressBook();
+        modelManager.addPerson(BENSON);
+        modelManager.commitAddressBook();
+        assertTrue(modelManager.canUndoAddressBook());
+
+        modelManager.undoAddressBook();
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+        assertEquals(List.of(ALICE), modelManager.getAddressBook().getPersonList());
+        assertTrue(modelManager.canRedoAddressBook());
+
+        modelManager.redoAddressBook();
+        assertEquals(List.of(ALICE, BENSON), modelManager.getFilteredPersonList());
+        assertFalse(modelManager.canRedoAddressBook());
+    }
+
+    @Test
+    public void undoAddressBook_withActiveFilter_keepsFilterApplied() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.commitAddressBook();
+        modelManager.deletePerson(ALICE);
+        modelManager.commitAddressBook();
+        modelManager.updateFilteredPersonList(
+                new NameContainsKeywordsPredicate(List.of(BENSON.getName().fullName.split(" ")[0])));
+
+        modelManager.undoAddressBook();
+
+        assertEquals(List.of(BENSON), modelManager.getFilteredPersonList());
+        assertEquals(List.of(ALICE, BENSON), modelManager.getAddressBook().getPersonList());
+    }
 }

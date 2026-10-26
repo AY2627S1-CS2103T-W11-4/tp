@@ -24,7 +24,7 @@ import seedu.address.model.person.Person;
 public class ModelManager implements Model {
     private static final Logger logger = LogsCenter.getLogger(ModelManager.class);
 
-    private final AddressBook addressBook;
+    private final VersionedAddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
@@ -39,7 +39,7 @@ public class ModelManager implements Model {
 
         logger.fine("Initializing with RESIDEX client data: " + addressBook + " and user prefs " + userPrefs);
 
-        this.addressBook = new AddressBook(addressBook);
+        this.addressBook = new VersionedAddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
         // Invalidation precedes transformation change events, so sorting sees current source positions.
         this.addressBook.getPersonList().addListener((InvalidationListener) observable -> sourcePositions.clear());
@@ -80,6 +80,31 @@ public class ModelManager implements Model {
     @Override
     public ReadOnlyAddressBook getAddressBook() {
         return addressBook;
+    }
+
+    @Override
+    public void commitAddressBook() {
+        addressBook.commit();
+    }
+
+    @Override
+    public boolean canUndoAddressBook() {
+        return addressBook.canUndo();
+    }
+
+    @Override
+    public boolean canRedoAddressBook() {
+        return addressBook.canRedo();
+    }
+
+    @Override
+    public void undoAddressBook() {
+        addressBook.undo();
+    }
+
+    @Override
+    public void redoAddressBook() {
+        addressBook.redo();
     }
 
     @Override
