@@ -6,7 +6,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_PRICE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_TYPE;
 
 import java.util.List;
 
@@ -18,7 +20,10 @@ import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
+import seedu.address.model.person.PropertyPriceInRangePredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
+import seedu.address.model.person.PropertyTypeMatchesPredicate;
+import seedu.address.model.property.PropertyPrice;
 
 /**
  * Parses input arguments and creates a new FindCommand object.
@@ -76,6 +81,27 @@ public class FindCommandParser implements Parser<FindCommand> {
             }
         }
 
+        if (isTypeSelector(selector)) {
+            List<String> keywords = parseKeywords(keywordArgs);
+            if (keywords.size() != 1) {
+                throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+            }
+            try {
+                return new FindCommand(new PropertyTypeMatchesPredicate(
+                        PropertyParserUtil.parseType(keywords.get(0))));
+            } catch (ParseException e) {
+                throw new ParseException(FindCommand.MESSAGE_INVALID_TYPE, e);
+            }
+        }
+
+        if (isPriceSelector(selector)) {
+            List<String> keywords = parseKeywords(keywordArgs);
+            if (keywords.size() != 1) {
+                throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+            }
+            return new FindCommand(parsePriceRange(keywords.get(0)));
+        }
+
         if (isEmailSelector(selector)) {
             return new FindCommand(new EmailContainsKeywordsPredicate(parseKeywords(keywordArgs)));
         }
@@ -93,6 +119,35 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
+    }
+
+    /**
+     * Parses a price range such as {@code 500000-800000}, {@code 500000-} or {@code -800000}.
+     *
+     * @throws ParseException if the range is malformed, has a non-price bound, or has a minimum above the maximum.
+     */
+    private PropertyPriceInRangePredicate parsePriceRange(String range) throws ParseException {
+        String[] bounds = range.split("-", -1);
+        if (bounds.length != 2 || (bounds[0].isEmpty() && bounds[1].isEmpty())) {
+            throw new ParseException(FindCommand.MESSAGE_INVALID_PRICE_RANGE);
+        }
+        PropertyPrice minimum = parsePriceBound(bounds[0]);
+        PropertyPrice maximum = parsePriceBound(bounds[1]);
+        try {
+            return new PropertyPriceInRangePredicate(minimum, maximum);
+        } catch (IllegalArgumentException e) {
+            throw new ParseException(FindCommand.MESSAGE_INVALID_PRICE_RANGE, e);
+        }
+    }
+
+    private PropertyPrice parsePriceBound(String bound) throws ParseException {
+        if (bound.isEmpty()) {
+            return null;
+        }
+        if (!PropertyPrice.isValidPrice(bound)) {
+            throw new ParseException(FindCommand.MESSAGE_INVALID_PRICE_RANGE);
+        }
+        return new PropertyPrice(bound);
     }
 
     /**
@@ -129,11 +184,20 @@ public class FindCommandParser implements Parser<FindCommand> {
 
     private boolean isSelector(String token) {
         return isNameSelector(token) || isEmailSelector(token) || isPhoneSelector(token)
-                || isIntentionSelector(token) || isLocationSelector(token) || isStatusSelector(token);
+                || isIntentionSelector(token) || isLocationSelector(token) || isStatusSelector(token)
+                || isTypeSelector(token) || isPriceSelector(token);
     }
 
     private boolean isIntentionSelector(String token) {
         return token.equalsIgnoreCase(PREFIX_INTENTION.getPrefix());
+    }
+
+    private boolean isTypeSelector(String token) {
+        return token.equalsIgnoreCase(PREFIX_PROPERTY_TYPE.getPrefix());
+    }
+
+    private boolean isPriceSelector(String token) {
+        return token.equalsIgnoreCase(PREFIX_PROPERTY_PRICE.getPrefix());
     }
 
     private boolean isStatusSelector(String token) {
