@@ -16,8 +16,12 @@ import seedu.address.model.person.IntentionMatchesPredicate;
 import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
+import seedu.address.model.person.PropertyPriceInRangePredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
+import seedu.address.model.person.PropertyTypeMatchesPredicate;
+import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyStatus;
+import seedu.address.model.property.PropertyType;
 
 public class FindCommandParserTest {
 
@@ -367,5 +371,54 @@ public class FindCommandParserTest {
                 "s/viewing/foo", "s/viewing x/", "n/Alice status/viewing")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_INVALID_PROPERTY);
         }
+    }
+
+    @Test
+    public void parse_typeSelectors_returnsTypeFindCommand() {
+        for (String selector : List.of("t/", "T/")) {
+            assertParseSuccess(parser, selector + "HDB",
+                    new FindCommand(new PropertyTypeMatchesPredicate(PropertyType.HDB)));
+            assertParseSuccess(parser, " " + selector + " condominium ",
+                    new FindCommand(new PropertyTypeMatchesPredicate(PropertyType.CONDOMINIUM)));
+            assertParseSuccess(parser, selector + "l",
+                    new FindCommand(new PropertyTypeMatchesPredicate(PropertyType.LANDED)));
+        }
+    }
+
+    @Test
+    public void parse_invalidType_throwsParseException() {
+        assertParseFailure(parser, "t/villa", FindCommand.MESSAGE_INVALID_TYPE);
+        assertParseFailure(parser, "t/", FindCommand.MESSAGE_MISSING_KEYWORD);
+        assertParseFailure(parser, "t/HDB Landed",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "t/HDB n/alice", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+    }
+
+    @Test
+    public void parse_priceRanges_returnsPriceFindCommand() {
+        PropertyPrice low = new PropertyPrice("500000");
+        PropertyPrice high = new PropertyPrice("800000");
+        for (String selector : List.of("pr/", "PR/")) {
+            assertParseSuccess(parser, selector + "500000-800000",
+                    new FindCommand(new PropertyPriceInRangePredicate(low, high)));
+            assertParseSuccess(parser, " " + selector + " 500000- ",
+                    new FindCommand(new PropertyPriceInRangePredicate(low, null)));
+            assertParseSuccess(parser, selector + "-800000",
+                    new FindCommand(new PropertyPriceInRangePredicate(null, high)));
+            assertParseSuccess(parser, selector + "500000-500000",
+                    new FindCommand(new PropertyPriceInRangePredicate(low, low)));
+        }
+    }
+
+    @Test
+    public void parse_invalidPriceRanges_throwsParseException() {
+        for (String range : List.of("-", "500000", "800000-500000", "abc", "1,000-2,000", "0-500", "05-100",
+                "100-200-300", "1.5-2", "500000--800000", "a-b")) {
+            assertParseFailure(parser, "pr/" + range, FindCommand.MESSAGE_INVALID_PRICE_RANGE);
+        }
+        assertParseFailure(parser, "pr/", FindCommand.MESSAGE_MISSING_KEYWORD);
+        assertParseFailure(parser, "pr/1-2 3-4",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "pr/1-2 s/viewing", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
     }
 }

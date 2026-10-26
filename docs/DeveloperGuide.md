@@ -187,7 +187,7 @@ examples parse as the intended commands without executing them or starting JavaF
 
 ### Find command
 
-`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, `i/` or `s/`.
+`FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, `i/`, `s/`, `t/` or `pr/`.
 For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
 Name, email, phone, and location searches use case-insensitive substring matching with OR semantics across keywords.
 `LocationContainsKeywordsPredicate` checks every entry in `Person#getProperties()` and returns a client once if any
@@ -230,6 +230,16 @@ Multiple matching properties still produce one client result.
 The predicate bases both equality and hashing on the requested status.
 
 Status results retain source order through the displayed list; a status query clears the intention comparator.
+
+Type and price searches each accept exactly one value. `find t/` reuses `PropertyParserUtil.parseType()`, so the same
+tokens as `addp` are accepted (`HDB`, `Condominium`, `Landed`, or `h`, `c`, `l`), ignoring case.
+`PropertyTypeMatchesPredicate` matches a client if any property has that type.
+`find pr/` takes a range of whole-dollar amounts: `MIN-MAX`, `MIN-` or `-MAX`. `FindCommandParser` splits it on the
+single `-`, validates each bound with `PropertyPrice.isValidPrice()`, and rejects empty, malformed or reversed ranges
+with `FindCommand#MESSAGE_INVALID_PRICE_RANGE`.
+`PropertyPriceInRangePredicate` compares the inclusive bounds with each property's price. Properties without a price
+never match, and a client appears once even if several properties match.
+Both predicates clear the intention comparator, so their results use normal client order.
 Replacing a property re-evaluates the active status predicate, so clients may leave the displayed results.
 `PropertyStatusSearchIntegrationTest` checks stages, selector coexistence, saved order and displayed-index targeting.
 
@@ -1519,6 +1529,46 @@ Run these steps in order. Client indexes always refer to the current displayed l
 
 The automated logging test checks FINE diagnostics for successful status changes and their absence for unchanged,
 unrelated or rejected edits. Normal INFO logging does not show these diagnostics.
+
+### Finding clients by property type and price
+
+1. Preparing the data
+
+   1. Enter `add n/Type Test p/91008001 e/typetest@example.com`, then `find p/91008001`.<br>
+      Expected: One client is shown at index 1.
+
+   1. Enter `addp 1 t/HDB i/Buying l/Clementi pr/600000`, then `addp 1 t/Landed i/Selling l/Sentosa pr/3000000`,
+      then `addp 1 t/Condominium i/Buying l/Bishan`.<br>
+      Expected: Three properties are added. The Bishan condominium has no price.
+
+1. Searching by type
+
+   1. Enter `list`, then `find t/HDB` and `find T/h`.<br>
+      Expected: Type Test is listed once for each search.
+
+   1. Enter `find t/Landed`, `find t/condominium` and `find t/c`.<br>
+      Expected: Type Test is listed each time. Searches for a type that no client has show no results.
+
+   1. Try `find t/`, `find t/villa`, `find t/HDB Landed` and `find t/HDB n/Type`.<br>
+      Expected: Each is rejected with an error and the displayed list is unchanged.
+
+1. Searching by price
+
+   1. Enter `find pr/500000-700000`.<br>
+      Expected: Type Test is listed, because of the $600,000 HDB. The list uses normal client order.
+
+   1. Enter `find pr/2000000-`, then `find pr/-650000`.<br>
+      Expected: Type Test is listed for both. Try `find pr/700000-800000`: Type Test is not listed.
+
+   1. Enter `find pr/600000-600000`.<br>
+      Expected: Type Test is listed, because both bounds are inclusive.
+
+   1. Try `find pr/`, `find pr/-`, `find pr/800000-500000`, `find pr/abc`, `find pr/1,000-2,000` and `find pr/500000`.<br>
+      Expected: Each is rejected with an error and the displayed list is unchanged.
+
+   1. Enter `addp 1 t/HDB i/Buying l/Yishun`, then `find pr/1-`.<br>
+      Expected: The property without a price never matches by itself; Type Test appears once because of its priced
+      properties.
 
 ### Rejecting removed client budgets
 

@@ -327,7 +327,7 @@ Examples:
 * `editp 1 2 s/Negotiating` changes only its transaction stage.
 * `editp 1 2 s/unspecified` resets its stage without removing the property.
 
-### Locating persons by name, email, phone, location, intention or property status: `find`
+### Locating persons by name, email, phone, location, intention, property status, type or price: `find`
 
 Finds contacts using exactly one selected search field.
 
@@ -341,6 +341,8 @@ Phone | `p/`
 Property location | `l/`
 Intention | `i/`
 Property status | `s/`
+Property type | `t/`
+Property price | `pr/`
 
 * Prefix letters and keywords are case-insensitive; `N/` and `n/` have the same effect.
 * Specify exactly one short prefix immediately after `find`, with `/` immediately after the letter.
@@ -367,6 +369,13 @@ Property status | `s/`
 * Status searches require exactly one complete stage: `unspecified`, `enquiring`, `viewing`, `negotiating`, `closing` or `completed`.
   A client matches if **any existing property** has that stage and appears only once even if several properties match.
   A client with no properties does **not** match `find s/unspecified`.
+* Type searches require exactly one value: `HDB`, `Condominium` or `Landed` (or `h`, `c`, `l`), in any capitalization.
+  A client matches if **any property** has that type, and appears only once.
+* Price searches require exactly one range of whole-dollar amounts, without commas: `500000-800000` (from and including
+  $500,000 up to and including $800,000), `500000-` (at least $500,000) or `-800000` (at most $800,000).
+  The minimum must not be above the maximum. A client matches if **any property** has a price within the range.
+  Properties without a price never match.
+* Type and price results retain normal client order.
 * Status results retain normal client order. Client indexes refer to the currently displayed results.
   Use `list` to show all contacts again. Searches do not modify stored contacts.
 
@@ -385,6 +394,9 @@ Examples:
 * `find i/both` lists Buyer / Seller clients only.
 * `find s/viewing` lists clients with at least one property at Viewing.
 * `find S/UNSPECIFIED` lists clients with at least one property whose stage is Not specified.
+* `find t/HDB` lists clients with at least one HDB property.
+* `find pr/500000-800000` lists clients with a property priced from $500,000 to $800,000.
+* `find pr/-800000` lists clients with a property priced at $800,000 or less.
 
 The following example shows `find n/Alex David` using the sample clients:
 
@@ -478,7 +490,7 @@ Action     | Format, Examples
 **Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]`<br> e.g., `editp 1 2 l/Toa Payoh`
-**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`
+**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`, `find t/HDB`, `find pr/500000-800000`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
