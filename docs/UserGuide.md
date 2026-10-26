@@ -231,11 +231,12 @@ Status is independent of the derived client role.
 * Location is nonblank text, for example `Clementi Ave 3`.
   Surrounding whitespace is removed; capitalisation and internal spaces are preserved.
 * `pr/PRICE` is the property's price in whole Singapore dollars, recorded on that property.
+* `bd/BEDROOMS` is the property's number of bedrooms, a whole number from 1 to 20 without leading zeros.
   For a Buying property, it records the asking or current listing price; for a Seller property, the client's asking price.
   A supplied price must be positive, no greater than `9223372036854775807`, and contain no commas, decimals or leading zeros.
   Use `pr/` rather than `p/` for property prices.
 * Whitespace-separated words ending in `/` are treated as field prefixes in property commands.
-  Use only `t/`, `i/`, `l/`, `pr/` and `s/`; do not include prefix-like text such as `MRT/Exit` in a location.
+  Use only `t/`, `i/`, `l/`, `pr/`, `bd/` and `s/`; do not include prefix-like text such as `MRT/Exit` in a location.
 
 #### Property transaction stages
 
@@ -276,16 +277,18 @@ Older releases may reject the migrated file. Before upgrading, back up
 
 ### Adding a property: `addp`
 
-Format: `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]`
+Format: `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`
 
 Type, property intention and location are required.
 Omit `pr/` if the price is unknown; a supplied empty `pr/` is rejected when adding.
+Omit `bd/` if the number of bedrooms is unknown; a supplied empty `bd/` is also rejected when adding.
 Omit `s/` to default to Not specified, or supply one of the stages above. Empty `s/` is rejected.
 The new property is appended to the selected client's list.
 
 Examples:
 
 * `addp 1 t/HDB i/Buying l/Clementi pr/800000` adds a property with an $800,000 price to the first displayed client.
+* `addp 1 t/c i/Buying l/Bishan bd/3` adds a 3-bedroom condominium entry.
 * `addp 1 t/c i/Selling l/Bishan` adds a condominium entry without a price to the same client.
 * `ADDP 1 T/l I/buying L/Bukit Timah PR/3200000` adds a landed property using mixed-case syntax.
 * `addp 1 t/HDB i/Buying l/Clementi s/Viewing` records a property at the Viewing stage.
@@ -304,11 +307,11 @@ The former property 3, if any, becomes property 2.
 
 ### Editing a property: `editp`
 
-Format: `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]`
+Format: `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`
 
 * Supply at least one field.
   Omitted fields keep their current values.
-* Empty `pr/` removes the optional price.
+* Empty `pr/` removes the optional price. Empty `bd/` removes the number of bedrooms.
   Empty `t/`, `i/`, `l/` and `s/` are rejected.
 * Omitted `s/` preserves the current status. Use `s/unspecified` to reset it to Not specified.
   Status-only edits and edits combining status with other fields are supported.
@@ -324,6 +327,7 @@ Examples:
 * `editp 1 2 i/Buying` changes only its property intention, preserving its type, location, price and position.
 * `editp 1 2 t/Landed i/Selling pr/3200000` changes its type, property intention and price together.
 * `editp 1 2 pr/` removes its price while preserving its location and other fields.
+* `editp 1 2 bd/4` sets property 2 to 4 bedrooms, and `editp 1 2 bd/` removes the number of bedrooms.
 * `editp 1 2 s/Negotiating` changes only its transaction stage.
 * `editp 1 2 s/unspecified` resets its stage without removing the property.
 
@@ -504,9 +508,9 @@ Action     | Format, Examples
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000`
+**Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000 bd/3`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
-**Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]`<br> e.g., `editp 1 2 l/Toa Payoh`
+**Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `editp 1 2 l/Toa Payoh`, `editp 1 2 bd/4`
 **Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`

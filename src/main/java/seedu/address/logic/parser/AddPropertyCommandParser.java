@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_BEDROOMS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_PRICE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
@@ -11,6 +12,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.AddPropertyCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyStatus;
 
@@ -33,10 +35,13 @@ public class AddPropertyCommandParser implements Parser<AddPropertyCommand> {
         PropertyStatus status = fields.getValue(PREFIX_PROPERTY_STATUS).isPresent()
                 ? PropertyParserUtil.parseStatus(fields.getValue(PREFIX_PROPERTY_STATUS).get())
                 : PropertyStatus.UNSPECIFIED;
+        PropertyBedrooms bedrooms = fields.getValue(PREFIX_PROPERTY_BEDROOMS).isPresent()
+                ? PropertyParserUtil.parseBedrooms(fields.getValue(PREFIX_PROPERTY_BEDROOMS).get()) : null;
         Property property = new Property(
                 PropertyParserUtil.parseType(fields.getValue(PREFIX_PROPERTY_TYPE).get()),
                 PropertyParserUtil.parseIntention(fields.getValue(PREFIX_INTENTION).get()),
-                PropertyParserUtil.parseLocation(fields.getValue(PREFIX_PROPERTY_LOCATION).get()), price, status);
+                PropertyParserUtil.parseLocation(fields.getValue(PREFIX_PROPERTY_LOCATION).get()), price, status,
+                bedrooms);
         return new AddPropertyCommand(clientIndex, property);
     }
 }

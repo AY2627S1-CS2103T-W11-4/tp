@@ -305,6 +305,7 @@ Each entry describes one client's interest in buying or selling a property.
 | Intention | `PropertyIntention` | Required: `BUYING` or `SELLING`. `parse` accepts `Buying` or `Selling`, ignoring case and surrounding whitespace. Client-role values are invalid. Property directions determine the derived `ClientIntention`. |
 | Location | `PropertyLocation` | Required, nonblank text. Surrounding whitespace is removed; case and internal whitespace are preserved. |
 | Price | `PropertyPrice` | Optional. A supplied price must be a positive whole-dollar SGD amount up to `Long.MAX_VALUE`, without commas, decimals, leading zeros, or surrounding whitespace. |
+| Bedrooms | `PropertyBedrooms` | Optional. A whole number from 1 to 20 without leading zeros, a decimal point or a sign. `getBedrooms()` returns `Optional.empty()` when unknown. |
 | Status | `PropertyStatus` | Always non-null internally. The six tokens ignore case and outer whitespace; omitted creation status defaults to `UNSPECIFIED`. Empty input is invalid. |
 
 Use the three-argument `Property` constructor when the price is unknown, or pass `null` as the fourth argument.
@@ -358,20 +359,20 @@ identity as determined by `isSamePerson()`.
 
 `AddressBookParser` normalises command words with `Locale.ROOT`, making command words case-insensitive.
 `AddPropertyCommandParser`, `DeletePropertyCommandParser` and `EditPropertyCommandParser` parse the three property commands.
-`PropertyParserUtil` recognises `t/`, `i/`, `l/`, `pr/` and `s/` case-insensitively without changing field values.
+`PropertyParserUtil` recognises `t/`, `i/`, `l/`, `pr/`, `bd/` and `s/` case-insensitively without changing field values.
 Unknown and repeated fields are rejected, including repeated prefixes with different capitalisation.
 Whitespace-separated alphabetic words ending in `/` are reserved as prefixes and cannot be used as literal location text.
 Property type aliases and Buying/Selling values ignore case in property commands.
 `PropertyParserUtil.parseIntention` delegates to `PropertyIntention.parse` and translates invalid values into
 `ParseException`. `Buyer`, `Seller`, `Both` and blank values are rejected; legacy values are accepted only by storage.
 
-`addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [s/STATUS]` requires a type, intention and nonblank location.
+`addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]` requires a type, intention and nonblank location.
 The parser validates every field before constructing a complete `Property`; an omitted price is unknown.
-An omitted status defaults to `UNSPECIFIED`. Supplied empty price or status is invalid when adding.
+An omitted status defaults to `UNSPECIFIED`, and omitted bedrooms are unknown. A supplied empty price, bedrooms or status is invalid when adding.
 `delp CLIENT_INDEX PROPERTY_INDEX` accepts exactly two positive indexes and no field arguments.
-`editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [s/STATUS]` requires at least one field.
-`EditPropertyDescriptor` copies the requested edits and distinguishes an omitted price from an explicitly cleared price.
-An empty `pr/` clears the price on edit, while empty required fields are rejected.
+`editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [bd/BEDROOMS] [s/STATUS]` requires at least one field.
+`EditPropertyDescriptor` copies the requested edits and distinguishes an omitted price or bedroom count from an explicitly cleared one.
+An empty `pr/` clears the price and an empty `bd/` clears the bedrooms on edit, while empty required fields are rejected.
 Omitted `s/` preserves status; empty `s/` is rejected. `s/unspecified` explicitly resets the stage.
 The descriptor copies a supplied non-null status and accepts status-only or combined edits.
 Invalid status tokens are translated from `IllegalArgumentException` to `ParseException` with the cause preserved.
@@ -429,6 +430,7 @@ Each saved client has a `properties` array. `JsonAdaptedProperty` stores `type`,
 `price` as a whole-dollar string or `null` when unknown, and `status` as a canonical enum name such as `VIEWING`.
 Property order and duplicate entries survive saving and loading. A missing `price` also loads as unknown.
 Missing or null legacy status loads as `UNSPECIFIED`; otherwise the status must be a recognised token.
+`bedrooms` is saved as a whole-number string, or `null` when unknown; a missing `bedrooms` field also loads as unknown, so older files still open. An invalid saved value is rejected like any other invalid property field.
 The adapter retains its four-argument convenience constructor for old callers and uses a five-field JSON creator.
 New saves always write a status for each property. Loading alone does not rewrite the file.
 
@@ -1289,6 +1291,9 @@ Run these steps in order; client indexes below refer to the filtered list.
 
    1. Enter `editp 1 2 pr/`.<br>
       Expected: Property 2's price is removed; all other fields remain unchanged.
+
+   1. Enter `editp 1 2 bd/3`, then `editp 1 2 bd/`.<br>
+      Expected: Property 2 shows 3 bedrooms, then the bedrooms are removed. Try `bd/0`, `bd/21` and `bd/abc`; each is rejected and nothing changes.
 
    1. Enter `editp 1 2 i/BUYING`, then `editp 1 2 i/sElLiNg`.<br>
       Expected: Property 2 changes from Selling to Buying and back to Selling.

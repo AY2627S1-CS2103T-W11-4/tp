@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_BEDROOMS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_PRICE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
@@ -35,6 +36,10 @@ public class EditPropertyCommandParser implements Parser<EditPropertyCommand> {
         if (fields.getValue(PREFIX_PROPERTY_PRICE).isPresent()) {
             String value = fields.getValue(PREFIX_PROPERTY_PRICE).get();
             descriptor.setPrice(value.isEmpty() ? null : PropertyParserUtil.parsePrice(value));
+        }
+        if (fields.getValue(PREFIX_PROPERTY_BEDROOMS).isPresent()) {
+            String value = fields.getValue(PREFIX_PROPERTY_BEDROOMS).get();
+            descriptor.setBedrooms(value.isEmpty() ? null : PropertyParserUtil.parseBedrooms(value));
         }
         if (fields.getValue(PREFIX_PROPERTY_STATUS).isPresent()) {
             descriptor.setStatus(PropertyParserUtil.parseStatus(fields.getValue(PREFIX_PROPERTY_STATUS).get()));
