@@ -61,6 +61,8 @@ public class PersonDetailsCard extends UiPart<Region> {
         addField(fields, "Status", property.getStatus().toString(), "propertyStatus" + index);
         addField(fields, "Price", property.getPrice().map(value -> value.toDisplay()).orElse(NOT_RECORDED),
                 "propertyPrice" + index);
+        addField(fields, "Bedrooms", property.getBedrooms().map(value -> value.toString()).orElse(NOT_RECORDED),
+                "propertyBedrooms" + index);
         VBox entry = new VBox(8, heading, fields);
         entry.getStyleClass().add("client-properties");
         return entry;

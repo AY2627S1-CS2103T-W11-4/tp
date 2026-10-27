@@ -494,7 +494,8 @@ are changed. `list` uses the existing show-all predicate to restore all clients 
 and immediately replaces its graphic with `PersonDetailsCard` or the usual `PersonCard`, including when
 JavaFX reuses cells after `list`. This avoids leaving detail cards visible until a later layout pulse.
 The panel displays the return hint above the scrollable list. The detail card uses the client's name as its heading
-and lays out the other four scalar client fields and every property's five fields in labelled, wrapping rows.
+and lays out the other four scalar client fields and every property's six fields in labelled, wrapping rows.
+The Bedrooms row shows the recorded count, or `Not recorded` when absent.
 Missing optional values use explicit placeholders.
 Other successful client commands use the normal card layout; help and failed commands preserve the current layout.
 The single displayed client has index 1, consistent with other filtered lists.
@@ -1255,16 +1256,17 @@ testers are expected to do more *exploratory* testing.
 ### Viewing complete client details
 
 Prerequisite: At least two clients exist. Choose one with a remark and multiple properties,
-including a property without a price.
+including properties with and without a price or bedroom count.
 
 1. Run `list`, then `view 2`.<br>
    Expected: Only the second client is shown, now at index 1, under **Client details**.
    The client's name is the heading; phone, email, intention and remark are labelled below it.
    Every property is numbered in order
-   and shows type, intention, location, status and price. An absent price reads `Not recorded`.
+   and shows type, intention, location, status, price and bedrooms.
+   An absent price or bedroom count reads `Not recorded`.
    The line `Type list to return to the original list` appears above the details.
 2. Resize the window and scroll through the details.<br>
-   Expected: Long field values wrap and every field remains accessible by scrolling.
+   Expected: Long field values wrap and every field, including each Bedrooms row, remains accessible by scrolling.
 3. Run `view 2`, `view 0`, `view`, and `view 1 extra`.<br>
    Expected: Each command reports an error and preserves the current details and stored data.
 4. Run `view 1`, then `list`.<br>
