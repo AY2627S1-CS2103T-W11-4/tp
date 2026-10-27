@@ -1,9 +1,11 @@
 package seedu.address.ui;
 
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.AccessibleAttribute;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
@@ -20,6 +22,8 @@ final class CommandHelpCard extends UiPart<VBox> {
     private static final String FXML = "CommandHelpCard.fxml";
     private static final Logger logger = LogsCenter.getLogger(CommandHelpCard.class);
 
+    private final Predicate<ClipboardContent> clipboardWriter;
+
     @FXML
     private Label commandName;
     @FXML
@@ -35,7 +39,15 @@ final class CommandHelpCard extends UiPart<VBox> {
      * Creates a card for the given command-reference entry.
      */
     CommandHelpCard(HelpContent.CommandHelp command) {
+        this(command, content -> Clipboard.getSystemClipboard().setContent(content));
+    }
+
+    /**
+     * Creates a card with a clipboard writer that reports whether copying succeeded.
+     */
+    CommandHelpCard(HelpContent.CommandHelp command, Predicate<ClipboardContent> clipboardWriter) {
         super(FXML);
+        this.clipboardWriter = clipboardWriter;
         commandName.setText(command.commandWord());
         description.setText(command.description());
         syntax.setText(command.syntax());
@@ -63,8 +75,10 @@ final class CommandHelpCard extends UiPart<VBox> {
     private void copyExample(String example, Button copy) {
         ClipboardContent content = new ClipboardContent();
         content.putString(example);
-        boolean isCopied = Clipboard.getSystemClipboard().setContent(content);
+        boolean isCopied = clipboardWriter.test(content);
         copy.setText(isCopied ? "Copied" : "Failed");
+        copy.setAccessibleText(copy.getText() + ". Copy example: " + example);
+        copy.notifyAccessibleAttributeChanged(AccessibleAttribute.TEXT);
         if (!isCopied) {
             logger.warning("Could not copy a Help example to the clipboard.");
         }

@@ -99,6 +99,7 @@ Format: `help`
 * Click **Copy** beside an example to copy that command, then paste it into the main command box and adjust its
   values before pressing Enter. Copying does not execute the example.
   The button shows **Copied** on success. If it shows **Failed**, click it again to retry.
+  Its accessible text also includes the result and identifies the example.
   You can reach the buttons with Tab and activate them with Space.
 * You can also open help by pressing `F1`. Opening help again restores the existing window if it is minimised,
   brings it to the front and focuses it. Its size and scroll position are kept.

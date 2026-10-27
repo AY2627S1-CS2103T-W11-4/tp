@@ -186,6 +186,8 @@ The cards sit inside a scrolling pane, with the heading and User Guide footer ou
 Each read-only example has a keyboard-accessible Copy button. `CommandHelpCard` copies its original example string
 using JavaFX's clipboard API; visual wrapping does not add line breaks. The button reports Copied or Failed and
 can be used again. Copy actions do not invoke command logic.
+The copy result updates the button's accessible text, retaining the example, and sends an accessibility text-change
+notification. A package-private constructor accepts a clipboard writer so tests can exercise failure and retry.
 The layout and styles are defined in `HelpWindow.fxml`, `CommandHelpCard.fxml` and `HelpWindow.css`.
 Help loads `Residex.css` first so text, buttons and focus indicators follow the main UI's light theme.
 `HelpWindow.css` scopes the reference layout and example-row sizing to the Help window.
@@ -193,8 +195,11 @@ Help loads `Residex.css` first so text, buttons and focus indicators follow the 
 The reference is bundled with the app and works offline. The footer's Copy URL button copies the RESIDEX User Guide URL.
 Update `HelpContent` and the User Guide together when commands change. `HelpContentTest` checks that the documented
 examples parse as the intended commands without executing them or starting JavaFX.
-`ResidexUiTest` checks restoration state, exact example copying, the guide URL action, and wrapping at
-the default and minimum Help sizes using off-screen layouts.
+`ResidexUiTest` shows a real Help window and checks restoration through `help` and F1, preserving its bounds and scroll
+position. A keyboard interaction test sends Tab and Space events through JavaFX and checks the focused example is copied.
+These tests wait for JavaFX pulses and window state changes rather than using fixed delays. Other checks cover exact
+example copying, accessible success/failure feedback and retry, the guide URL action, and off-screen wrapping at the
+default and minimum Help sizes. Clipboard contents are restored after tests that use the system clipboard.
 
 ### Find command
 
