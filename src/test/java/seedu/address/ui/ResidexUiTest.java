@@ -53,6 +53,7 @@ import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
@@ -624,6 +625,41 @@ public class ResidexUiTest {
                 assertFalse(properties.isManaged());
                 assertEquals("Intention: Not specified", label(root, "intention").getText());
                 assertTrue(model.getFilteredPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_saveFailure_doesNotKeepUnsavedClientInList() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Path dataFile = temporaryFolder.resolve("unsaved.json");
+            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(dataFile) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    throw new AccessDeniedException(dataFile.toString());
+                }
+            };
+            Logic logic = new LogicManager(model, new StorageManager(failingStorage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("unsaved-prefs.json"))));
+            MainWindow window = new MainWindow(new Stage(), logic, dataFile);
+            window.fillInnerParts();
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/SaveFail p/88119991 e/savefail@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertTrue(result.getText().contains("Could not save data"));
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
             } finally {
                 window.getPrimaryStage().close();
             }

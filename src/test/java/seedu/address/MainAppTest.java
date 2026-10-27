@@ -71,8 +71,8 @@ public class MainAppTest {
 
         assertEquals(List.of("Alex Yeoh"), app.model.getFilteredPersonList().stream()
                 .map(person -> person.getName().fullName).toList());
-        assertEquals(SampleDataUtil.getSampleAddressBook(),
-                new JsonAddressBookStorage(dataPath()).readAddressBook().orElseThrow());
+        assertEquals(SampleDataUtil.getSampleAddressBook(), app.model.getAddressBook());
+        assertFalse(Files.exists(dataPath()));
     }
 
     // Codex assisted Brendan-Lim with the missing/null client-list startup regressions.
@@ -156,8 +156,7 @@ public class MainAppTest {
         app.logic.execute("list");
 
         assertEquals(SampleDataUtil.getSampleAddressBook(), app.model.getAddressBook());
-        assertEquals(SampleDataUtil.getSampleAddressBook(),
-                new JsonAddressBookStorage(dataPath()).readAddressBook().orElseThrow());
+        assertFalse(Files.exists(dataPath()));
         assertEquals(invalidData, Files.readString(backup));
     }
 
