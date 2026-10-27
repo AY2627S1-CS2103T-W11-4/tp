@@ -71,6 +71,7 @@ public class FindCommandParser implements Parser<FindCommand> {
             throw new ParseException(FindCommand.MESSAGE_INVALID_INTENTION);
         }
 
+        // Codex assisted Brendan-Lim with this status-search alias and its related help text.
         if (isStatusSelector(selector)) {
             List<String> keywords = parseKeywords(keywordArgs);
             if (String.join(" ", keywords).equalsIgnoreCase(PropertyStatus.UNSPECIFIED.toString())) {

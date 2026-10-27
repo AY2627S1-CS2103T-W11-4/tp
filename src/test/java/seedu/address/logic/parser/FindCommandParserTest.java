@@ -343,6 +343,7 @@ public class FindCommandParserTest {
                 new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.NEGOTIATING)));
     }
 
+    // Codex assisted Brendan-Lim with the displayed-status and selector regression tests.
     @Test
     public void parse_displayedUnspecifiedStatus_returnsUnspecifiedFindCommand() {
         FindCommand expected = new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.UNSPECIFIED));

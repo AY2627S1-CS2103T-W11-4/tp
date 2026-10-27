@@ -223,6 +223,7 @@ displayed indexes, live role changes, normal-order restoration and saved source 
 `ModelManagerIntentionOrderTest` additionally checks replacements, source resets and 1,000 clients without
 timing assertions: intention sorting must not scan clients using `Person#equals()` to resolve ties.
 
+<!-- Codex assisted Brendan-Lim with the status-search alias documentation and manual checks. -->
 Status searches accept one `PropertyStatus` token or the displayed phrase `Not specified`, ignoring case.
 `FindCommandParser` recognises the display alias after selector validation and otherwise shares
 `PropertyParserUtil.parseStatus()` with property commands while retaining

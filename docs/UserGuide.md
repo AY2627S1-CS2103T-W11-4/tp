@@ -249,6 +249,7 @@ Status is independent of the derived client role.
 
 Status belongs to each property, so a client's properties can be at different stages.
 Use these single-word values with `s/`; capitalization does not matter.
+<!-- Codex assisted Brendan-Lim with the status-search alias documentation. -->
 For status searches, `find s/Not specified` is also accepted as an alias for `find s/unspecified`.
 
 | Value | Display | Meaning |
