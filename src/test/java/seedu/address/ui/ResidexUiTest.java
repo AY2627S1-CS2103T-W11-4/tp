@@ -632,6 +632,32 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void editCommand_missingField_keepsClientAndNamesPrefixes() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Edit Client p/88110081 e/edit@example.com");
+                runCommand(root, "edit 1");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals("Provide at least one field: n/NAME, p/PHONE_NUMBER or e/EMAIL.\n"
+                        + "Example: edit 1 p/91234567", result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("Edit Client", label(root, "name").getText());
+                assertEquals("88110081", label(root, "phone").getText());
+                assertEquals("edit@example.com", model.getAddressBook().getPersonList().get(0).getEmail().value);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void addCommand_unknownParameterAfterEmail_keepsEmptyListAndNamesTheParameter() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
