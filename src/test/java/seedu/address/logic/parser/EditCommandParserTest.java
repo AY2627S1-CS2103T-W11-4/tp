@@ -72,7 +72,14 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 some random string", MESSAGE_INVALID_FORMAT);
 
         // invalid prefix being parsed as preamble
-        assertParseFailure(parser, "1 x/ string", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 x/ string",
+                String.format(Messages.MESSAGE_UNEXPECTED_PARAMETER, "x/"));
+    }
+
+    @Test
+    public void parse_unknownParameterAfterEmail_throwsParseException() {
+        assertParseFailure(parser, "1 e/f@example.com x/foo",
+                String.format(Messages.MESSAGE_UNEXPECTED_PARAMETER, "x/foo"));
     }
 
     @Test

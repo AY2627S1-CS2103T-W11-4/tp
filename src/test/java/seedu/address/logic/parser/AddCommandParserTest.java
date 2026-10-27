@@ -176,6 +176,17 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_unknownParameterAfterEmail_throwsParseException() {
+        assertParseFailure(parser, " n/Fay p/91230006 e/f@example.com x/foo",
+                String.format(Messages.MESSAGE_UNEXPECTED_PARAMETER, "x/foo"));
+        assertParseFailure(parser, " n/Fay p/91230006 e/f@example.com z/bar",
+                String.format(Messages.MESSAGE_UNEXPECTED_PARAMETER, "z/bar"));
+        assertParseSuccess(parser, " n/Fay p/91230006 e/f@example.com",
+                new AddCommand(new PersonBuilder().withName("Fay").withPhone("91230006")
+                        .withEmail("f@example.com").build()));
+    }
+
+    @Test
     public void parse_tagArguments_failure() {
         String personDetails = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB;
         for (String tags : new String[] {" t/friends", " t/clients", " t/", " t/friends t/clients", " t/#invalid"}) {
