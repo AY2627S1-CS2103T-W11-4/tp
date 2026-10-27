@@ -1,19 +1,85 @@
 package seedu.address.model.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Person;
+import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyIntention;
+import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
+import seedu.address.model.property.PropertyType;
+import seedu.address.storage.JsonAddressBookStorage;
 
 public class SampleDataUtilTest {
+    @TempDir
+    public Path temporaryFolder;
+
+    @Test
+    public void getSamplePersons_preservesOrderedPropertyFieldsWithRepresentativeStages() {
+        List<List<Property>> properties = Arrays.stream(SampleDataUtil.getSamplePersons())
+                .map(Person::getProperties).toList();
+        assertEquals(List.of(
+                List.of(new Property(PropertyType.HDB, PropertyIntention.BUYING,
+                        new PropertyLocation("Clementi Ave 3"), new PropertyPrice("480000"), PropertyStatus.VIEWING)),
+                List.of(new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
+                        new PropertyLocation("Tampines Street 86"), new PropertyPrice("1250000"))),
+                List.of(new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
+                        new PropertyLocation("Upper Bukit Timah Road"), new PropertyPrice("1700000")),
+                        new Property(PropertyType.HDB, PropertyIntention.SELLING,
+                                new PropertyLocation("Toa Payoh Lorong 1"), new PropertyPrice("780000"))),
+                List.of(), List.of(), List.of()), properties);
+    }
+
+    @Test
+    public void getSamplePersons_clientIdentitiesAreUnique() {
+        Person[] clients = SampleDataUtil.getSamplePersons();
+        for (int i = 0; i < clients.length; i++) {
+            for (int j = i + 1; j < clients.length; j++) {
+                assertFalse(clients[i].isSamePerson(clients[j]));
+            }
+        }
+    }
+
+    @Test
+    public void sampleStatusSearches_findExpectedClientsAndPreserveSourceData() throws Exception {
+        ModelManager model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
+        List<Person> source = List.copyOf(model.getAddressBook().getPersonList());
+        AddressBookParser parser = new AddressBookParser();
+        for (PropertyStatus status : PropertyStatus.values()) {
+            parser.parseCommand("find s/" + status.name()).execute(model);
+            List<String> expected = switch (status) {
+                case VIEWING -> List.of("Alex Yeoh");
+                case UNSPECIFIED -> List.of("Bernice Yu", "Charlotte Oliveiro");
+                default -> List.of();
+            };
+            assertEquals(expected, model.getFilteredPersonList().stream()
+                    .map(person -> person.getName().fullName).toList());
+            assertEquals(source, model.getAddressBook().getPersonList());
+        }
+    }
+
+    @Test
+    public void getSampleAddressBook_saveAndReload_preservesClientsAndProperties() throws Exception {
+        ReadOnlyAddressBook sample = SampleDataUtil.getSampleAddressBook();
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("clients.json"));
+        storage.saveAddressBook(sample);
+        assertEquals(sample, storage.readAddressBook().orElseThrow());
+    }
+
     @Test
     public void getSamplePersons_preservesClientIdentities() {
         List<List<String>> identities = Arrays.stream(SampleDataUtil.getSamplePersons())
