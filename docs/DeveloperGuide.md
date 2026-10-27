@@ -193,6 +193,8 @@ Help loads `Residex.css` first so text, buttons and focus indicators follow the 
 The reference is bundled with the app and works offline. The footer's Copy URL button copies the RESIDEX User Guide URL.
 Update `HelpContent` and the User Guide together when commands change. `HelpContentTest` checks that the documented
 examples parse as the intended commands without executing them or starting JavaFX.
+`ResidexUiTest` checks restoration state, exact example copying, the guide URL action, and wrapping at
+the default and minimum Help sizes using off-screen layouts.
 
 ### Find command
 
@@ -1260,8 +1262,12 @@ testers are expected to do more *exploratory* testing.
       Client `add` and `edit` have no budget option; property commands retain `pr/PRICE` and transaction status.
       The heading and User Guide footer remain visible while the cards scroll.
 
-   1. Resize the window narrower and wider.<br>
-      Expected: Long text and examples wrap inside their cards. The cards can be read without horizontal scrolling.
+   1. Resize the window narrower and wider, including its minimum size.<br>
+      Expected: Long text and examples wrap inside their cards. Copy buttons remain beside their examples,
+      and the cards can be read without horizontal scrolling. The footer remains visible.
+
+   1. Compare Help with the main window.<br>
+      Expected: Help uses the same light background, dark text, white cards and button styling.
 
 1. Copying the guide URL
 
