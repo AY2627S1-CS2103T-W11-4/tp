@@ -350,7 +350,9 @@ This is a recorded assessment, not a one-way state machine. All old/new status p
 including Viewing to Enquiring, Closing to Negotiating and corrections from Completed.
 Completed does not delete, archive or lock a property or client. Explicit `delp`/`delete` remains necessary.
 There is no client-level status, stage history, viewing-date field or automatic transition.
-The CLI token for Not specified is `unspecified`, not `not-specified` or the display text.
+The property-command token for Not specified is `unspecified`. Status search also accepts the display text
+`Not specified`, ignoring case and whitespace between its words; `not-specified` remains invalid.
+`FindCommandParser` handles this search alias after validating selectors, leaving property parsing and saved statuses unchanged.
 
 `PropertyIntention` describes an individual property's buying or selling action.
 It is separate from `ClientIntention`, the role derived from all of the client's properties.
@@ -1513,7 +1515,7 @@ Run these steps in order. Client indexes always refer to the current displayed l
    1. Enter `find S/VIEWING`.<br>
       Expected: Stage First then Stage Second, each once even though Stage Second has two matching properties.
 
-   1. Enter `find s/unspecified`.<br>
+   1. Enter `find s/unspecified`, then `find s/Not specified` and `find s/not SPECIFIED`.<br>
       Expected: Only Stage First. Stage Empty is excluded because it has no properties.
 
    1. Try `find s/enquiring`, `find s/negotiating`, `find s/closing` and `find s/completed`.<br>
@@ -1563,7 +1565,7 @@ Run these steps in order. Client indexes always refer to the current displayed l
       and `addp 1 t/HDB i/Selling l/Bedok s/`.<br>
       Expected: Each input error leaves the properties, displayed filter and saved data unchanged.
 
-   1. Try `find s/`, `find s/unknown`, `find s/Not specified`, `find s/viewing s/closing`
+   1. Try `find s/`, `find s/unknown`, `find s/Not specified extra`, `find s/viewing s/closing`
       and `find s/viewing n/Stage`.<br>
       Expected: Input errors. The previous phone-filtered client remains displayed.
 
