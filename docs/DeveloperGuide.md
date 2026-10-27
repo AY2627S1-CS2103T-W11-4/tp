@@ -223,8 +223,9 @@ displayed indexes, live role changes, normal-order restoration and saved source 
 `ModelManagerIntentionOrderTest` additionally checks replacements, source resets and 1,000 clients without
 timing assertions: intention sorting must not scan clients using `Person#equals()` to resolve ties.
 
-Status searches accept exactly one `PropertyStatus` token, ignoring case.
-`FindCommandParser` shares `PropertyParserUtil.parseStatus()` with property commands while retaining
+Status searches accept one `PropertyStatus` token or the displayed phrase `Not specified`, ignoring case.
+`FindCommandParser` recognises the display alias after selector validation and otherwise shares
+`PropertyParserUtil.parseStatus()` with property commands while retaining
 the find command's validation order and error messages.
 `PropertyStatusMatchesPredicate` matches a client if any existing property has the requested status.
 The predicate returns false for an empty property list, including when searching for `UNSPECIFIED`.
