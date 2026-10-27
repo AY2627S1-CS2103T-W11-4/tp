@@ -37,6 +37,7 @@ public class FindCommand extends Command {
             + "Intention search: " + COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller|both\n"
             + "Property status search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS
             + "unspecified|enquiring|viewing|negotiating|closing|completed\n"
+            + "Status search also accepts Not specified as an alias for unspecified.\n"
             + "Property type search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_TYPE + "HDB|Condominium|Landed\n"
             + "Property price search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE
             + "MIN-MAX (either side optional)\n"

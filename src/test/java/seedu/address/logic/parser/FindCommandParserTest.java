@@ -343,6 +343,25 @@ public class FindCommandParserTest {
                 new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.NEGOTIATING)));
     }
 
+    // Codex assisted Brendan-Lim with the displayed-status and selector regression tests.
+    @Test
+    public void parse_displayedUnspecifiedStatus_returnsUnspecifiedFindCommand() {
+        FindCommand expected = new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.UNSPECIFIED));
+        for (String args : List.of("s/Not specified", "s/not SPECIFIED", "S/NOT SPECIFIED",
+                " \n s/ \t Not   specified \t ", "s/Not\tspecified")) {
+            assertParseSuccess(parser, args, expected);
+        }
+    }
+
+    @Test
+    public void parse_displayedUnspecifiedStatusWithAnotherSelector_throwsParseException() {
+        for (String field : List.of("t/HDB", "s/viewing", "n/Alice", "x/foo")) {
+            String expected = field.startsWith("x/") ? FindCommand.MESSAGE_INVALID_PROPERTY
+                    : FindCommand.MESSAGE_MULTIPLE_PROPERTIES;
+            assertParseFailure(parser, "s/Not specified " + field, expected);
+        }
+    }
+
     @Test
     public void parse_statusSelectorWithoutValue_throwsParseException() {
         for (String selector : List.of("s/", "S/")) {
@@ -353,11 +372,12 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidStatus_throwsParseException() {
-        for (String keyword : List.of("not-specified", "Cancelled", "Withdrawn", "view", "viewings", "1")) {
+        for (String keyword : List.of("invalid", "not-specified", "Cancelled", "Withdrawn", "view", "viewings", "1")) {
             assertParseFailure(parser, "s/" + keyword, FindCommand.MESSAGE_INVALID_STATUS);
         }
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
-        for (String values : List.of("viewing completed", "VIEWING viewing", "Not specified")) {
+        for (String values : List.of("viewing completed", "VIEWING viewing", "Not specified extra", "Not viewing",
+                "Not specified unspecified")) {
             assertParseFailure(parser, "s/" + values, expectedMessage);
         }
     }

@@ -164,6 +164,7 @@ final class HelpContent {
                             "Other searches and list restore normal client order. Indexes follow the displayed list.",
                             PROPERTY_STATUS_NOTE,
                             "Status requires one complete value and matches any recorded property.",
+                            "Status search also accepts Not specified as unspecified, ignoring case.",
                             "Each client appears once, in normal order. "
                                     + "Clients without properties do not match s/unspecified.",
                             "Type requires one value: HDB, Condominium or Landed (h, c and l also work).",

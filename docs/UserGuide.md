@@ -251,6 +251,8 @@ Status is independent of the derived client role.
 
 Status belongs to each property, so a client's properties can be at different stages.
 Use these single-word values with `s/`; capitalization does not matter.
+<!-- Codex assisted Brendan-Lim with the status-search alias documentation. -->
+For status searches, `find s/Not specified` is also accepted as an alias for `find s/unspecified`.
 
 | Value | Display | Meaning |
 | --- | --- | --- |
@@ -381,6 +383,7 @@ Property bedrooms | `bd/`
 * Only the selected search field is searched. Each search filters the entire client list, replacing any previous filter.
 
 * Status searches require exactly one complete stage: `unspecified`, `enquiring`, `viewing`, `negotiating`, `closing` or `completed`.
+  The displayed phrase `Not specified` is also accepted, ignoring case and extra whitespace between its words.
   A client matches if **any existing property** has that stage and appears only once even if several properties match.
   A client with no properties does **not** match `find s/unspecified`.
 * Type searches require exactly one value: `HDB`, `Condominium` or `Landed` (or `h`, `c`, `l`), in any capitalization.
@@ -409,7 +412,7 @@ Examples:
 * `find i/seller` lists Seller clients followed by Buyer / Seller clients.
 * `find i/both` lists Buyer / Seller clients only.
 * `find s/viewing` lists clients with at least one property at Viewing.
-* `find S/UNSPECIFIED` lists clients with at least one property whose stage is Not specified.
+* `find S/UNSPECIFIED` or `find s/Not specified` lists clients with at least one property whose stage is Not specified.
 * `find t/HDB` lists clients with at least one HDB property.
 * `find pr/500000-800000` lists clients with a property priced from $500,000 to $800,000.
 * `find pr/-800000` lists clients with a property priced at $800,000 or less.

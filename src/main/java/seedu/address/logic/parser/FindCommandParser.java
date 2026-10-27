@@ -26,6 +26,7 @@ import seedu.address.model.person.PropertyPriceInRangePredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.PropertyTypeMatchesPredicate;
 import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
 
 /**
  * Parses input arguments and creates a new FindCommand object.
@@ -70,8 +71,12 @@ public class FindCommandParser implements Parser<FindCommand> {
             throw new ParseException(FindCommand.MESSAGE_INVALID_INTENTION);
         }
 
+        // Codex assisted Brendan-Lim with this status-search alias and its related help text.
         if (isStatusSelector(selector)) {
             List<String> keywords = parseKeywords(keywordArgs);
+            if (String.join(" ", keywords).equalsIgnoreCase(PropertyStatus.UNSPECIFIED.toString())) {
+                return new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.UNSPECIFIED));
+            }
             if (keywords.size() != 1) {
                 throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
             }

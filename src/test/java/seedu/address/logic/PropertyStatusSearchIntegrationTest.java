@@ -96,6 +96,16 @@ public class PropertyStatusSearchIntegrationTest {
         assertSame(model.getFilteredPersonList(), logic.getFilteredPersonList());
     }
 
+    // Codex assisted Brendan-Lim with the displayed-status search and persistence regression.
+    @Test
+    public void execute_displayedUnspecifiedStatus_matchesExistingPropertiesWithoutChangingData() throws Exception {
+        for (String command : List.of("find s/unspecified", "find s/Not specified", "find s/not SPECIFIED",
+                "find S/NOT   SPECIFIED")) {
+            assertSearch(command, List.of(mixed, unspecified));
+        }
+        assertRejectedWithoutChanges("find s/Not specified t/HDB", ParseException.class);
+    }
+
     @Test
     public void execute_statusAndExistingSelectors_replacePreviousFiltersAndRetainNormalOrder() throws Exception {
         for (String previous : List.of("find n/Nobody", "find n/Alice", "find e/alice",
