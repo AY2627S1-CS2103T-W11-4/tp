@@ -105,6 +105,25 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void setPerson_otherClientWhileViewingDetails_preservesViewedClient() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.showPersonDetails(ALICE);
+        Person replacement = new PersonBuilder(BENSON).withName("Updated Client").build();
+
+        modelManager.setPerson(BENSON, replacement);
+
+        assertEquals(List.of(ALICE, replacement), modelManager.getAddressBook().getPersonList());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+        assertEquals(ClientViewMode.CLIENT_DETAILS, modelManager.clientViewModeProperty().get());
+
+        // The viewed client must remain tracked after another client is replaced.
+        modelManager.deletePerson(ALICE);
+        assertEquals(List.of(replacement), modelManager.getFilteredPersonList());
+        assertEquals(ClientViewMode.ALL_CLIENTS, modelManager.clientViewModeProperty().get());
+    }
+
+    @Test
     public void deletePerson_viewedClient_restoresAllRemainingClients() {
         modelManager.addPerson(ALICE);
         modelManager.addPerson(BENSON);
@@ -114,6 +133,19 @@ public class ModelManagerTest {
 
         assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
         assertEquals(ClientViewMode.ALL_CLIENTS, modelManager.clientViewModeProperty().get());
+    }
+
+    @Test
+    public void deletePerson_otherClientWhileViewingDetails_preservesDetailMode() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.showPersonDetails(ALICE);
+
+        modelManager.deletePerson(BENSON);
+
+        assertEquals(List.of(ALICE), modelManager.getAddressBook().getPersonList());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+        assertEquals(ClientViewMode.CLIENT_DETAILS, modelManager.clientViewModeProperty().get());
     }
 
     @Test
