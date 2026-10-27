@@ -27,7 +27,8 @@ public class StringUtilTest {
         assertFalse(StringUtil.isNonZeroUnsignedInteger("0"));
 
         // EP: zero as prefix
-        assertTrue(StringUtil.isNonZeroUnsignedInteger("01"));
+        assertFalse(StringUtil.isNonZeroUnsignedInteger("01"));
+        assertFalse(StringUtil.isNonZeroUnsignedInteger("001"));
 
         // EP: signed numbers
         assertFalse(StringUtil.isNonZeroUnsignedInteger("-1"));
