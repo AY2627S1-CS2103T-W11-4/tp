@@ -184,6 +184,24 @@ Null GUI settings and dimensions that are non-positive or non-finite cause `Data
 Missing fields still use their defaults; valid negative screen coordinates and an unset position remain supported.
 Client data is independent of preferences and is not rewritten during this recovery.
 
+### Preventing concurrent instances
+
+`MainApp#init()` acquires a `DataFileLock` before reading or saving preferences or client data.
+It holds a non-blocking, exclusive Java NIO file lock on a companion `addressbook.json.lock` file beside
+the resolved client data path. Equivalent paths share ownership, while independent data files can be used separately.
+An in-process owner map avoids reopening an already-owned companion file: closing a competing channel can
+release the original process's locks on some platforms.
+
+If acquisition fails, startup supplies an error UI without creating storage, model or command logic.
+Contention explains that the other instance must be closed; other I/O failures report access instructions.
+`MainApp#stop()` releases the lock after saving preferences, including when saving fails.
+Unsuccessful initialization releases it in a `finally` block. JVM termination also releases the operating-system lock.
+The companion file remains in place to avoid races caused by deleting and recreating it; its existence alone
+does not indicate ownership. The lock coordinates RESIDEX instances, not external editors or older app versions.
+
+`DataFileLockTest` uses separate headless Java processes to check contention, normal exit and forced termination.
+`MainAppTest` checks that rejected launches preserve client data and preferences, and failures release ownership.
+
 ### Command reference help
 
 `HelpCommand` returns a `CommandResult` with `showHelp` set to `true`. The existing `MainWindow#handleHelp()`
@@ -1747,6 +1765,9 @@ Use a copy of the application in a separate folder for these tests, and keep a b
       Expected: It still contains `invalid JSON`.
    3. Repeat with `null`, `{"persons": [null]}`, and a client with an invalid field value.
       Expected: The same error and file-preservation behavior.
+   4. Repeat with `{"persons": []}` followed by a second JSON object or ordinary text.
+      Expected: Startup rejects the entire file and preserves all its contents.
+      Whitespace after a single valid object is accepted.
 
 2. Recovery:
    1. Restore the valid backup and restart RESIDEX.
@@ -1758,3 +1779,18 @@ Use a copy of the application in a separate folder for these tests, and keep a b
    1. Close RESIDEX and set the data file contents to `{"persons": []}`.
    2. Restart, then add a client using `add n/Alice p/91234567 e/alice@example.com`.
       Expected: RESIDEX starts normally with an empty list, and the added client persists after restarting.
+
+4. Invalid window preferences:
+   1. Close RESIDEX and replace `preferences.json` with `{"guiSettings": null}`, then restart.
+      Expected: The app opens with default window settings and all saved clients. Default preferences are saved.
+   2. Repeat with `{"guiSettings": {"windowWidth": 0}}`.
+      Expected: The same recovery; client data is not changed.
+
+5. Concurrent instances:
+   1. Launch RESIDEX twice from the same test folder.
+      Expected: The second launch explains that the data is already open and closes after the dialog is dismissed.
+      The first window remains usable, and the second launch changes neither client data nor preferences.
+   2. Add a client in the first window, close it and relaunch.
+      Expected: The app opens normally and retains the client, even though `addressbook.json.lock` still exists.
+   3. Launch copies from two independent test folders.
+      Expected: Both work with their own client data.

@@ -486,9 +486,16 @@ Format: `exit`
 
 RESIDEX automatically saves data after every command. You do not need to save manually.
 
+Only one RESIDEX instance can use the same client data file at a time. A second launch shows an error and closes
+without changing client data or preferences. Close the existing instance before launching again.
+
+RESIDEX creates `data/addressbook.json.lock` to coordinate access. Leave this file in place; it requires no
+maintenance. Its presence does not mean RESIDEX is running, and a crash does not leave the data locked.
+
 ### Editing the data file
 
 RESIDEX data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+Close RESIDEX before editing or replacing this file.
 
 <box type="warning" seamless>
 
