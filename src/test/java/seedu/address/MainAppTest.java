@@ -2,6 +2,7 @@ package seedu.address;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -10,6 +11,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,7 @@ public class MainAppTest {
         UserPrefs prefs = createPrefs();
         new JsonUserPrefsStorage(prefsPath()).saveUserPrefs(prefs);
         new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        String savedData = Files.readString(dataPath());
 
         app.init();
 
@@ -49,8 +52,10 @@ public class MainAppTest {
         assertNotNull(app.ui);
         assertEquals(dataPath(), app.storage.getAddressBookFilePath());
         assertEquals(prefsPath(), app.storage.getUserPrefsFilePath());
+        assertEquals(savedData, Files.readString(dataPath()));
     }
 
+    // Codex assisted Brendan-Lim with the fresh-sample search and existing-file preservation assertions.
     @Test
     public void init_missingFiles_usesSampleClientsAndSavesDefaultPreferences() throws Exception {
         MainApp app = createApp();
@@ -60,6 +65,14 @@ public class MainAppTest {
         assertEquals(SampleDataUtil.getSampleAddressBook(), app.model.getAddressBook());
         assertEquals(new UserPrefs(), app.model.getUserPrefs());
         assertEquals(new UserPrefs(), new JsonUserPrefsStorage(prefsPath()).readUserPrefs().orElseThrow());
+        assertFalse(Files.exists(dataPath()));
+
+        app.logic.execute("find s/viewing");
+
+        assertEquals(List.of("Alex Yeoh"), app.model.getFilteredPersonList().stream()
+                .map(person -> person.getName().fullName).toList());
+        assertEquals(SampleDataUtil.getSampleAddressBook(),
+                new JsonAddressBookStorage(dataPath()).readAddressBook().orElseThrow());
     }
 
     // Codex assisted Brendan-Lim with the missing/null client-list startup regressions.
