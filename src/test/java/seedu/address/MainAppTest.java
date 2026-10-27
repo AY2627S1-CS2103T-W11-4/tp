@@ -62,6 +62,17 @@ public class MainAppTest {
         assertEquals(new UserPrefs(), new JsonUserPrefsStorage(prefsPath()).readUserPrefs().orElseThrow());
     }
 
+    // Codex assisted Brendan-Lim with the missing/null client-list startup regressions.
+    @Test
+    public void init_missingClientList_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("{}");
+    }
+
+    @Test
+    public void init_nullClientList_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("{\"persons\": null}");
+    }
+
     @Test
     public void init_corruptData_preventsCommandsAndPreservesFile() throws Exception {
         assertLoadFailurePreservesFile("invalid JSON");

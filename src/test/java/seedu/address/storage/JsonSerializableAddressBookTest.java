@@ -25,6 +25,22 @@ public class JsonSerializableAddressBookTest {
     private static final Path INVALID_PERSON_FILE = TEST_DATA_FOLDER.resolve("invalidPersonAddressBook.json");
     private static final Path DUPLICATE_PERSON_FILE = TEST_DATA_FOLDER.resolve("duplicatePersonAddressBook.json");
 
+    // Codex assisted Brendan-Lim with the missing, null and empty client-list regressions.
+    @Test
+    public void toModelType_missingOrNullClientList_throwsIllegalValueException() throws Exception {
+        for (String json : List.of("{}", "{\"persons\": null}")) {
+            JsonSerializableAddressBook data = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class);
+            assertThrows(IllegalValueException.class, "Client list is missing from the data file.", data::toModelType);
+        }
+    }
+
+    @Test
+    public void toModelType_emptyClientList_returnsEmptyAddressBook() throws Exception {
+        JsonSerializableAddressBook data = JsonUtil.fromJsonString("{\"persons\": []}",
+                JsonSerializableAddressBook.class);
+        assertEquals(new AddressBook(), data.toModelType());
+    }
+
     @Test
     public void toModelType_typicalPersonsFile_success() throws Exception {
         JsonSerializableAddressBook dataFromFile = JsonUtil.readJsonFile(TYPICAL_PERSONS_FILE,

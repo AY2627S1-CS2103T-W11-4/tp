@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.AddCommand;
@@ -50,6 +51,29 @@ public class JsonAddressBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    // Codex assisted Brendan-Lim with the client-list validation and file-preservation regressions.
+    @Test
+    public void readAddressBook_missingOrNullClientList_reportsValidationFailureAndPreservesFile() throws Exception {
+        Path file = testFolder.resolve("missingClients.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        for (String json : List.of("{}", "{\"persons\": null}")) {
+            Files.writeString(file, json);
+            assertThrows(DataLoadingException.class,
+                    IllegalValueException.class.getName() + ": Client list is missing from the data file.",
+                    storage::readAddressBook);
+            assertEquals(json, Files.readString(file));
+        }
+    }
+
+    @Test
+    public void readAddressBook_emptyClientList_loadsEmptyDataWithoutChangingFile() throws Exception {
+        Path file = testFolder.resolve("emptyClients.json");
+        String json = "{\"persons\": []}";
+        Files.writeString(file, json);
+        assertEquals(new AddressBook(), new JsonAddressBookStorage(file).readAddressBook().orElseThrow());
+        assertEquals(json, Files.readString(file));
+    }
 
     @Test
     public void readAddressBook_nullFilePath_throwsNullPointerException() {

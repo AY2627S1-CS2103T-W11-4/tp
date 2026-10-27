@@ -15,21 +15,24 @@ import seedu.address.model.person.Person;
 
 /**
  * An Immutable AddressBook that is serializable to JSON format.
+ * Codex assisted Brendan-Lim with missing-client-list validation at model conversion.
  */
 @JsonRootName(value = "addressbook")
 class JsonSerializableAddressBook {
 
+    public static final String MESSAGE_MISSING_PERSONS = "Client list is missing from the data file.";
     public static final String MESSAGE_DUPLICATE_PERSON = "Persons list contains duplicate person(s).";
     public static final String MESSAGE_NULL_PERSON_FORMAT = "Client %d is missing!";
 
-    private final List<JsonAdaptedPerson> persons = new ArrayList<>();
+    private final List<JsonAdaptedPerson> persons;
 
     /**
      * Constructs a {@code JsonSerializableAddressBook} with the given persons.
+     * A missing or null list is retained for validation in {@link #toModelType()}.
      */
     @JsonCreator
     public JsonSerializableAddressBook(@JsonProperty("persons") List<JsonAdaptedPerson> persons) {
-        this.persons.addAll(persons);
+        this.persons = persons == null ? null : new ArrayList<>(persons);
     }
 
     /**
@@ -38,7 +41,7 @@ class JsonSerializableAddressBook {
      * @param source future changes to this will not affect the created {@code JsonSerializableAddressBook}.
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
-        persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
+        persons = source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList());
     }
 
     /**
@@ -47,6 +50,9 @@ class JsonSerializableAddressBook {
      * @throws IllegalValueException if there were any data constraints violated.
      */
     public AddressBook toModelType() throws IllegalValueException {
+        if (persons == null) {
+            throw new IllegalValueException(MESSAGE_MISSING_PERSONS);
+        }
         AddressBook addressBook = new AddressBook();
         for (int i = 0; i < persons.size(); i++) {
             JsonAdaptedPerson jsonAdaptedPerson = persons.get(i);
