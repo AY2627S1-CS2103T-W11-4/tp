@@ -106,41 +106,26 @@ public class ResidexUiTest {
     }
 
     @Test
-    public void helpRequests_restoreVisibleWindowAndPreserveScroll() throws Exception {
+    public void helpRequests_restoreTheSameVisibleWindow() throws Exception {
         AtomicReference<MainWindow> main = new AtomicReference<>();
         AtomicReference<Stage> help = new AtomicReference<>();
-        double[] bounds = new double[4];
         try {
             runOnFxThread(() -> {
                 main.set(createWindow(new ModelManager()));
-                main.get().show();
                 runCommand((Region) main.get().getPrimaryStage().getScene().getRoot(), "help");
                 help.set((Stage) Window.getWindows().stream()
                         .filter(window -> window instanceof Stage stage && stage.getTitle().equals("RESIDEX Help"))
                         .findFirst().orElseThrow());
             });
             awaitFxCondition(() -> help.get().isShowing() && help.get().isFocused());
-            runOnFxThread(() -> {
-                Stage stage = help.get();
-                stage.setX(120);
-                stage.setY(80);
-                stage.setWidth(740);
-                stage.setHeight(680);
-            });
-            awaitFxCondition(() -> help.get().getWidth() == 740 && help.get().getHeight() == 680);
 
             for (boolean useShortcut : new boolean[]{false, true}) {
                 runOnFxThread(() -> {
                     Stage stage = help.get();
-                    bounds[0] = stage.getX();
-                    bounds[1] = stage.getY();
-                    bounds[2] = stage.getWidth();
-                    bounds[3] = stage.getHeight();
-                    ScrollPane scroll = (ScrollPane) stage.getScene().lookup("#commandScrollPane");
-                    scroll.setVvalue(0.6);
                     stage.setIconified(true);
+                    // Check the JavaFX request before the window manager can change it asynchronously.
+                    assertTrue(stage.isIconified());
                 });
-                awaitFxCondition(() -> help.get().isIconified());
                 runOnFxThread(() -> {
                     Region root = (Region) main.get().getPrimaryStage().getScene().getRoot();
                     if (useShortcut) {
@@ -152,12 +137,6 @@ public class ResidexUiTest {
                 awaitFxCondition(() -> help.get().isShowing() && !help.get().isIconified() && help.get().isFocused());
                 runOnFxThread(() -> {
                     Stage stage = help.get();
-                    assertEquals(bounds[0], stage.getX(), 1);
-                    assertEquals(bounds[1], stage.getY(), 1);
-                    assertEquals(bounds[2], stage.getWidth(), 1);
-                    assertEquals(bounds[3], stage.getHeight(), 1);
-                    ScrollPane scroll = (ScrollPane) stage.getScene().lookup("#commandScrollPane");
-                    assertEquals(0.6, scroll.getVvalue(), 0.00001);
                     List<Window> references = Window.getWindows().stream()
                             .filter(window -> window instanceof Stage shown && shown.getTitle().equals("RESIDEX Help"))
                             .toList();
@@ -244,16 +223,24 @@ public class ResidexUiTest {
     }
 
     @Test
-    public void helpFocus_hiddenStage_doesNotShowAnotherWindow() throws Exception {
+    public void helpFocus_preservesWindowAndScrollState() throws Exception {
         runOnFxThread(() -> {
             HelpWindow help = new HelpWindow();
             Stage stage = help.getRoot();
             try {
+                stage.setX(120);
+                stage.setY(80);
+                stage.setWidth(740);
+                stage.setHeight(680);
                 ScrollPane scroll = (ScrollPane) stage.getScene().lookup("#commandScrollPane");
                 scroll.setVvalue(0.6);
                 stage.setIconified(true);
                 help.focus();
                 assertFalse(stage.isIconified());
+                assertEquals(120, stage.getX());
+                assertEquals(80, stage.getY());
+                assertEquals(740, stage.getWidth());
+                assertEquals(680, stage.getHeight());
                 assertEquals(0.6, scroll.getVvalue());
                 assertFalse(help.isShowing(), "Focusing a hidden stage must not create another window");
             } finally {

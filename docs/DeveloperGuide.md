@@ -195,9 +195,12 @@ Help loads `Residex.css` first so text, buttons and focus indicators follow the 
 The reference is bundled with the app and works offline. The footer's Copy URL button copies the RESIDEX User Guide URL.
 Update `HelpContent` and the User Guide together when commands change. `HelpContentTest` checks that the documented
 examples parse as the intended commands without executing them or starting JavaFX.
-`ResidexUiTest` shows a real Help window and checks restoration through `help` and F1, preserving its bounds and scroll
-position. A keyboard interaction test sends Tab and Space events through JavaFX and checks the focused example is copied.
-These tests wait for JavaFX pulses and window state changes rather than using fixed delays. Other checks cover exact
+`ResidexUiTest` shows a real Help window and checks restoration and focus through `help` and F1. It checks the
+minimisation request immediately because a window manager can asynchronously change the iconified state.
+Exact bounds and scroll-state preservation are checked separately without a native window manager; actual size and
+scroll preservation after minimising are also covered by the manual tests below.
+A keyboard interaction test sends Tab and Space events through JavaFX and checks the focused example is copied.
+These tests wait for JavaFX pulses and focus changes rather than assuming fixed native dimensions. Other checks cover exact
 example copying, accessible success/failure feedback and retry, the guide URL action, and off-screen wrapping at the
 default and minimum Help sizes. Clipboard contents are restored after tests that use the system clipboard.
 
