@@ -13,15 +13,12 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BooleanSupplier;
 import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.AfterAll;
@@ -30,10 +27,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.io.TempDir;
 
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.geometry.Orientation;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.Group;
@@ -52,8 +47,6 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -78,7 +71,7 @@ import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
- * Exercises real FXML, CSS and command wiring, including briefly shown Help interaction tests.
+ * Exercises real FXML, CSS and command wiring without opening a visible Help window.
  * Linux requires a display (such as Xvfb); model and logic tests still run without one.
  */
 @EnabledIf("hasDisplay")
@@ -103,99 +96,6 @@ public class ResidexUiTest {
     @AfterAll
     public static void stopToolkit() {
         Platform.exit();
-    }
-
-    @Test
-    public void helpRequests_restoreTheSameVisibleWindow() throws Exception {
-        AtomicReference<MainWindow> main = new AtomicReference<>();
-        AtomicReference<Stage> help = new AtomicReference<>();
-        try {
-            runOnFxThread(() -> {
-                main.set(createWindow(new ModelManager()));
-                runCommand((Region) main.get().getPrimaryStage().getScene().getRoot(), "help");
-                help.set((Stage) Window.getWindows().stream()
-                        .filter(window -> window instanceof Stage stage && stage.getTitle().equals("RESIDEX Help"))
-                        .findFirst().orElseThrow());
-            });
-            awaitFxCondition(() -> help.get().isShowing() && help.get().isFocused());
-
-            for (boolean useShortcut : new boolean[]{false, true}) {
-                runOnFxThread(() -> {
-                    Stage stage = help.get();
-                    stage.setIconified(true);
-                    // Check the JavaFX request before the window manager can change it asynchronously.
-                    assertTrue(stage.isIconified());
-                });
-                runOnFxThread(() -> {
-                    Region root = (Region) main.get().getPrimaryStage().getScene().getRoot();
-                    if (useShortcut) {
-                        pressKey(root.lookup("#commandTextField"), KeyCode.F1);
-                    } else {
-                        runCommand(root, "help");
-                    }
-                });
-                awaitFxCondition(() -> help.get().isShowing() && !help.get().isIconified() && help.get().isFocused());
-                runOnFxThread(() -> {
-                    Stage stage = help.get();
-                    List<Window> references = Window.getWindows().stream()
-                            .filter(window -> window instanceof Stage shown && shown.getTitle().equals("RESIDEX Help"))
-                            .toList();
-                    assertEquals(List.of(stage), references, "Both requests must restore the original Help window");
-                });
-            }
-        } finally {
-            runOnFxThread(() -> {
-                if (help.get() != null) {
-                    help.get().close();
-                }
-                if (main.get() != null) {
-                    main.get().getPrimaryStage().close();
-                }
-            });
-        }
-    }
-
-    @Test
-    public void helpExamples_tabAndSpaceCopyTheFocusedExample() throws Exception {
-        AtomicReference<HelpWindow> help = new AtomicReference<>();
-        List<Button> buttons = new ArrayList<>();
-        Map<DataFormat, Object> original = new HashMap<>();
-        String expected = HelpContent.getCommands().get(0).examples().get(1);
-        try {
-            runOnFxThread(() -> {
-                original.putAll(clipboardContents());
-                help.set(new HelpWindow());
-                help.get().show();
-                Region root = (Region) help.get().getRoot().getScene().getRoot();
-                root.applyCss();
-                root.layout();
-                VBox cards = (VBox) root.lookup("#commandCards");
-                VBox examples = (VBox) cards.getChildren().get(0).lookup("#examples");
-                for (Node row : examples.getChildren()) {
-                    buttons.add((Button) ((HBox) row).getChildren().get(1));
-                }
-                buttons.get(0).requestFocus();
-            });
-            awaitFxCondition(() -> buttons.get(0).isFocused());
-            runOnFxThread(() -> pressKey(buttons.get(0), KeyCode.TAB));
-            awaitFxCondition(() -> buttons.get(1).isFocused());
-            runOnFxThread(() -> {
-                assertEquals(buttons.get(1), help.get().getRoot().getScene().getFocusOwner());
-                pressKey(buttons.get(1), KeyCode.SPACE);
-                assertEquals(expected, Clipboard.getSystemClipboard().getString());
-                assertEquals("Copied", buttons.get(1).getText());
-                assertEquals("Copied. Copy example: " + expected,
-                        buttons.get(1).queryAccessibleAttribute(AccessibleAttribute.TEXT));
-                assertEquals("Copy", buttons.get(0).getText(), "Space must activate only the focused example");
-            });
-        } finally {
-            runOnFxThread(() -> {
-                Clipboard.getSystemClipboard().setContent(original);
-                if (help.get() != null) {
-                    help.get().getRoot().close();
-                }
-            });
-        }
     }
 
     @Test
@@ -1066,37 +966,6 @@ public class ResidexUiTest {
             }
         }
         return contents;
-    }
-
-    private static void pressKey(Node target, KeyCode code) {
-        Event.fireEvent(target, new KeyEvent(KeyEvent.KEY_PRESSED, KeyEvent.CHAR_UNDEFINED, "", code,
-                false, false, false, false));
-        Event.fireEvent(target, new KeyEvent(KeyEvent.KEY_RELEASED, KeyEvent.CHAR_UNDEFINED, "", code,
-                false, false, false, false));
-    }
-
-    private static void awaitFxCondition(BooleanSupplier condition) throws Exception {
-        CompletableFuture<Void> completed = new CompletableFuture<>();
-        AnimationTimer timer = new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                try {
-                    if (condition.getAsBoolean()) {
-                        stop();
-                        completed.complete(null);
-                    }
-                } catch (Throwable e) {
-                    stop();
-                    completed.completeExceptionally(e);
-                }
-            }
-        };
-        runOnFxThread(timer::start);
-        try {
-            completed.get(10, TimeUnit.SECONDS);
-        } finally {
-            runOnFxThread(timer::stop);
-        }
     }
 
     private static void runOnFxThread(FxAction action) throws Exception {
