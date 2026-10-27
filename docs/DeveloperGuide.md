@@ -487,16 +487,21 @@ an unknown price has no amount, while `UNSPECIFIED` displays as Not specified.
 `ViewCommandParser` delegates index validation to `ParserUtil.parseIndex`. `ViewCommand` resolves that index
 against `Model#getFilteredPersonList()` before changing the filter, so search-result indexes are respected.
 An out-of-range index raises `CommandException` without changing the filter. A valid request filters by the
-selected client's identity and returns a `CommandResult` with `showClientDetails` enabled. No client records
-are changed. `list` uses the existing show-all predicate to restore all clients in stored order.
+selected client's identity through `Model#showPersonDetails`. No client records are changed.
+`ModelManager` owns an observable `ClientViewMode`: `ALL_CLIENTS`, `FILTERED_CLIENTS` or `CLIENT_DETAILS`.
+`list` uses the existing show-all predicate to restore all clients in stored order and clear search mode.
 
-`MainWindow` passes the display flag to `PersonListPanel`. Each cell observes that flag with a weak listener
+`Logic` exposes the model's read-only display mode, which `MainWindow` passes to `PersonListPanel`.
+The heading follows this mode, so a search matching all or no clients still shows `Filtered clients`.
+Each cell observes detail mode with a weak listener
 and immediately replaces its graphic with `PersonDetailsCard` or the usual `PersonCard`, including when
 JavaFX reuses cells after `list`. This avoids leaving detail cards visible until a later layout pulse.
 The panel displays the return hint above the scrollable list. The detail card uses the client's name as its heading
 and lays out the other four scalar client fields and every property's five fields in labelled, wrapping rows.
 Missing optional values use explicit placeholders.
-Other successful client commands use the normal card layout; help and failed commands preserve the current layout.
+Property updates preserve detail mode and refresh the selected client; deleting that client restores all remaining
+clients. Ordinary searches keep their predicates and displayed-index targeting when property data changes.
+Commands that reset the filter use the normal cards; help and failed commands preserve the current layout.
 The single displayed client has index 1, consistent with other filtered lists.
 
 Assertions check the internal postcondition that viewing yields exactly the selected client and the UI precondition
@@ -1272,6 +1277,13 @@ including a property without a price.
 5. Run a `find` command, then `view 1`.<br>
    Expected: The first search result is shown. Run `list`; all stored clients return, including those
    outside the earlier search results.
+   Run `view 1`, followed by `addp 1 t/HDB i/Buying l/Bishan`, `editp 1 1 l/Tampines`, and `delp 1 1`.<br>
+   Expected: After each property command the updated details and return hint remain visible.
+   Run `delete 1`.<br>
+   Expected: All remaining clients appear under **All clients**, with the return hint hidden.
+   Run `find e/@`, `find n/Nonexistent`, and `list`.<br>
+   Expected: Both searches show **Filtered clients**, even if everyone or nobody matches;
+   `list` restores **All clients** and the complete list.
 6. View a client with no remark or properties.<br>
    Expected: Remark reads `Not recorded`, and properties read `No properties recorded`.
 

@@ -1,10 +1,12 @@
 package seedu.address.logic;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.ClientViewMode;
 import seedu.address.model.person.Person;
 
 /**
@@ -25,6 +27,9 @@ public interface Logic {
 
     /** Returns an unmodifiable view of all persons, for the displayed total client count. */
     ObservableList<Person> getPersonList();
+
+    /** Returns the observable display mode of the client list. */
+    ReadOnlyObjectProperty<ClientViewMode> clientViewModeProperty();
 
     /**
      * Returns the user prefs' GUI settings.

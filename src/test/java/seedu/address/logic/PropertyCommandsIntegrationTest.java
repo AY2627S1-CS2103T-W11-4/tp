@@ -16,6 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.EditPropertyCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.ClientViewMode;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.ClientIntention;
@@ -314,6 +315,40 @@ public class PropertyCommandsIntegrationTest {
 
     private Person client(int index) {
         return model.getAddressBook().getPersonList().get(index);
+    }
+
+    @Test
+    public void execute_viewThenPropertyCommands_preservesDetailsAndDisplayedIndex() throws Exception {
+        Person alice = client(0);
+        logic.execute("find n/Ben");
+        logic.execute("view 1");
+
+        for (String command : List.of("addp 1 t/HDB i/Buying l/Clementi",
+                "addp 1 t/c i/Selling l/Bishan", "editp 1 2 l/Tampines", "editp 1 2 l/Tampines", "delp 1 1",
+                "delp 1 1")) {
+            logic.execute(command);
+            assertEquals(List.of(client(1)), model.getFilteredPersonList());
+            assertEquals(ClientViewMode.CLIENT_DETAILS, logic.clientViewModeProperty().get());
+            assertEquals(alice, client(0));
+            assertSaved();
+        }
+        assertTrue(client(1).getProperties().isEmpty());
+
+        logic.execute("list");
+        assertEquals(List.of(alice, client(1)), model.getFilteredPersonList());
+        assertEquals(ClientViewMode.ALL_CLIENTS, logic.clientViewModeProperty().get());
+    }
+
+    @Test
+    public void execute_viewThenDelete_restoresRemainingClientsAndSaves() throws Exception {
+        Person alice = client(0);
+        logic.execute("find n/Ben");
+        logic.execute("view 1");
+        logic.execute("delete 1");
+
+        assertEquals(List.of(alice), model.getFilteredPersonList());
+        assertEquals(ClientViewMode.ALL_CLIENTS, logic.clientViewModeProperty().get());
+        assertSaved();
     }
 
     @Test

@@ -9,6 +9,8 @@ import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -30,6 +32,9 @@ public class ModelManager implements Model {
     private final SortedList<Person> sortedPersons;
     private final ObservableList<Person> displayedPersons;
     private final Map<Person, Integer> sourcePositions = new IdentityHashMap<>();
+    private final ReadOnlyObjectWrapper<ClientViewMode> clientViewMode =
+            new ReadOnlyObjectWrapper<>(ClientViewMode.ALL_CLIENTS);
+    private Person viewedPerson;
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -116,6 +121,9 @@ public class ModelManager implements Model {
     @Override
     public void deletePerson(Person target) {
         addressBook.removePerson(target);
+        if (viewedPerson != null && viewedPerson.isSamePerson(target)) {
+            updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        }
     }
 
     @Override
@@ -129,6 +137,9 @@ public class ModelManager implements Model {
         requireAllNonNull(target, editedPerson);
 
         addressBook.setPerson(target, editedPerson);
+        if (viewedPerson != null && viewedPerson.isSamePerson(target)) {
+            showPersonDetails(editedPerson);
+        }
     }
 
     //=========== Filtered Person List Accessors =============================================================
@@ -143,8 +154,29 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public ReadOnlyObjectProperty<ClientViewMode> clientViewModeProperty() {
+        return clientViewMode.getReadOnlyProperty();
+    }
+
+    @Override
+    public void showPersonDetails(Person person) {
+        requireNonNull(person);
+        setPersonFilter(person::isSamePerson);
+        viewedPerson = person;
+        clientViewMode.set(ClientViewMode.CLIENT_DETAILS);
+    }
+
+    @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
+        setPersonFilter(predicate);
+        viewedPerson = null;
+        clientViewMode.set(predicate == PREDICATE_SHOW_ALL_PERSONS
+                ? ClientViewMode.ALL_CLIENTS : ClientViewMode.FILTERED_CLIENTS);
+    }
+
+    /** Applies filtering and ranking without changing the chosen display mode. */
+    private void setPersonFilter(Predicate<Person> predicate) {
         filteredPersons.setPredicate(predicate);
         // Replacements can disturb SortedList ties, so resolve equal ranks using the source positions.
         sortedPersons.setComparator(predicate instanceof IntentionMatchesPredicate intentionPredicate
@@ -178,6 +210,7 @@ public class ModelManager implements Model {
 
         return addressBook.equals(otherModelManager.addressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
+                && clientViewMode.get() == otherModelManager.clientViewMode.get()
                 && displayedPersons.equals(otherModelManager.displayedPersons);
     }
 

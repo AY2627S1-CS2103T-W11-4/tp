@@ -2,6 +2,7 @@ package seedu.address.model;
 
 import java.util.function.Predicate;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
@@ -91,9 +92,18 @@ public interface Model {
     /** Returns the unmodifiable displayed person list used by the UI and displayed-index commands. */
     ObservableList<Person> getFilteredPersonList();
 
+    /** Returns the observable display mode used by the client list UI. */
+    ReadOnlyObjectProperty<ClientViewMode> clientViewModeProperty();
+
+    /**
+     * Shows only {@code person} in detail mode. The person must exist in the address book.
+     */
+    void showPersonDetails(Person person);
+
     /**
      * Updates the filter of the filtered person list to filter by the given {@code predicate}.
      * Intention searches show exact-role matches first; other predicates restore source order.
+     * Exits detail mode. Only {@link #PREDICATE_SHOW_ALL_PERSONS} clears search mode.
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);

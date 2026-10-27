@@ -173,8 +173,11 @@ This example shows `view 3` from the sample list above. The selected client is n
   To repeat the earlier search instead, enter the same `find` command again.
 * Viewing does not change stored client information. An invalid or out-of-range index displays an error
   and keeps the current display unchanged.
-* Other successful client commands return to the usual client card layout and follow their own filtering rules.
-  `help` keeps the detail view open.
+* Property commands (`addp`, `editp`, `delp`) keep the updated client's details and the return reminder visible.
+  Use client index **1** while viewing details. Deleting the viewed client returns to all remaining clients.
+* `find` returns to the usual cards with the heading **Filtered clients**, even when every client matches
+  or no clients match. `list` clears the search and shows **All clients**.
+* Other client commands follow their own filtering rules. `help` and failed commands keep the detail view open.
 
 Examples:
 

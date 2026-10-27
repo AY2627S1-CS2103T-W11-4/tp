@@ -14,7 +14,9 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
 import seedu.address.testutil.AddressBookBuilder;
+import seedu.address.testutil.PersonBuilder;
 
 public class ModelManagerTest {
 
@@ -71,6 +73,70 @@ public class ModelManagerTest {
     @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> modelManager.getFilteredPersonList().remove(0));
+    }
+
+    @Test
+    public void updateFilteredPersonList_allOrNoMatches_keepsSearchModeUntilReset() {
+        modelManager.addPerson(ALICE);
+        modelManager.updateFilteredPersonList(person -> true);
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+        assertEquals(ClientViewMode.FILTERED_CLIENTS, modelManager.clientViewModeProperty().get());
+
+        modelManager.updateFilteredPersonList(person -> false);
+        assertTrue(modelManager.getFilteredPersonList().isEmpty());
+        assertEquals(ClientViewMode.FILTERED_CLIENTS, modelManager.clientViewModeProperty().get());
+
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+        assertEquals(ClientViewMode.ALL_CLIENTS, modelManager.clientViewModeProperty().get());
+    }
+
+    @Test
+    public void setPerson_viewedClientIdentityChanges_followsReplacementInDetailMode() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.showPersonDetails(BENSON);
+        Person replacement = new PersonBuilder(BENSON).withName("New Name").withPhone("87654321").build();
+
+        modelManager.setPerson(BENSON, replacement);
+
+        assertEquals(List.of(replacement), modelManager.getFilteredPersonList());
+        assertEquals(ClientViewMode.CLIENT_DETAILS, modelManager.clientViewModeProperty().get());
+    }
+
+    @Test
+    public void deletePerson_viewedClient_restoresAllRemainingClients() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.showPersonDetails(BENSON);
+
+        modelManager.deletePerson(BENSON);
+
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+        assertEquals(ClientViewMode.ALL_CLIENTS, modelManager.clientViewModeProperty().get());
+    }
+
+    @Test
+    public void deletePerson_searchResult_preservesSearchModeAndPredicate() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.updateFilteredPersonList(person -> person.isSamePerson(BENSON));
+
+        modelManager.deletePerson(BENSON);
+
+        assertTrue(modelManager.getFilteredPersonList().isEmpty());
+        assertEquals(ClientViewMode.FILTERED_CLIENTS, modelManager.clientViewModeProperty().get());
+    }
+
+    @Test
+    public void equals_sameDisplayedClientsDifferentModes_returnsFalse() {
+        modelManager.addPerson(ALICE);
+        ModelManager other = new ModelManager(modelManager.getAddressBook(), new UserPrefs());
+        modelManager.updateFilteredPersonList(person -> true);
+        assertFalse(modelManager.equals(other));
+
+        other.showPersonDetails(ALICE);
+        assertFalse(modelManager.equals(other));
     }
 
     @Test

@@ -3,8 +3,8 @@ package seedu.address.ui;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -12,6 +12,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
 import seedu.address.logic.commands.ViewCommand;
+import seedu.address.model.ClientViewMode;
 import seedu.address.model.person.Person;
 
 /**
@@ -20,7 +21,7 @@ import seedu.address.model.person.Person;
 public class PersonListPanel extends UiPart<Region> {
     private static final String FXML = "PersonListPanel.fxml";
 
-    private final BooleanProperty showClientDetails = new SimpleBooleanProperty(false);
+    private final BooleanBinding showClientDetails;
 
     @FXML
     private Label clientListHeading;
@@ -33,10 +34,13 @@ public class PersonListPanel extends UiPart<Region> {
     private ListView<Person> personListView;
 
     /**
-     * Creates a panel with the filtered clients and the complete list used for its total count.
+     * Creates a panel whose cards, heading and return hint follow the model's display mode.
      */
-    public PersonListPanel(ObservableList<Person> personList, ObservableList<Person> allPersons) {
+    public PersonListPanel(ObservableList<Person> personList, ObservableList<Person> allPersons,
+            ObservableValue<ClientViewMode> viewMode) {
         super(FXML);
+        showClientDetails = Bindings.createBooleanBinding(() ->
+                viewMode.getValue() == ClientViewMode.CLIENT_DETAILS, viewMode);
         personListView.setItems(personList);
         personListView.setCellFactory(listView -> new PersonListViewCell());
         clientCount.textProperty().bind(Bindings.createStringBinding(() ->
@@ -44,22 +48,16 @@ public class PersonListPanel extends UiPart<Region> {
         returnToListHint.setText(ViewCommand.MESSAGE_RETURN_TO_LIST);
         returnToListHint.visibleProperty().bind(showClientDetails);
         returnToListHint.managedProperty().bind(showClientDetails);
-        clientListHeading.textProperty().bind(Bindings.when(showClientDetails).then("Client details")
-                .otherwise(Bindings.when(Bindings.size(personList).isEqualTo(Bindings.size(allPersons)))
-                        .then("All clients").otherwise("Filtered clients")));
-    }
-
-    /**
-     * Switches between the complete detail card and the usual client list cards.
-     */
-    public void setShowClientDetails(boolean showDetails) {
-        assert !showDetails || personListView.getItems().size() == 1
-                : "The detail view requires exactly one displayed client";
-        if (showClientDetails.get() == showDetails) {
-            return;
-        }
-        showClientDetails.set(showDetails);
-        personListView.scrollTo(0);
+        clientListHeading.textProperty().bind(Bindings.createStringBinding(() -> switch (viewMode.getValue()) {
+            case ALL_CLIENTS -> "All clients";
+            case FILTERED_CLIENTS -> "Filtered clients";
+            case CLIENT_DETAILS -> "Client details";
+        }, viewMode));
+        showClientDetails.addListener((observable, oldValue, showDetails) -> {
+            assert !showDetails || personListView.getItems().size() == 1
+                    : "The detail view requires exactly one displayed client";
+            personListView.scrollTo(0);
+        });
     }
 
     /**
