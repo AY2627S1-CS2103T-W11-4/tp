@@ -51,6 +51,7 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -625,6 +626,31 @@ public class ResidexUiTest {
                 assertFalse(properties.isManaged());
                 assertEquals("Intention: Not specified", label(root, "intention").getText());
                 assertTrue(model.getFilteredPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void remarkCommand_missingPrefix_keepsRemarkAndShowsUsage() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Remark Test p/91110011 e/remarktest@example.com");
+                runCommand(root, "remark 1 r/Call tomorrow");
+                runCommand(root, "remark 1");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, RemarkCommand.MESSAGE_USAGE),
+                        result.getText());
+                assertEquals("Call tomorrow", label(root, "remark").getText());
+                assertEquals("Call tomorrow", model.getAddressBook().getPersonList().get(0).getRemark().value);
             } finally {
                 window.getPrimaryStage().close();
             }
