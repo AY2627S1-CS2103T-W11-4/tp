@@ -88,7 +88,8 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 ### Viewing help: `help`
 
 Opens a separate, resizable window containing the command reference. Each command has a card showing its
-purpose, format, parameter rules and examples. The command reference is available without an internet connection.
+purpose, format, parameter rules and examples. It uses the same light styling as the main window.
+The command reference is available without an internet connection.
 
 Format: `help`
 

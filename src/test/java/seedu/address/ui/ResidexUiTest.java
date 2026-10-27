@@ -48,6 +48,7 @@ import javafx.scene.input.DataFormat;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -171,6 +172,56 @@ public class ResidexUiTest {
                 assertFalse(help.isShowing(), "Copying must not open another window or run an example");
             } finally {
                 clipboard.setContent(original);
+                help.getRoot().close();
+            }
+        });
+    }
+
+    @Test
+    public void helpLayout_matchesMainThemeAndWrapsExamplesAtMinimumSize() throws Exception {
+        runOnFxThread(() -> {
+            HelpWindow help = new HelpWindow();
+            try {
+                for (int width : new int[] {740, 520}) {
+                    Region root = layoutStage(help.getRoot(), width, width == 520 ? 420 : 680);
+                    assertEquals(Color.web("#f1f3f5"), root.getBackground().getFills().get(0).getFill());
+                    VBox cards = (VBox) root.lookup("#commandCards");
+                    boolean hasWrappedExample = false;
+                    for (Node node : cards.getChildren()) {
+                        VBox card = (VBox) node;
+                        assertEquals(Color.WHITE, card.getBackground().getFills().get(0).getFill());
+                        assertEquals(Color.web("#27313d"), label(card, "description").getTextFill());
+                        VBox examples = (VBox) card.lookup("#examples");
+                        for (Node example : examples.getChildren()) {
+                            HBox row = (HBox) example;
+                            Label text = (Label) row.getChildren().get(0);
+                            Button copy = (Button) row.getChildren().get(1);
+                            assertTrue(text.getWidth() > 0);
+                            assertTrue(text.getHeight() >= text.prefHeight(text.getWidth()));
+                            assertTrue(text.localToScene(text.getBoundsInLocal()).getMaxX()
+                                    <= copy.localToScene(copy.getBoundsInLocal()).getMinX());
+                            assertTrue(copy.localToScene(copy.getBoundsInLocal()).getMaxX()
+                                    <= row.localToScene(row.getBoundsInLocal()).getMaxX());
+                            assertEquals(Color.WHITE, copy.getTextFill());
+                            assertEquals(Color.web("#344d6b"), copy.getBackground().getFills().get(0).getFill());
+                            hasWrappedExample |= text.getHeight() > 30;
+                        }
+                    }
+                    if (width == 520) {
+                        assertTrue(hasWrappedExample, "Long examples must wrap at the minimum width");
+                    }
+                    ScrollPane scroll = (ScrollPane) root.lookup("#commandScrollPane");
+                    assertTrue(scroll.getHeight() > 0);
+                    Button copyGuide = (Button) root.lookup("#copyButton");
+                    assertTrue(copyGuide.localToScene(copyGuide.getBoundsInLocal()).getMaxY() <= root.getHeight());
+                    for (Node bar : scroll.lookupAll(".scroll-bar")) {
+                        if (((ScrollBar) bar).getOrientation() == Orientation.HORIZONTAL) {
+                            assertFalse(bar.isVisible());
+                        }
+                    }
+                    saveSnapshot(root, "help-" + width);
+                }
+            } finally {
                 help.getRoot().close();
             }
         });
@@ -843,12 +894,16 @@ public class ResidexUiTest {
     }
 
     private static Region layoutWindow(MainWindow window, double width, double height) {
-        Scene previousScene = window.getPrimaryStage().getScene();
+        return layoutStage(window.getPrimaryStage(), width, height);
+    }
+
+    private static Region layoutStage(Stage stage, double width, double height) {
+        Scene previousScene = stage.getScene();
         Region root = (Region) previousScene.getRoot();
         previousScene.setRoot(new Group());
         Scene scene = new Scene(root, width, height);
         scene.getStylesheets().addAll(previousScene.getStylesheets());
-        window.getPrimaryStage().setScene(scene);
+        stage.setScene(scene);
         root.resize(width, height);
         root.applyCss();
         root.layout();

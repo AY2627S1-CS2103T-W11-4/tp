@@ -187,6 +187,8 @@ Each read-only example has a keyboard-accessible Copy button. `CommandHelpCard` 
 using JavaFX's clipboard API; visual wrapping does not add line breaks. The button reports Copied or Failed and
 can be used again. Copy actions do not invoke command logic.
 The layout and styles are defined in `HelpWindow.fxml`, `CommandHelpCard.fxml` and `HelpWindow.css`.
+Help loads `Residex.css` first so text, buttons and focus indicators follow the main UI's light theme.
+`HelpWindow.css` scopes the reference layout and example-row sizing to the Help window.
 
 The reference is bundled with the app and works offline. The footer's Copy URL button copies the RESIDEX User Guide URL.
 Update `HelpContent` and the User Guide together when commands change. `HelpContentTest` checks that the documented
