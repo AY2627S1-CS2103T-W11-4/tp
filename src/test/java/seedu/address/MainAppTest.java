@@ -1,5 +1,6 @@
 package seedu.address;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -65,6 +66,17 @@ public class MainAppTest {
     @Test
     public void init_corruptData_preventsCommandsAndPreservesFile() throws Exception {
         assertLoadFailurePreservesFile("invalid JSON");
+    }
+
+    @Test
+    public void init_trailingData_preventsCommandsAndPreservesEntireFile() throws Exception {
+        for (String suffix : new String[]{
+            "{\"persons\":[{\"name\":\"Trailing Client\",\"phone\":\"91110012\","
+                    + "\"email\":\"trailing@example.com\"}]}",
+            "[]", "null", "true", "42", "\"extra\"", "garbage", "{"
+        }) {
+            assertLoadFailurePreservesFile("{\"persons\":[]}\n" + suffix);
+        }
     }
 
     @Test
@@ -238,6 +250,7 @@ public class MainAppTest {
 
     private void assertLoadFailurePreservesFile(String invalidData) throws Exception {
         Files.writeString(dataPath(), invalidData);
+        byte[] original = Files.readAllBytes(dataPath());
         MainApp app = createApp();
 
         app.init();
@@ -247,6 +260,7 @@ public class MainAppTest {
         assertNotNull(app.ui, "Startup must provide an error UI");
         assertDoesNotThrow(app::stop);
         assertEquals(invalidData, Files.readString(dataPath()));
+        assertArrayEquals(original, Files.readAllBytes(dataPath()));
     }
 
     private Path prefsPath() {

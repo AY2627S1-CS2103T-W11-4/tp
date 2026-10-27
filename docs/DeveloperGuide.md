@@ -164,6 +164,9 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Protecting client data after a failed load
 
+`JsonUtil#fromJsonString()` reads a complete value using Jackson's parser and checks that no token follows it.
+Trailing whitespace is accepted; additional values and malformed trailing text cause a loading error.
+
 `MainApp#initModelManager()` propagates `DataLoadingException` when an existing client data file cannot
 be loaded. `MainApp#init()` then provides an error UI without creating a model or command logic.
 When the application starts, the error dialog shows the file's absolute path and recovery instructions,
