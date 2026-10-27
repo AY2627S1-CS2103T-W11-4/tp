@@ -13,7 +13,6 @@ import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
 import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,10 +20,12 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.AddressBook;
+import seedu.address.model.ClientViewMode;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.property.Property;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -81,9 +82,9 @@ public class ViewCommandTest {
         List<Person> original = List.copyOf(model.getFilteredPersonList());
         new ViewCommand(INDEX_SECOND_PERSON).execute(model);
         new ViewCommand(INDEX_FIRST_PERSON).execute(model);
-        CommandResult result = new ListCommand().execute(model);
+        new ListCommand().execute(model);
         assertEquals(original, model.getFilteredPersonList());
-        assertFalse(result.isShowClientDetails());
+        assertEquals(ClientViewMode.ALL_CLIENTS, model.clientViewModeProperty().get());
     }
 
     @Test
@@ -107,10 +108,38 @@ public class ViewCommandTest {
     }
 
     @Test
+    public void execute_rankedSearchThenPropertyChangeAndDelete_preservesDisplayedTarget() throws Exception {
+        Model rankedModel = new ModelManager();
+        Person both = new PersonBuilder().withName("Both Client")
+                .withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
+        Person buyer = new PersonBuilder().withName("Buyer Client").withProperties(CLEMENTI_HDB).build();
+        Person seller = new PersonBuilder().withName("Seller Client").withProperties(TAMPINES_CONDO).build();
+        rankedModel.addPerson(both);
+        rankedModel.addPerson(buyer);
+        rankedModel.addPerson(seller);
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("find i/buyer").execute(rankedModel);
+        assertEquals(List.of(buyer, both), rankedModel.getFilteredPersonList());
+
+        parser.parseCommand("view 1").execute(rankedModel);
+        parser.parseCommand("editp 1 1 i/Selling").execute(rankedModel);
+        Person updated = new PersonBuilder(buyer).withProperties(new Property(
+                CLEMENTI_HDB.getType(), TAMPINES_CONDO.getIntention(), CLEMENTI_HDB.getLocation(),
+                CLEMENTI_HDB.getPrice().orElseThrow())).build();
+        assertEquals(List.of(updated), rankedModel.getFilteredPersonList());
+        assertEquals(ClientViewMode.CLIENT_DETAILS, rankedModel.clientViewModeProperty().get());
+        assertEquals(List.of(both, updated, seller), rankedModel.getAddressBook().getPersonList());
+
+        parser.parseCommand("delete 1").execute(rankedModel);
+        assertEquals(List.of(both, seller), rankedModel.getFilteredPersonList());
+        assertEquals(ClientViewMode.ALL_CLIENTS, rankedModel.clientViewModeProperty().get());
+    }
+
+    @Test
     public void execute_modelFailsToFilter_assertionDetectsInvalidDisplayState() {
         Model brokenModel = new ModelManager(getTypicalAddressBook(), new UserPrefs()) {
             @Override
-            public void updateFilteredPersonList(Predicate<Person> predicate) {
+            public void showPersonDetails(Person person) {
                 // Simulate a model regression that leaves other clients visible.
             }
         };
@@ -139,7 +168,7 @@ public class ViewCommandTest {
         assertEquals(List.of(selected), model.getFilteredPersonList());
         assertEquals(original, model.getAddressBook());
         assertEquals(ViewCommand.MESSAGE_SUCCESS, result.getFeedbackToUser());
-        assertTrue(result.isShowClientDetails());
+        assertEquals(ClientViewMode.CLIENT_DETAILS, model.clientViewModeProperty().get());
         assertFalse(result.isShowHelp());
         assertFalse(result.isExit());
     }

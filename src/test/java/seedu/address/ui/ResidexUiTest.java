@@ -214,6 +214,146 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void propertyCommandsAfterView_keepUpdatedDetailsAndReturnHint() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Person first = new PersonBuilder().withName("Alice Pauline").build();
+            model.addPerson(first);
+            model.addPerson(new PersonBuilder().withName("Bob Choo").build());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 900, 900);
+                runCommand(root, "view 2");
+                for (String command : List.of("addp 1 t/HDB i/Buying l/Clementi",
+                        "editp 1 1 l/Bishan", "editp 1 1 l/Bishan", "editp 1 1 l/", "delp 1 1")) {
+                    runCommand(root, command);
+                    assertEquals("Client details", label(root, "clientListHeading").getText());
+                    assertEquals("1 of 2 clients", label(root, "clientCount").getText());
+                    assertTrue(label(root, "returnToListHint").isVisible());
+                    assertTrue(label(root, "returnToListHint").isManaged());
+                    Region card = (Region) root.lookup("#personDetailsCard");
+                    assertNotNull(card);
+                    assertEquals("Bob Choo", label(card, "name").getText());
+                    Person updated = model.getAddressBook().getPersonList().get(1);
+                    assertEquals(List.of(updated), model.getFilteredPersonList());
+                    assertEquals(first, model.getAddressBook().getPersonList().get(0));
+                    if (command.startsWith("delp")) {
+                        assertEquals("No properties recorded", label(card, "emptyProperties").getText());
+                    } else {
+                        assertEquals(command.startsWith("addp") ? "Clementi" : "Bishan",
+                                label(card, "propertyLocation1").getText());
+                    }
+                }
+                runCommand(root, "list");
+                assertEquals("All clients", label(root, "clientListHeading").getText());
+                assertEquals("2 of 2 clients", label(root, "clientCount").getText());
+                assertFalse(label(root, "returnToListHint").isVisible());
+                assertTrue(root.lookupAll("#personDetailsCard").isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void deleteAfterView_restoresAllRemainingClientsAndHidesHint() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Person first = new PersonBuilder().withName("Alice Pauline").build();
+            model.addPerson(first);
+            model.addPerson(new PersonBuilder().withName("Bob Choo").build());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 900, 900);
+                runCommand(root, "find n/Bob");
+                runCommand(root, "view 1");
+                runCommand(root, "delete 1");
+                assertEquals(List.of(first), model.getFilteredPersonList());
+                assertEquals("All clients", label(root, "clientListHeading").getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertFalse(label(root, "returnToListHint").isVisible());
+                assertTrue(root.lookupAll("#personDetailsCard").isEmpty());
+                assertEquals(first.getName().fullName, label(root, "name").getText());
+
+                runCommand(root, "view 1");
+                runCommand(root, "delete 1");
+                assertEquals("All clients", label(root, "clientListHeading").getText());
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertFalse(label(root, "returnToListHint").isVisible());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void findMatchingEveryoneOrNobody_showsFilteredHeadingUntilList() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Person first = new PersonBuilder().withName("Alice Pauline").build();
+            Person second = new PersonBuilder().withName("Bob Choo").build();
+            model.addPerson(first);
+            model.addPerson(second);
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 900, 900);
+                runCommand(root, "view 2");
+                runCommand(root, "find e/@");
+                assertEquals(List.of(first, second), model.getFilteredPersonList());
+                assertEquals("Filtered clients", label(root, "clientListHeading").getText());
+                assertEquals("2 of 2 clients", label(root, "clientCount").getText());
+                assertFalse(label(root, "returnToListHint").isVisible());
+                assertTrue(root.lookupAll("#personDetailsCard").isEmpty());
+
+                runCommand(root, "find n/Nonexistent");
+                assertEquals("Filtered clients", label(root, "clientListHeading").getText());
+                assertEquals("0 of 2 clients", label(root, "clientCount").getText());
+                runCommand(root, "list");
+                assertEquals("All clients", label(root, "clientListHeading").getText());
+                assertEquals(List.of(first, second), model.getFilteredPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void undoAndRedoFromDetails_restoreNormalCardsAndClearReturnHint() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Person first = new PersonBuilder().withName("Alice Pauline").build();
+            Person second = new PersonBuilder().withName("Bob Choo").build();
+            model.addPerson(first);
+            model.addPerson(second);
+            model.commitAddressBook();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 900, 900);
+                runCommand(root, "view 2");
+                runCommand(root, "addp 1 t/HDB i/Buying l/Clementi");
+                Person updated = model.getFilteredPersonList().get(0);
+                assertEquals("Client details", label(root, "clientListHeading").getText());
+                assertTrue(label(root, "returnToListHint").isVisible());
+
+                runCommand(root, "undo");
+                assertEquals(List.of(first, second), model.getFilteredPersonList());
+                assertEquals("All clients", label(root, "clientListHeading").getText());
+                assertFalse(label(root, "returnToListHint").isVisible());
+                assertTrue(root.lookupAll("#personDetailsCard").isEmpty());
+
+                runCommand(root, "view 2");
+                runCommand(root, "redo");
+                assertEquals(List.of(first, updated), model.getFilteredPersonList());
+                assertEquals("All clients", label(root, "clientListHeading").getText());
+                assertFalse(label(root, "returnToListHint").isVisible());
+                assertTrue(root.lookupAll("#personDetailsCard").isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void dataLoadingError_showsFilePathAndRecoveryInstructions() throws Exception {
         assertDataLoadingError(new IOException("Invalid JSON.\nParser details."), "Invalid JSON.");
     }
@@ -502,6 +642,15 @@ public class ResidexUiTest {
         MainWindow window = new MainWindow(new Stage(), logic, Path.of("data", "addressbook.json"));
         window.fillInnerParts();
         return window;
+    }
+
+    private static void runCommand(Region root, String commandText) {
+        TextField command = (TextField) root.lookup("#commandTextField");
+        Button run = (Button) root.lookup("#runButton");
+        command.setText(commandText);
+        run.fire();
+        root.applyCss();
+        root.layout();
     }
 
     private static Region layoutWindow(MainWindow window, double width, double height) {

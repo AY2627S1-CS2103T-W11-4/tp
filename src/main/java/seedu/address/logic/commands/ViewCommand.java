@@ -47,12 +47,12 @@ public class ViewCommand extends Command {
         }
 
         Person personToView = lastShownList.get(targetIndex.getZeroBased());
-        model.updateFilteredPersonList(personToView::isSamePerson);
+        model.showPersonDetails(personToView);
         assert model.getFilteredPersonList().size() == 1
                 && model.getFilteredPersonList().get(0).equals(personToView)
                 : "Viewing a client must show exactly the selected client";
         logger.fine("Showing details of displayed client index " + targetIndex.getOneBased());
-        return new CommandResult(MESSAGE_SUCCESS, false, false, true);
+        return new CommandResult(MESSAGE_SUCCESS);
     }
 
     @Override
