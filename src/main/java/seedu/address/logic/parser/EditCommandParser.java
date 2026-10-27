@@ -27,6 +27,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         requireNonNull(args);
         ParserUtil.rejectClientIntention(args);
         ParserUtil.rejectClientBudget(args);
+        ParserUtil.rejectUnknownClientParameters(args);
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
                         PREFIX_TAG);
