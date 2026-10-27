@@ -75,6 +75,18 @@ public class MainAppTest {
                 new JsonAddressBookStorage(dataPath()).readAddressBook().orElseThrow());
     }
 
+    @Test
+    public void init_missingFiles_findGmailListsSampleClient() throws Exception {
+        MainApp app = createApp();
+        app.init();
+
+        assertEquals("1 person(s) found!", app.logic.execute("find e/gmail").getFeedbackToUser());
+        assertEquals(List.of("Alex Yeoh"), app.model.getFilteredPersonList().stream()
+                .map(person -> person.getName().fullName).toList());
+        assertEquals("alexyeoh@gmail.com", app.model.getFilteredPersonList().get(0).getEmail().value);
+        assertEquals(6, app.model.getAddressBook().getPersonList().size());
+    }
+
     // Codex assisted Brendan-Lim with the missing/null client-list startup regressions.
     @Test
     public void init_missingClientList_preventsCommandsAndPreservesFile() throws Exception {
