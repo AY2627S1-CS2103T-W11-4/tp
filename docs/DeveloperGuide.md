@@ -176,6 +176,14 @@ This prevents command-triggered automatic saving from overwriting the failed fil
 The user must repair or replace the file and restart. Moving the file aside explicitly selects the existing
 first-run behavior, which loads sample clients. A valid file containing an empty client list still loads normally.
 
+### Recovering invalid window preferences
+
+`JsonUserPrefsStorage#readUserPrefs()` validates deserialized GUI settings before returning them.
+Null GUI settings and dimensions that are non-positive or non-finite cause `DataLoadingException`.
+`MainApp#initPrefs()` then uses its existing recovery path to load and save default preferences.
+Missing fields still use their defaults; valid negative screen coordinates and an unset position remain supported.
+Client data is independent of preferences and is not rewritten during this recovery.
+
 ### Command reference help
 
 `HelpCommand` returns a `CommandResult` with `showHelp` set to `true`. The existing `MainWindow#handleHelp()`

@@ -506,6 +506,10 @@ If RESIDEX cannot load an existing client data file, it shows an error and close
 2. Repair the invalid data or replace the file with a valid backup, then restart RESIDEX.
 3. If you want to start fresh instead, move or rename the failed file before restarting. RESIDEX will start with sample clients, as it does when no data file exists. Keep the original file if you want to recover its contents later.
 
+Window settings are stored separately in `preferences.json`. If that file is invalid, or its GUI settings are null
+or contain invalid window dimensions, RESIDEX uses default window settings and attempts to save them back.
+Your client data is loaded normally if it is valid.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## FAQ

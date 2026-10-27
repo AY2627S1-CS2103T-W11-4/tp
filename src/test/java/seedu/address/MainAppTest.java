@@ -177,6 +177,27 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_unusableGuiPreferences_savesDefaultsAndPreservesClients() throws Exception {
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        byte[] originalData = Files.readAllBytes(dataPath());
+        for (String settings : new String[]{
+            "null", "[]", "{\"windowWidth\":0}", "{\"windowHeight\":-1}", "{\"windowWidth\":\"NaN\"}"
+        }) {
+            Files.writeString(prefsPath(), "{\"guiSettings\":" + settings + "}");
+            MainApp app = createApp();
+
+            app.init();
+
+            assertEquals(getTypicalAddressBook(), app.model.getAddressBook());
+            assertEquals(new UserPrefs(), app.model.getUserPrefs());
+            assertNotNull(app.logic);
+            assertEquals(new UserPrefs(), new JsonUserPrefsStorage(prefsPath()).readUserPrefs().orElseThrow());
+            assertArrayEquals(originalData, Files.readAllBytes(dataPath()));
+            app.stop();
+        }
+    }
+
+    @Test
     public void initPrefs_saveFailure_returnsLoadedPreferences() throws Exception {
         UserPrefs prefs = createPrefs();
         new JsonUserPrefsStorage(prefsPath()).saveUserPrefs(prefs);
