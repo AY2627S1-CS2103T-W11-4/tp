@@ -177,6 +177,8 @@ first-run behavior, which loads sample clients. A valid file containing an empty
 
 `HelpCommand` returns a `CommandResult` with `showHelp` set to `true`. The existing `MainWindow#handleHelp()`
 method shows or focuses a single `HelpWindow`. The `F1` shortcut uses the same method.
+`HelpWindow#focus()` clears the stage's iconified state before bringing it forward and requesting focus.
+Restoring an existing window keeps its size, position and scroll position; it does not construct a new reference.
 
 `HelpContent` holds each command's description, syntax, notes and examples, using shared command words,
 prefixes and validation messages where appropriate. `HelpWindow` creates a `CommandHelpCard` for each entry.
@@ -1239,6 +1241,9 @@ testers are expected to do more *exploratory* testing.
 
    1. With help already open, enter `help` again in the main window.<br>
       Expected: The existing help window is focused; no second help window is created.
+
+   1. Scroll down, resize and minimise Help, then enter `help` again. Repeat using `F1`.<br>
+      Expected: The same Help window is restored and focused, keeping its size and scroll position.
 
    1. Close help, focus the main command box and press `F1`.<br>
       Expected: The same command-reference window opens.

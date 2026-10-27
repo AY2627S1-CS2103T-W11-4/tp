@@ -36,6 +36,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.PixelFormat;
@@ -87,6 +88,38 @@ public class ResidexUiTest {
     @AfterAll
     public static void stopToolkit() {
         Platform.exit();
+    }
+
+    @Test
+    public void helpFocus_restoresMinimisedStageWithoutResettingWindowOrScroll() throws Exception {
+        runOnFxThread(() -> {
+            HelpWindow help = new HelpWindow();
+            Stage stage = help.getRoot();
+            try {
+                stage.setX(120);
+                stage.setY(80);
+                stage.setWidth(740);
+                stage.setHeight(680);
+                ScrollPane scroll = (ScrollPane) stage.getScene().lookup("#commandScrollPane");
+                scroll.setVvalue(0.6);
+                stage.setIconified(true);
+                assertTrue(stage.isIconified());
+
+                help.focus();
+
+                assertFalse(stage.isIconified());
+                assertEquals(120, stage.getX());
+                assertEquals(80, stage.getY());
+                assertEquals(740, stage.getWidth());
+                assertEquals(680, stage.getHeight());
+                assertEquals(0.6, scroll.getVvalue());
+                help.focus();
+                assertFalse(stage.isIconified());
+                assertFalse(help.isShowing(), "Focusing a hidden stage must not create another window");
+            } finally {
+                stage.close();
+            }
+        });
     }
 
     @Test

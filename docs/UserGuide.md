@@ -96,7 +96,8 @@ Format: `help`
 
 * Scroll through the cards using the mouse wheel or scrollbar. Resize the window for more space.
 * Examples are for reference only. Enter commands in the main application's command box to run them.
-* You can also open help by pressing `F1`. Opening help again focuses the existing window.
+* You can also open help by pressing `F1`. Opening help again restores the existing window if it is minimised,
+  brings it to the front and focuses it. Its size and scroll position are kept.
 * Click **Copy URL** in the footer to copy the RESIDEX User Guide link for further information.
   Opening the online guide requires an internet connection.
 
@@ -524,7 +525,6 @@ If RESIDEX cannot load an existing client data file, it shows an error and close
 3. **Phone numbers** must have at least 3 digits, but there is no upper limit on their length.
 4. **Property locations** cannot contain a word followed by a slash, such as `N/A`, because it is read as a field prefix. Write `NA` instead. Numbers such as `1/2` are fine.
 5. **Undo history** is kept only while RESIDEX is running. After you close it, earlier changes cannot be undone.
-6. **If you minimize the Help Window** and then run the `help` command (or use the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
