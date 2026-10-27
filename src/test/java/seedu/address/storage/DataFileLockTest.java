@@ -8,8 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +88,20 @@ public class DataFileLockTest {
         Files.createDirectory(data.resolveSibling("addressbook.json.lock"));
 
         assertThrows(IOException.class, () -> DataFileLock.acquire(data));
+    }
+
+    @Test
+    public void acquire_overlappingNativeLock_reportsDataInUseAndAllowsRetry() throws Exception {
+        Path data = temporaryFolder.resolve("addressbook.json");
+        Path companion = data.resolveSibling("addressbook.json.lock");
+        try (FileChannel channel = FileChannel.open(companion, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                FileLock nativeLock = channel.tryLock()) {
+            assertNotNull(nativeLock);
+            assertThrows(DataFileLock.InUseException.class, () -> DataFileLock.acquire(data));
+        }
+        try (DataFileLock lock = DataFileLock.acquire(data)) {
+            assertNotNull(lock);
+        }
     }
 
     @Test

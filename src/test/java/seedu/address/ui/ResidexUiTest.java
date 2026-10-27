@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
 import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
@@ -56,6 +57,7 @@ import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyStatus;
+import seedu.address.storage.DataFileLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -470,6 +472,56 @@ public class ResidexUiTest {
     public void dataLoadingError_accessDenied_showsPermissionMessage() throws Exception {
         assertDataLoadingError(new AccessDeniedException("addressbook.json"),
                 "Access to the file was denied. Check its permissions.");
+    }
+
+    @Test
+    public void dataFileLockError_inUse_explainsHowToReopen() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        try (DataFileLock owner = DataFileLock.acquire(dataFile)) {
+            assertNotNull(owner);
+            IOException error = assertThrows(DataFileLock.InUseException.class, () -> DataFileLock.acquire(dataFile));
+            assertDataFileLockError(dataFile, error, "This client data is already open in RESIDEX",
+                    "Close the other RESIDEX instance, then launch again.");
+        }
+    }
+
+    @Test
+    public void dataFileLockError_ioFailure_explainsAccessProblem() throws Exception {
+        assertDataFileLockError(temporaryFolder.resolve("addressbook.json"), new IOException("Test lock failure"),
+                "RESIDEX could not secure access to your client data",
+                "Check folder permissions or move RESIDEX to a writable local folder, then try again."
+                        + "\nReason: Test lock failure");
+    }
+
+    private void assertDataFileLockError(Path dataFile, IOException error, String expectedHeader,
+            String expectedRecovery) throws Exception {
+        runOnFxThread(() -> {
+            CompletableFuture<Void> checked = new CompletableFuture<>();
+            Platform.runLater(() -> {
+                List<Window> windows = List.copyOf(Window.getWindows());
+                try {
+                    DialogPane dialog = windows.stream().map(Window::getScene)
+                            .map(scene -> scene.lookup("#" + UiManager.ALERT_DIALOG_PANE_FIELD_ID))
+                            .filter(DialogPane.class::isInstance).map(DialogPane.class::cast)
+                            .findFirst().orElseThrow();
+                    assertEquals(expectedHeader, dialog.getHeaderText());
+                    String message = dialog.getContentText();
+                    assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
+                    assertTrue(message.contains(expectedRecovery));
+                    assertTrue(message.contains("This instance has not changed your client data or preferences."));
+                    assertTrue(message.contains("It will now close."));
+                    checked.complete(null);
+                } catch (Throwable e) {
+                    checked.completeExceptionally(e);
+                } finally {
+                    windows.forEach(Window::hide);
+                }
+            });
+
+            UiManager.showDataFileLockError(dataFile, error);
+
+            checked.get(5, TimeUnit.SECONDS);
+        });
     }
 
     private void assertDataLoadingError(Exception cause, String expectedReason) throws Exception {
