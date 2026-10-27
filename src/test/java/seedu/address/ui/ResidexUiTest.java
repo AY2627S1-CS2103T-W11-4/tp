@@ -2,8 +2,10 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
 import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
@@ -467,6 +469,19 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void dataLoadingError_missingOrNullClientList_showsStorageValidationReason() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : List.of("{}", "{\"persons\": null}")) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertDataLoadingError(assertInstanceOf(IllegalValueException.class, failure.getCause()),
+                    "Client list is missing from the data file.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
     public void dataLoadingError_accessDenied_showsPermissionMessage() throws Exception {
         assertDataLoadingError(new AccessDeniedException("addressbook.json"),
                 "Access to the file was denied. Check its permissions.");
@@ -488,6 +503,8 @@ public class ResidexUiTest {
                     assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
                     assertTrue(message.contains("Reason: " + expectedReason));
                     assertFalse(message.contains("Parser details."));
+                    assertFalse(message.contains("NullPointerException"));
+                    assertFalse(message.contains("JsonSerializableAddressBook"));
                     assertTrue(message.contains("has not been changed"));
                     assertTrue(message.contains("RESIDEX will close"));
                     assertTrue(message.contains("repair it or replace it with a valid backup"));

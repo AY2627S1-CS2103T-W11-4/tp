@@ -501,6 +501,9 @@ Furthermore, certain edits can cause RESIDEX to behave in unexpected ways (e.g.,
 
 If RESIDEX cannot load an existing client data file, it shows an error and closes. Commands and automatic saving are unavailable, so the failed file cannot be overwritten by an empty client list.
 
+If the error says `Client list is missing from the data file.`, the required `persons` list is absent or null.
+A valid empty file contains `{"persons": []}`. Restore your client records from a valid backup if they should be present.
+
 1. Locate the file using the path shown in the error dialog and make a backup copy.
 2. Repair the invalid data or replace the file with a valid backup, then restart RESIDEX.
 3. If you want to start fresh instead, move or rename the failed file before restarting. RESIDEX will start with sample clients, as it does when no data file exists. Keep the original file if you want to recover its contents later.

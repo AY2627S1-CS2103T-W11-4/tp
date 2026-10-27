@@ -63,6 +63,16 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_missingClientList_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("{}");
+    }
+
+    @Test
+    public void init_nullClientList_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("{\"persons\": null}");
+    }
+
+    @Test
     public void init_corruptData_preventsCommandsAndPreservesFile() throws Exception {
         assertLoadFailurePreservesFile("invalid JSON");
     }
