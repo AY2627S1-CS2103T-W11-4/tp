@@ -55,6 +55,7 @@ public class MainAppTest {
         assertEquals(savedData, Files.readString(dataPath()));
     }
 
+    // Codex assisted Brendan-Lim with the fresh-sample search and existing-file preservation assertions.
     @Test
     public void init_missingFiles_usesSampleClientsAndSavesDefaultPreferences() throws Exception {
         MainApp app = createApp();

@@ -29,6 +29,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
    ![RESIDEX client list with contact details, derived roles and property summaries](images/Ui.png)
 
    This screenshot uses the bundled sample clients with example remarks and property statuses.
+   <!-- Codex assisted Brendan-Lim with the fresh-sample search documentation. -->
    With fresh sample data, `find s/viewing` returns Alex Yeoh; `find s/unspecified` returns Bernice Yu and Charlotte Oliveiro.
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>

@@ -18,6 +18,7 @@ import seedu.address.model.property.PropertyType;
 
 /**
  * Contains utility methods for populating {@code AddressBook} with sample data.
+ * Codex assisted Brendan-Lim with the sample property at the Viewing stage.
  */
 public class SampleDataUtil {
     public static Person[] getSamplePersons() {

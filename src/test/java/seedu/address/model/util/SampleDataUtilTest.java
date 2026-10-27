@@ -28,6 +28,7 @@ public class SampleDataUtilTest {
     @TempDir
     public Path temporaryFolder;
 
+    // Codex assisted Brendan-Lim with the sample-stage, identity and storage regression tests.
     @Test
     public void getSamplePersons_preservesOrderedPropertyFieldsWithRepresentativeStages() {
         List<List<Property>> properties = Arrays.stream(SampleDataUtil.getSamplePersons())
