@@ -29,6 +29,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
    ![RESIDEX client list with contact details, derived roles and property summaries](images/Ui.png)
 
    This screenshot uses the bundled sample clients with example remarks and property statuses.
+   With fresh sample data, `find s/viewing` returns Alex Yeoh; `find s/unspecified` returns Bernice Yu and Charlotte Oliveiro.
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
@@ -406,7 +407,7 @@ Examples:
 * `find i/buyer` lists Buyer clients followed by Buyer / Seller clients.
 * `find i/seller` lists Seller clients followed by Buyer / Seller clients.
 * `find i/both` lists Buyer / Seller clients only.
-* `find s/viewing` lists clients with at least one property at Viewing. On fresh sample data, this returns Alex Yeoh.
+* `find s/viewing` lists clients with at least one property at Viewing.
 * `find S/UNSPECIFIED` lists clients with at least one property whose stage is Not specified.
 * `find t/HDB` lists clients with at least one HDB property.
 * `find pr/500000-800000` lists clients with a property priced from $500,000 to $800,000.
