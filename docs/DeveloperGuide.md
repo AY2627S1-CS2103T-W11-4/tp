@@ -1736,6 +1736,7 @@ Use a copy of the application in a separate folder for these tests, and keep a b
       Expected: It still contains `invalid JSON`.
    3. Repeat with `null`, `{"persons": [null]}`, and a client with an invalid field value.
       Expected: The same error and file-preservation behavior.
+   <!-- Codex assisted Brendan-Lim with the missing-client-list manual checks. -->
    4. Repeat with `{}` and `{"persons": null}`.
       Expected: The reason is `Client list is missing from the data file.` rather than an internal exception.
       The original file stays unchanged and RESIDEX closes without creating a replacement client list.

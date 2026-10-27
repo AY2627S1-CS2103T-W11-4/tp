@@ -25,6 +25,7 @@ public class JsonSerializableAddressBookTest {
     private static final Path INVALID_PERSON_FILE = TEST_DATA_FOLDER.resolve("invalidPersonAddressBook.json");
     private static final Path DUPLICATE_PERSON_FILE = TEST_DATA_FOLDER.resolve("duplicatePersonAddressBook.json");
 
+    // Codex assisted Brendan-Lim with the missing, null and empty client-list regressions.
     @Test
     public void toModelType_missingOrNullClientList_throwsIllegalValueException() throws Exception {
         for (String json : List.of("{}", "{\"persons\": null}")) {

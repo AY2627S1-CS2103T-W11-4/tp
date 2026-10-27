@@ -468,6 +468,7 @@ public class ResidexUiTest {
                 "Persons list contains duplicate person(s).");
     }
 
+    // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
     @Test
     public void dataLoadingError_missingOrNullClientList_showsStorageValidationReason() throws Exception {
         Path dataFile = temporaryFolder.resolve("addressbook.json");

@@ -15,6 +15,7 @@ import seedu.address.model.person.Person;
 
 /**
  * An Immutable AddressBook that is serializable to JSON format.
+ * Codex assisted Brendan-Lim with missing-client-list validation at model conversion.
  */
 @JsonRootName(value = "addressbook")
 class JsonSerializableAddressBook {

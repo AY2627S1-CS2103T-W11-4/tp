@@ -52,6 +52,7 @@ public class JsonAddressBookStorageTest {
     @TempDir
     public Path testFolder;
 
+    // Codex assisted Brendan-Lim with the client-list validation and file-preservation regressions.
     @Test
     public void readAddressBook_missingOrNullClientList_reportsValidationFailureAndPreservesFile() throws Exception {
         Path file = testFolder.resolve("missingClients.json");
