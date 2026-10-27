@@ -182,7 +182,10 @@ Restoring an existing window keeps its size, position and scroll position; it do
 
 `HelpContent` holds each command's description, syntax, notes and examples, using shared command words,
 prefixes and validation messages where appropriate. `HelpWindow` creates a `CommandHelpCard` for each entry.
-The cards are display-only and sit inside a scrolling pane, with the heading and User Guide footer outside it.
+The cards sit inside a scrolling pane, with the heading and User Guide footer outside it.
+Each read-only example has a keyboard-accessible Copy button. `CommandHelpCard` copies its original example string
+using JavaFX's clipboard API; visual wrapping does not add line breaks. The button reports Copied or Failed and
+can be used again. Copy actions do not invoke command logic.
 The layout and styles are defined in `HelpWindow.fxml`, `CommandHelpCard.fxml` and `HelpWindow.css`.
 
 The reference is bundled with the app and works offline. The footer's Copy URL button copies the RESIDEX User Guide URL.
@@ -1262,6 +1265,18 @@ testers are expected to do more *exploratory* testing.
 
    1. Click **Copy URL** and paste the clipboard contents into a text editor.<br>
       Expected: `https://ay2627s1-cs2103t-w11-4.github.io/tp/UserGuide.html` is pasted.
+
+1. Copying examples
+
+   1. Click **Copy** beside a long `editp` example, then paste into the main command box.<br>
+      Expected: The exact example is pasted without extra line breaks, and the button shows **Copied**.
+      Nothing runs until Enter is pressed in the main command box. Adjust example values before executing.
+
+   1. Copy a different example, then use **Copy URL** again.<br>
+      Expected: Each action copies its own text. Copying examples does not change the guide URL action.
+
+   1. Use Tab to reach a Copy button, then activate it with Space.<br>
+      Expected: The example can be copied without a mouse. If a button shows **Failed**, click it again to retry.
 
 ### Viewing complete client details
 

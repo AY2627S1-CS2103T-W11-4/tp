@@ -1,14 +1,24 @@
 package seedu.address.ui;
 
+import java.util.logging.Logger;
+
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import seedu.address.commons.core.LogsCenter;
 
 /**
- * A display-only card containing a command's syntax, notes and examples.
+ * A command-reference card with read-only examples that can be copied.
  */
 final class CommandHelpCard extends UiPart<VBox> {
     private static final String FXML = "CommandHelpCard.fxml";
+    private static final Logger logger = LogsCenter.getLogger(CommandHelpCard.class);
 
     @FXML
     private Label commandName;
@@ -33,7 +43,30 @@ final class CommandHelpCard extends UiPart<VBox> {
             notes.getChildren().add(createLabel("\u2022 " + note, "help-note"));
         }
         for (String example : command.examples()) {
-            examples.getChildren().add(createLabel(example, "help-example"));
+            examples.getChildren().add(createExample(example));
+        }
+    }
+
+    private HBox createExample(String example) {
+        Label text = createLabel(example, "help-example");
+        HBox.setHgrow(text, Priority.ALWAYS);
+        Button copy = new Button("Copy");
+        copy.getStyleClass().add("help-example-copy");
+        copy.setAccessibleText("Copy example: " + example);
+        copy.setOnAction(event -> copyExample(example, copy));
+        HBox row = new HBox(8, text, copy);
+        row.setAlignment(Pos.TOP_LEFT);
+        row.setMinWidth(0);
+        return row;
+    }
+
+    private void copyExample(String example, Button copy) {
+        ClipboardContent content = new ClipboardContent();
+        content.putString(example);
+        boolean isCopied = Clipboard.getSystemClipboard().setContent(content);
+        copy.setText(isCopied ? "Copied" : "Failed");
+        if (!isCopied) {
+            logger.warning("Could not copy a Help example to the clipboard.");
         }
     }
 

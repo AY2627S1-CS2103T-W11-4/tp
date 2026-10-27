@@ -95,7 +95,10 @@ Format: `help`
 ![RESIDEX help window showing command reference cards](images/helpMessage.png)
 
 * Scroll through the cards using the mouse wheel or scrollbar. Resize the window for more space.
-* Examples are for reference only. Enter commands in the main application's command box to run them.
+* Click **Copy** beside an example to copy that command, then paste it into the main command box and adjust its
+  values before pressing Enter. Copying does not execute the example.
+  The button shows **Copied** on success. If it shows **Failed**, click it again to retry.
+  You can reach the buttons with Tab and activate them with Space.
 * You can also open help by pressing `F1`. Opening help again restores the existing window if it is minimised,
   brings it to the front and focuses it. Its size and scroll position are kept.
 * Click **Copy URL** in the footer to copy the RESIDEX User Guide link for further information.

@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
@@ -41,6 +43,9 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -118,6 +123,55 @@ public class ResidexUiTest {
                 assertFalse(help.isShowing(), "Focusing a hidden stage must not create another window");
             } finally {
                 stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void helpExamples_copyExactTextAndKeepGuideUrlAction() throws Exception {
+        runOnFxThread(() -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            Map<DataFormat, Object> original = new HashMap<>();
+            for (DataFormat format : clipboard.getContentTypes()) {
+                Object content = clipboard.getContent(format);
+                if (content != null) {
+                    original.put(format, content);
+                }
+            }
+            HelpWindow help = new HelpWindow();
+            try {
+                Region root = (Region) help.getRoot().getScene().getRoot();
+                root.resize(740, 680);
+                root.applyCss();
+                root.layout();
+                VBox cards = (VBox) root.lookup("#commandCards");
+                assertEquals(HelpContent.getCommands().size(), cards.getChildren().size());
+                for (int i = 0; i < cards.getChildren().size(); i++) {
+                    VBox examples = (VBox) cards.getChildren().get(i).lookup("#examples");
+                    List<String> expected = HelpContent.getCommands().get(i).examples();
+                    assertEquals(expected.size(), examples.getChildren().size());
+                    for (int j = 0; j < expected.size(); j++) {
+                        HBox row = (HBox) examples.getChildren().get(j);
+                        Label text = (Label) row.getChildren().get(0);
+                        Button copy = (Button) row.getChildren().get(1);
+                        assertEquals(expected.get(j), text.getText());
+                        assertTrue(text.isWrapText());
+                        assertTrue(copy.isFocusTraversable());
+                        assertEquals("Copy example: " + expected.get(j), copy.getAccessibleText());
+                        copy.fire();
+                        assertEquals(expected.get(j), clipboard.getString());
+                        assertEquals("Copied", copy.getText());
+                        copy.fire();
+                        assertEquals(expected.get(j), clipboard.getString());
+                    }
+                }
+                Button copyGuide = (Button) root.lookup("#copyButton");
+                copyGuide.fire();
+                assertEquals(HelpWindow.USERGUIDE_URL, clipboard.getString());
+                assertFalse(help.isShowing(), "Copying must not open another window or run an example");
+            } finally {
+                clipboard.setContent(original);
+                help.getRoot().close();
             }
         });
     }
