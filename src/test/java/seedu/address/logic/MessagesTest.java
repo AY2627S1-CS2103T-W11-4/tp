@@ -1,6 +1,8 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
+import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,5 +26,15 @@ public class MessagesTest {
 
         assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
                 + "Remark: ", Messages.format(person));
+    }
+
+    @Test
+    public void format_personWithProperties_includesNumberedCardSummaries() {
+        Person person = new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
+
+        assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; Remark: \n"
+                + "1. " + CLEMENTI_HDB.toDisplay() + "\n"
+                + "2. " + TAMPINES_CONDO.toDisplay(),
+                Messages.format(person));
     }
 }

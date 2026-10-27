@@ -55,6 +55,12 @@ public class Messages {
                 .append(person.getEmail())
                 .append("; Remark: ")
                 .append(person.getRemark());
+        for (int i = 0; i < person.getProperties().size(); i++) {
+            builder.append("\n")
+                    .append(i + 1)
+                    .append(". ")
+                    .append(person.getProperties().get(i).toDisplay());
+        }
         return builder.toString();
     }
 
