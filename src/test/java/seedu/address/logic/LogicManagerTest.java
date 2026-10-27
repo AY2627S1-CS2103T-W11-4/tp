@@ -159,7 +159,8 @@ public class LogicManagerTest {
         String savedData = Files.readString(dataFile);
 
         assertParseException(PersonUtil.getAddCommand(person) + " t/friends", MESSAGE_TAGS_NOT_SUPPORTED);
-        assertParseException("edit 1 a/New address t/clients", MESSAGE_TAGS_NOT_SUPPORTED);
+        assertParseException("edit 1 a/New address t/clients",
+                String.format(Messages.MESSAGE_UNEXPECTED_PARAMETER, "a/New"));
         assertParseException("edit 1 t/", MESSAGE_TAGS_NOT_SUPPORTED);
 
         assertEquals(savedData, Files.readString(dataFile));
