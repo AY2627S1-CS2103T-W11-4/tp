@@ -153,7 +153,8 @@ Examples:
 ### Viewing a client's full details: `view`
 
 Shows only the selected client, with their name as the heading and labelled phone, email, intention and remark fields.
-Every property is numbered in its stored order and shows its type, intention, location, transaction status and price separately.
+Every property is numbered in its stored order and shows its type, intention, location, transaction status,
+price and number of bedrooms separately.
 Long values wrap onto additional lines; scroll down to see details that do not fit in the window.
 
 Format: `view INDEX`
@@ -166,7 +167,7 @@ This example shows `view 3` from the sample list above. The selected client is n
   Supply exactly one index, with no prefixes or extra arguments.
 * Other clients are hidden. The selected client is now the only displayed client, at index **1**;
   subsequent commands that take a client index use this displayed index.
-* A missing remark or property price is shown as `Not recorded`.
+* A missing remark, property price or bedroom count is shown as `Not recorded`.
   A client without properties shows `No properties recorded`.
 * A line above the details says `Type list to return to the original list`.
   `list` restores **all stored clients** in their original order, even if you ran `view` from search results.

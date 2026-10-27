@@ -26,6 +26,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.geometry.Orientation;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -52,6 +53,8 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
+import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -103,7 +106,8 @@ public class ResidexUiTest {
             Model model = new ModelManager();
             Person first = new PersonBuilder().withName("Alice Pauline").build();
             Property viewingHdb = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
-                    CLEMENTI_HDB.getLocation(), CLEMENTI_HDB.getPrice().orElse(null), PropertyStatus.VIEWING);
+                    CLEMENTI_HDB.getLocation(), CLEMENTI_HDB.getPrice().orElse(null), PropertyStatus.VIEWING,
+                    new PropertyBedrooms("3"));
             Person selected = new PersonBuilder().withName("Bob Choo").withPhone("91234567")
                     .withEmail("bob@example.com")
                     .withRemark("Call after 6 pm. ".repeat(25))
@@ -141,12 +145,15 @@ public class ResidexUiTest {
                 assertEquals("Clementi Ave 3", label(card, "propertyLocation1").getText());
                 assertEquals("$800,000", label(card, "propertyPrice1").getText());
                 assertEquals("Viewing", label(card, "propertyStatus1").getText());
+                assertEquals("3", label(card, "propertyBedrooms1").getText());
                 assertEquals("Not specified", label(card, "propertyStatus2").getText());
                 assertEquals("Condominium", label(card, "propertyType2").getText());
                 assertEquals("Selling", label(card, "propertyIntention2").getText());
                 assertEquals("Tampines", label(card, "propertyLocation2").getText());
                 assertEquals("Not recorded", label(card, "propertyPrice2").getText());
+                assertEquals("Not recorded", label(card, "propertyBedrooms2").getText());
                 assertEquals("$800,000", label(card, "propertyPrice3").getText());
+                assertEquals("Not recorded", label(card, "propertyBedrooms3").getText());
                 saveSnapshot(root, "client-details");
 
                 command.setText("view 2");
@@ -162,6 +169,101 @@ public class ResidexUiTest {
                 assertEquals("All clients", label(root, "clientListHeading").getText());
                 assertFalse(label(root, "returnToListHint").isManaged());
                 assertTrue(root.lookupAll("#personDetailsCard").isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void clientDetails_bedroomsForMultipleProperties_remainReadableWithWrappedFields() throws Exception {
+        runOnFxThread(() -> {
+            Property small = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
+                    new PropertyLocation("Clementi Avenue 3 near the community centre and MRT station ".repeat(6)),
+                    CLEMENTI_HDB.getPrice().orElseThrow(), PropertyStatus.VIEWING, new PropertyBedrooms("1"));
+            Property large = new Property(TAMPINES_CONDO.getType(), TAMPINES_CONDO.getIntention(),
+                    TAMPINES_CONDO.getLocation(), null, PropertyStatus.UNSPECIFIED, new PropertyBedrooms("20"));
+            Model model = new ModelManager();
+            model.addPerson(new PersonBuilder().withProperties(small, large, CLEMENTI_HDB).build());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                command.setText("view 1");
+                command.fireEvent(new ActionEvent());
+                for (int width : new int[] {1100, 700}) {
+                    root = layoutWindow(window, width, width == 700 ? 600 : 900);
+                    Region card = (Region) root.lookup("#personDetailsCard");
+                    assertNotNull(card);
+                    assertEquals(3, ((VBox) card.lookup("#properties")).getChildren().size());
+                    assertEquals(3L, card.lookupAll(".field-caption").stream().filter(Label.class::isInstance)
+                            .map(Label.class::cast).filter(label -> label.getText().equals("Bedrooms")).count());
+                    assertTrue(label(card, "propertyLocation1").getHeight() > 30,
+                            "Long locations must wrap without hiding the bedroom row");
+                    List<String> expected = List.of("1", "20", "Not recorded");
+                    for (int index = 1; index <= expected.size(); index++) {
+                        Label bedrooms = label(card, "propertyBedrooms" + index);
+                        Label price = label(card, "propertyPrice" + index);
+                        assertEquals(expected.get(index - 1), bedrooms.getText());
+                        assertTrue(bedrooms.isVisible());
+                        assertTrue(bedrooms.isManaged());
+                        assertTrue(bedrooms.isWrapText());
+                        assertTrue(bedrooms.getWidth() > 0);
+                        assertTrue(bedrooms.getHeight() >= bedrooms.prefHeight(bedrooms.getWidth()),
+                                "The bedroom value must fit without vertical clipping");
+                        assertTrue(bedrooms.localToScene(bedrooms.getBoundsInLocal()).getMinY()
+                                >= price.localToScene(price.getBoundsInLocal()).getMaxY());
+                        assertTrue(bedrooms.localToScene(bedrooms.getBoundsInLocal()).getMaxY()
+                                <= card.localToScene(card.getBoundsInLocal()).getMaxY());
+                    }
+                    saveSnapshot(root, "client-details-bedrooms-" + width);
+                    ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                    ScrollBar vertical = list.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                            .filter(bar -> bar.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
+                    assertTrue(vertical.isVisible(), "Long detail cards must be scrollable");
+                    vertical.setValue(vertical.getMax());
+                    root.layout();
+                    Label lastBedrooms = label(card, "propertyBedrooms3");
+                    assertTrue(lastBedrooms.localToScene(lastBedrooms.getBoundsInLocal()).getMinY()
+                            >= list.localToScene(list.getBoundsInLocal()).getMinY());
+                    assertTrue(lastBedrooms.localToScene(lastBedrooms.getBoundsInLocal()).getMaxY()
+                            <= list.localToScene(list.getBoundsInLocal()).getMaxY(),
+                            "Scrolling to the bottom must reveal the final property's bedroom count");
+                    saveSnapshot(root, "client-details-bedrooms-scrolled-" + width);
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void clientDetails_afterBedroomEdits_showsUpdatedCountAndPlaceholder() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            model.addPerson(new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 900, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                List<String> edits = List.of("editp 1 2 bd/3", "editp 1 2 bd/4", "editp 1 2 bd/");
+                List<String> expected = List.of("3", "4", "Not recorded");
+                for (int index = 0; index < edits.size(); index++) {
+                    command.setText("list");
+                    command.fireEvent(new ActionEvent());
+                    command.setText(edits.get(index));
+                    command.fireEvent(new ActionEvent());
+                    command.setText("view 1");
+                    command.fireEvent(new ActionEvent());
+                    root.applyCss();
+                    root.layout();
+                    Region card = (Region) root.lookup("#personDetailsCard");
+                    assertNotNull(card);
+                    assertEquals(expected.get(index), label(card, "propertyBedrooms2").getText());
+                    assertEquals("Not recorded", label(card, "propertyBedrooms1").getText());
+                    assertEquals("$800,000", label(card, "propertyPrice1").getText());
+                    assertEquals("Tampines", label(card, "propertyLocation2").getText());
+                }
             } finally {
                 window.getPrimaryStage().close();
             }
