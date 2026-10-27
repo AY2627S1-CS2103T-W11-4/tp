@@ -1,7 +1,9 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.Messages.MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_PROPERTY_INDEX_POSITIVE_INTEGER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTENTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_BEDROOMS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_LOCATION;
@@ -69,7 +71,10 @@ final class PropertyParserUtil {
             try {
                 indexes.add(ParserUtil.parseIndex(value));
             } catch (ParseException e) {
-                throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage), e);
+                String message = indexes.isEmpty()
+                        ? MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER
+                        : MESSAGE_PROPERTY_INDEX_POSITIVE_INTEGER;
+                throw new ParseException(message, e);
             }
         }
         return indexes;

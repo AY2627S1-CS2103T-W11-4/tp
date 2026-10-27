@@ -632,6 +632,30 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void addpCommand_zeroClientIndex_keepsClientAndNamesPositiveIntegerRule() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Zero Index p/88110080 e/zero@example.com");
+                runCommand(root, "addp 0 t/h i/Buying l/singapore");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals("Client index must be a positive integer, starting from 1.", result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("Zero Index", label(root, "name").getText());
+                assertTrue(model.getAddressBook().getPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void addCommand_unknownParameterAfterEmail_keepsEmptyListAndNamesTheParameter() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
