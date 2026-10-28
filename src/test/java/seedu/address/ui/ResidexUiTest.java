@@ -839,6 +839,39 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void addCommand_hyphenAndApostropheNames_showOnCardsAndInCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/Ng Wei-Ling p/91230001 e/w@example.com");
+                run.fire();
+                command.setText("add n/O'Brien p/91230002 e/o@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), model.getAddressBook().getPersonList().stream()
+                        .map(person -> person.getName().fullName).toList());
+                assertEquals("2 of 2 clients", label(root, "clientCount").getText());
+                List<String> cardNames = root.lookupAll(".list-cell").stream()
+                        .map(ListCell.class::cast)
+                        .filter(cell -> !cell.isEmpty())
+                        .map(cell -> label((Region) cell.getGraphic(), "name").getText())
+                        .toList();
+                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), cardNames);
+                assertTrue(result.getText().contains("O'Brien"));
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void addCommand_thirtyDigitPhone_keepsEmptyListAndShowsPhoneConstraint() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
