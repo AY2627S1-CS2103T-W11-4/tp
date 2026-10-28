@@ -12,6 +12,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PROPERTY_TYPE;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -32,6 +33,8 @@ import seedu.address.model.property.PropertyStatus;
  * Parses input arguments and creates a new FindCommand object.
  */
 public class FindCommandParser implements Parser<FindCommand> {
+
+    private static final Pattern FIELD_PREFIX = Pattern.compile("[A-Za-z]+/");
 
     /**
      * Parses the given {@code String} of arguments in the context of the FindCommand
@@ -131,7 +134,7 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         if (isLocationSelector(selector)) {
-            return new FindCommand(new LocationContainsKeywordsPredicate(parseKeywords(keywordArgs)));
+            return new FindCommand(new LocationContainsKeywordsPredicate(parseKeywords(keywordArgs, true)));
         }
 
         if (isNameSelector(selector)) {
@@ -174,6 +177,13 @@ public class FindCommandParser implements Parser<FindCommand> {
      * Parses keywords for a supported search field, rejecting missing keywords and additional selectors.
      */
     private List<String> parseKeywords(String keywordArgs) throws ParseException {
+        return parseKeywords(keywordArgs, false);
+    }
+
+    /**
+     * Parses keywords, optionally allowing literal slashes outside alphabetic field prefixes.
+     */
+    private List<String> parseKeywords(String keywordArgs, boolean allowLiteralSlashes) throws ParseException {
         if (keywordArgs.isEmpty()) {
             throw new ParseException(FindCommand.MESSAGE_MISSING_KEYWORD);
         }
@@ -184,7 +194,8 @@ public class FindCommandParser implements Parser<FindCommand> {
                 .anyMatch(this::isSelector)) {
             throw new ParseException(FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
         }
-        if (keywords.stream().anyMatch(keyword -> keyword.contains("/"))) {
+        if (keywords.stream().anyMatch(keyword -> allowLiteralSlashes
+                ? FIELD_PREFIX.matcher(keyword).lookingAt() : keyword.contains("/"))) {
             throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
         }
         return keywords;

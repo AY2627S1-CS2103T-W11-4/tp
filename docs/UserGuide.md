@@ -371,6 +371,9 @@ Property bedrooms | `bd/`
   clients without property entries do not match. Enter keywords without quotation marks.
 * Spaces separate location keywords. A multiword location search matches any of its keywords independently;
   it does not search for the whole phrase or require an exact address match.
+* Location keywords can contain literal slashes: `find l/1/2` matches a location containing `1/2`.
+  Alphabetic words immediately followed by `/` are reserved as field prefixes, so keywords such as `n/Alice`
+  or `x/foo` are rejected. Combining fields, such as `find l/1/2 n/Alice`, is also rejected.
 * Intention searches require exactly one complete value: `buyer`, `seller` or `both`, in any capitalization.
   `find i/unspecified` is not supported.
 * `find i/buyer` shows Buyer clients first, then Buyer / Seller clients.
@@ -406,6 +409,7 @@ Examples:
 * `find p/9123` finds phone numbers containing `9123`.
 * `find l/clementi` finds clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
 * `find l/clementi woodlands` finds clients with any property location containing `clementi` or `woodlands`.
+* `find l/1/2` finds clients with locations such as `Tampines Street 1/2`.
 * `find l/Clementi Ave 3` searches for `Clementi`, `Ave`, or `3` independently. It matches locations such as
   `Clementi Ave 3`, `Woodlands Clementi`, `Bedok Ave 1`, and `Tampines Street 3`.
 * `find i/buyer` lists Buyer clients followed by Buyer / Seller clients.
