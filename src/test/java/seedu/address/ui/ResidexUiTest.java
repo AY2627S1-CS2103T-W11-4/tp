@@ -63,6 +63,7 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
@@ -891,6 +892,74 @@ public class ResidexUiTest {
                 assertEquals(160, resultPane.getHeight(), 0.5);
                 result.setScrollTop(0);
                 assertTrue(result.isWrapText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_saveFailure_doesNotKeepUnsavedClientInList() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Path dataFile = temporaryFolder.resolve("unsaved.json");
+            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(dataFile) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    throw new AccessDeniedException(dataFile.toString());
+                }
+            };
+            Logic logic = new LogicManager(model, new StorageManager(failingStorage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("unsaved-prefs.json"))));
+            MainWindow window = new MainWindow(new Stage(), logic, dataFile);
+            window.fillInnerParts();
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/SaveFail p/88119991 e/savefail@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertTrue(result.getText().contains("Could not save data"));
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_hyphenAndApostropheNames_showOnCardsAndInCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/Ng Wei-Ling p/91230001 e/w@example.com");
+                run.fire();
+                command.setText("add n/O'Brien p/91230002 e/o@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), model.getAddressBook().getPersonList().stream()
+                        .map(person -> person.getName().fullName).toList());
+                assertEquals("2 of 2 clients", label(root, "clientCount").getText());
+                List<String> cardNames = root.lookupAll(".list-cell").stream()
+                        .map(ListCell.class::cast)
+                        .filter(cell -> !cell.isEmpty())
+                        .map(cell -> label((Region) cell.getGraphic(), "name").getText())
+                        .toList();
+                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), cardNames);
+                assertTrue(result.getText().contains("O'Brien"));
             } finally {
                 window.getPrimaryStage().close();
             }
