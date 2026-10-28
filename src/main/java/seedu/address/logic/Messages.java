@@ -19,6 +19,7 @@ public class Messages {
             "Client budgets are no longer supported. Remove all b/ arguments and try again.";
     public static final String MESSAGE_TAGS_NOT_SUPPORTED =
             "Tags are no longer supported. Remove all t/ arguments and try again.";
+    public static final String MESSAGE_UNEXPECTED_PARAMETER = "Unexpected parameter: %1$s";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
     public static final String MESSAGE_INVALID_PERSON_DISPLAYED_INDEX = "The person index provided is invalid.";
     public static final String MESSAGE_INVALID_PROPERTY_INDEX =
