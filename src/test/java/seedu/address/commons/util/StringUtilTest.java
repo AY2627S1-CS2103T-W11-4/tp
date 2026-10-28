@@ -30,6 +30,10 @@ public class StringUtilTest {
         assertFalse(StringUtil.isNonZeroUnsignedInteger("01"));
         assertFalse(StringUtil.isNonZeroUnsignedInteger("001"));
 
+        // EP: non-ASCII digits that Integer.parseInt still accepts
+        assertFalse(StringUtil.isNonZeroUnsignedInteger("１"));
+        assertFalse(StringUtil.isNonZeroUnsignedInteger("１２"));
+
         // EP: signed numbers
         assertFalse(StringUtil.isNonZeroUnsignedInteger("-1"));
         assertFalse(StringUtil.isNonZeroUnsignedInteger("+1"));
@@ -44,6 +48,7 @@ public class StringUtilTest {
         // EP: valid numbers, should return true
         assertTrue(StringUtil.isNonZeroUnsignedInteger("1")); // Boundary value
         assertTrue(StringUtil.isNonZeroUnsignedInteger("10"));
+        assertTrue(StringUtil.isNonZeroUnsignedInteger(Integer.toString(Integer.MAX_VALUE)));
     }
 
 

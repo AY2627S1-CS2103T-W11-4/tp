@@ -49,6 +49,7 @@ public class LeadingZeroIndexIntegrationTest {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE);
 
         assertThrows(ParseException.class, expectedMessage, () -> logic.execute("delete 01"));
+        assertThrows(ParseException.class, expectedMessage, () -> logic.execute("delete １"));
 
         assertEquals(List.of("First Client"), names(model.getAddressBook().getPersonList()));
         assertEquals(List.of("First Client"), names(model.getFilteredPersonList()));

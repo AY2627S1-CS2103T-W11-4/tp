@@ -49,6 +49,7 @@ public class ParserUtilTest {
         assertThrows(ParseException.class, () -> ParserUtil.parseIndex("10 a"));
         assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () -> ParserUtil.parseIndex("01"));
         assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () -> ParserUtil.parseIndex("001"));
+        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () -> ParserUtil.parseIndex("１"));
     }
 
     @Test
