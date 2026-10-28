@@ -65,12 +65,14 @@ import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyStatus;
+import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.DataFileLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -835,6 +837,29 @@ public class ResidexUiTest {
                 assertFalse(properties.isManaged());
                 assertEquals("Intention: Not specified", label(root, "intention").getText());
                 assertTrue(model.getFilteredPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void findCommand_gmailOnSampleData_listsAlexAndKeepsFullCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "find e/gmail");
+
+                assertEquals("1 person(s) found!", result.getText());
+                assertEquals("1 of 6 clients", label(root, "clientCount").getText());
+                assertEquals("Filtered clients", label(root, "clientListHeading").getText());
+                assertEquals("Alex Yeoh", label(root, "name").getText());
+                assertEquals("alexyeoh@gmail.com", label(root, "email").getText());
+                assertEquals(6, model.getAddressBook().getPersonList().size());
             } finally {
                 window.getPrimaryStage().close();
             }

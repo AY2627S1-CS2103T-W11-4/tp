@@ -60,38 +60,56 @@ public final class DocumentationScreenshots {
 
     private static void captureScreenshots() throws Exception {
         Files.createDirectories(OUTPUT_DIRECTORY);
-        Model model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
-        StorageManager storage = new StorageManager(
-                new JsonAddressBookStorage(DATA_DIRECTORY.resolve("addressbook.json")),
-                new JsonUserPrefsStorage(DATA_DIRECTORY.resolve("preferences.json")));
-        Logic logic = new LogicManager(model, storage);
-        MainWindow window = new MainWindow(new Stage(), logic, Path.of("data", "addressbook.json"));
         HelpWindow help = new HelpWindow();
+        MainWindow uiWindow = createPreparedWindow("ui");
+        MainWindow findWindow = null;
         try {
-            window.fillInnerParts();
-            Region main = layout(window.getPrimaryStage(), 1100, 1280);
-            enterCommand(main, "editp 1 1 s/Viewing");
-            enterCommand(main, "editp 2 1 s/Negotiating");
-            enterCommand(main, "editp 3 1 s/Enquiring");
-            enterCommand(main, "editp 3 2 s/Closing");
-            enterCommand(main, "remark 1 r/Prefers a home near an MRT station.");
-            enterCommand(main, "remark 3 r/Buying a condominium and selling the current HDB flat.");
-            enterCommand(main, "list");
+            Region main = (Region) uiWindow.getPrimaryStage().getScene().getRoot();
             saveScreenshot(main, "Ui.png");
 
-            main = layout(window.getPrimaryStage(), 1100, 1050);
+            // Resize this window only once. A second scene swap leaves ResultDisplay stale in snapshots.
+            main = layout(uiWindow.getPrimaryStage(), 1100, 1050);
             enterCommand(main, "view 3");
             saveScreenshot(main, "clientDetails.png");
+            uiWindow.getPrimaryStage().close();
+            uiWindow = null;
 
-            main = layout(window.getPrimaryStage(), 1100, 760);
+            findWindow = createPreparedWindow("find");
+            main = layout(findWindow.getPrimaryStage(), 1100, 760);
             enterCommand(main, "find n/Alex David");
             saveScreenshot(main, "findAlexDavidResult.png");
 
             saveScreenshot(layout(help.getRoot(), 960, 1100), "helpMessage.png");
         } finally {
             help.getRoot().close();
-            window.getPrimaryStage().close();
+            if (uiWindow != null) {
+                uiWindow.getPrimaryStage().close();
+            }
+            if (findWindow != null) {
+                findWindow.getPrimaryStage().close();
+            }
         }
+    }
+
+    private static MainWindow createPreparedWindow(String label) throws Exception {
+        Path dataDir = DATA_DIRECTORY.resolve(label);
+        Files.createDirectories(dataDir);
+        Model model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
+        StorageManager storage = new StorageManager(
+                new JsonAddressBookStorage(dataDir.resolve("addressbook.json")),
+                new JsonUserPrefsStorage(dataDir.resolve("preferences.json")));
+        Logic logic = new LogicManager(model, storage);
+        MainWindow window = new MainWindow(new Stage(), logic, Path.of("data", "addressbook.json"));
+        window.fillInnerParts();
+        Region main = layout(window.getPrimaryStage(), 1100, 1280);
+        enterCommand(main, "editp 1 1 s/Viewing");
+        enterCommand(main, "editp 2 1 s/Negotiating");
+        enterCommand(main, "editp 3 1 s/Enquiring");
+        enterCommand(main, "editp 3 2 s/Closing");
+        enterCommand(main, "remark 1 r/Prefers a home near an MRT station.");
+        enterCommand(main, "remark 3 r/Buying a condominium and selling the current HDB flat.");
+        enterCommand(main, "list");
+        return window;
     }
 
     private static Region layout(Stage stage, double width, double height) {

@@ -23,7 +23,7 @@ import seedu.address.model.property.PropertyType;
 public class SampleDataUtil {
     public static Person[] getSamplePersons() {
         return new Person[] {
-            new Person(new Name("Alex Yeoh"), new Phone("87438807"), new Email("alexyeoh@example.com"),
+            new Person(new Name("Alex Yeoh"), new Phone("87438807"), new Email("alexyeoh@gmail.com"),
                 new Remark(""), List.of(
                     new Property(PropertyType.HDB, PropertyIntention.BUYING,
                         new PropertyLocation("Clementi Ave 3"), new PropertyPrice("480000"), PropertyStatus.VIEWING))),
