@@ -287,6 +287,7 @@ public class JsonAddressBookStorageTest {
         original.setPersons(List.of(first, second));
         Model model = new ModelManager(original, new UserPrefs());
         LogicManager logic = new LogicManager(model, storage);
+        storage.saveAddressBook(original);
 
         logic.execute("find p/92345678");
         String savedData = Files.readString(filePath);
