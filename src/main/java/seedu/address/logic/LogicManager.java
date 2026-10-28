@@ -77,9 +77,6 @@ public class LogicManager implements Logic {
      * change and drop that redo entry so the unsaved state cannot return.
      */
     private void rollbackUnsavedChange(Command command, ReadOnlyAddressBook stateBeforeCommand) {
-        if (stateBeforeCommand.equals(model.getAddressBook())) {
-            return;
-        }
         if (command instanceof UndoCommand && model.canRedoAddressBook()) {
             model.redoAddressBook();
             return;

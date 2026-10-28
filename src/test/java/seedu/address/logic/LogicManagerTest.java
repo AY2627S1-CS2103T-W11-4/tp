@@ -261,6 +261,93 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_storageThrowsOnAddWhenUndoUnavailable_restoresSnapshot() {
+        model = new ModelManager() {
+            @Override
+            public boolean canUndoAddressBook() {
+                return false;
+            }
+        };
+        useFailingStorage(DUMMY_IO_EXCEPTION);
+
+        assertThrows(CommandException.class, String.format(
+                LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()), () ->
+                logic.execute("add n/SaveFail p/88119991 e/savefail@example.com"));
+
+        assertEquals(List.of(), model.getAddressBook().getPersonList());
+        assertFalse(model.canRedoAddressBook());
+    }
+
+    @Test
+    public void execute_storageThrowsOnUndoWhenRedoUnavailable_restoresPreUndoClients() throws Exception {
+        model = new ModelManager() {
+            private boolean acceptUndo = true;
+
+            @Override
+            public boolean canUndoAddressBook() {
+                return acceptUndo && super.canUndoAddressBook();
+            }
+
+            @Override
+            public boolean canRedoAddressBook() {
+                return false;
+            }
+
+            @Override
+            public void undoAddressBook() {
+                super.undoAddressBook();
+                acceptUndo = false;
+            }
+        };
+        useWorkingStorage();
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+        logic.execute("add n/Ben Ong p/92345678 e/ben@example.com");
+        useFailingStorage(DUMMY_IO_EXCEPTION);
+
+        assertThrows(CommandException.class, String.format(
+                LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()), () ->
+                logic.execute("undo"));
+
+        assertEquals(2, model.getAddressBook().getPersonList().size());
+        assertEquals("Ben Ong", model.getAddressBook().getPersonList().get(1).getName().fullName);
+    }
+
+    @Test
+    public void execute_storageThrowsOnRedoWhenUndoUnavailable_restoresPreRedoClients() throws Exception {
+        model = new ModelManager() {
+            private boolean acceptRedo = true;
+
+            @Override
+            public boolean canUndoAddressBook() {
+                return acceptRedo && super.canUndoAddressBook();
+            }
+
+            @Override
+            public boolean canRedoAddressBook() {
+                return acceptRedo && super.canRedoAddressBook();
+            }
+
+            @Override
+            public void redoAddressBook() {
+                super.redoAddressBook();
+                acceptRedo = false;
+            }
+        };
+        useWorkingStorage();
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+        logic.execute("add n/Ben Ong p/92345678 e/ben@example.com");
+        logic.execute("undo");
+        useFailingStorage(DUMMY_IO_EXCEPTION);
+
+        assertThrows(CommandException.class, String.format(
+                LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()), () ->
+                logic.execute("redo"));
+
+        assertEquals(1, model.getAddressBook().getPersonList().size());
+        assertEquals("Alice Tan", model.getAddressBook().getPersonList().get(0).getName().fullName);
+    }
+
+    @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> logic.getFilteredPersonList().remove(0));
     }

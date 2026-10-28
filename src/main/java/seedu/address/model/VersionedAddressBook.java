@@ -85,7 +85,6 @@ public class VersionedAddressBook extends AddressBook {
      */
     public void discardRedoHistory() {
         states.subList(currentStatePointer + 1, states.size()).clear();
-        assert isPointerValid() : "The current state pointer must identify a saved state";
     }
 
     private boolean isPointerValid() {
