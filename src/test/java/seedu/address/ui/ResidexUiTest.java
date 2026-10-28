@@ -55,6 +55,7 @@ import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
@@ -625,6 +626,31 @@ public class ResidexUiTest {
                 assertFalse(properties.isManaged());
                 assertEquals("Intention: Not specified", label(root, "intention").getText());
                 assertTrue(model.getFilteredPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_thirtyDigitPhone_keepsEmptyListAndShowsPhoneConstraint() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/Carl p/123456789012345678901234567890 e/c@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(Phone.MESSAGE_CONSTRAINTS, result.getText());
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
             } finally {
                 window.getPrimaryStage().close();
             }
