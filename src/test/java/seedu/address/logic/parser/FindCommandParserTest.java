@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -464,5 +465,17 @@ public class FindCommandParserTest {
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "bd/2 t/HDB", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
         assertParseFailure(parser, "bd/2 BD/3", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+    }
+
+    @Test
+    public void parse_missingArguments_errorShowsFormatAndExample() {
+        for (String args : List.of("", "   ")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_MISSING_ARGUMENTS);
+        }
+        assertParseFailure(parser, "n/", FindCommand.MESSAGE_MISSING_KEYWORD);
+        for (String message : List.of(FindCommand.MESSAGE_MISSING_ARGUMENTS, FindCommand.MESSAGE_MISSING_KEYWORD)) {
+            assertTrue(message.contains("Format: find FIELD/KEYWORD [MORE_KEYWORDS]"), message);
+            assertTrue(message.contains("Example: find n/alex"), message);
+        }
     }
 }

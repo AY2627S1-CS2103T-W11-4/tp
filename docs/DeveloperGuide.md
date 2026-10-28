@@ -247,6 +247,7 @@ property location contains any keyword. Clients without properties do not match 
 For example, `find l/clementi` matches clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
 Intention searches accept exactly one value, `buyer`, `seller` or `both`, case-insensitively.
 Missing keywords, repeated or mixed prefixes, and unsupported selectors are rejected.
+The missing-argument and missing-keyword errors append `FindCommand.MESSAGE_FORMAT_HINT`, which shows the format and an example.
 `find i/unspecified` is rejected. `IntentionMatchesPredicate` includes `BOTH` in buyer/seller searches and matches
 only `BOTH` for the both query. Its comparator ranks exact-role matches before mixed-role matches.
 

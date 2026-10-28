@@ -51,7 +51,10 @@ public class FindCommand extends Command {
     public static final String MESSAGE_INVALID_BEDROOMS = PropertyBedrooms.MESSAGE_CONSTRAINTS;
     public static final String MESSAGE_INVALID_PRICE_RANGE = "Price range must look like 500000-800000, 500000- "
             + "or -800000, using whole-dollar amounts without commas, and the minimum must not exceed the maximum.";
-    public static final String MESSAGE_MISSING_ARGUMENTS = "Search field and search keyword are missing.";
+    public static final String MESSAGE_FORMAT_HINT = "Format: " + COMMAND_WORD + " FIELD/KEYWORD [MORE_KEYWORDS]\n"
+            + "Example: " + COMMAND_WORD + " " + PREFIX_NAME + "alex";
+    public static final String MESSAGE_MISSING_ARGUMENTS =
+            "Search field and search keyword are missing.\n" + MESSAGE_FORMAT_HINT;
     public static final String MESSAGE_MISSING_PROPERTY =
             "Search field is missing. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", " + PREFIX_INTENTION
@@ -63,7 +66,7 @@ public class FindCommand extends Command {
                     + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + ", " + PREFIX_PROPERTY_PRICE
                     + ", or " + PREFIX_PROPERTY_BEDROOMS + ".";
     public static final String MESSAGE_MULTIPLE_PROPERTIES = "Specify exactly one search field.";
-    public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.";
+    public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.\n" + MESSAGE_FORMAT_HINT;
 
     private final Predicate<Person> predicate;
 
