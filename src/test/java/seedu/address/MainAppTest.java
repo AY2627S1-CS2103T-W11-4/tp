@@ -1,19 +1,23 @@
 package seedu.address;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -22,6 +26,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.util.SampleDataUtil;
+import seedu.address.storage.DataFileLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -30,6 +35,13 @@ import seedu.address.testutil.PersonBuilder;
 public class MainAppTest {
     @TempDir
     public Path temporaryFolder;
+
+    private final List<MainApp> applications = new ArrayList<>();
+
+    @AfterEach
+    public void stopApplications() {
+        applications.forEach(MainApp::stop);
+    }
 
     @Test
     public void constructor_javaFxLauncher_canCreateApplication() throws Exception {
@@ -87,8 +99,121 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_competingInstance_preservesDataAndPreferences() throws Exception {
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        MainApp first = createApp();
+        first.init();
+        first.logic.execute("add n/Window One p/91110001 e/windowone@example.com");
+        // Distinct formatting detects an unwanted preferences rewrite by the rejected instance.
+        Files.writeString(prefsPath(), Files.readString(prefsPath()) + "\n");
+        byte[] originalPrefs = Files.readAllBytes(prefsPath());
+        byte[] originalData = Files.readAllBytes(dataPath());
+        MainApp second = createApp();
+
+        second.init();
+        second.stop();
+
+        assertNull(second.model);
+        assertNull(second.logic);
+        assertNull(second.storage);
+        assertNotNull(second.ui);
+        assertArrayEquals(originalData, Files.readAllBytes(dataPath()));
+        assertArrayEquals(originalPrefs, Files.readAllBytes(prefsPath()));
+        first.logic.execute("add n/Window Three p/91110003 e/windowthree@example.com");
+        assertEquals(first.model.getAddressBook(),
+                new JsonAddressBookStorage(dataPath()).readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void init_competingFirstLaunch_doesNotCreateDataFile() throws Exception {
+        MainApp first = createApp();
+        first.init();
+        MainApp second = createApp();
+
+        second.init();
+
+        assertNull(second.logic);
+        assertFalse(Files.exists(dataPath()));
+        assertEquals(SampleDataUtil.getSampleAddressBook(), first.model.getAddressBook());
+    }
+
+    @Test
+    public void init_unavailableLock_preservesDataAndPreferences() throws Exception {
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        new JsonUserPrefsStorage(prefsPath()).saveUserPrefs(createPrefs());
+        byte[] originalData = Files.readAllBytes(dataPath());
+        byte[] originalPrefs = Files.readAllBytes(prefsPath());
+        Files.createDirectory(dataPath().resolveSibling("addressbook.json.lock"));
+        MainApp app = createApp();
+
+        app.init();
+        app.stop();
+
+        assertNull(app.model);
+        assertNull(app.logic);
+        assertNotNull(app.ui);
+        assertArrayEquals(originalData, Files.readAllBytes(dataPath()));
+        assertArrayEquals(originalPrefs, Files.readAllBytes(prefsPath()));
+    }
+
+    @Test
+    public void init_failedDataLoad_releasesLockBeforeStop() throws Exception {
+        Files.writeString(dataPath(), "invalid JSON");
+        MainApp failed = createApp();
+        failed.init();
+        assertNull(failed.model);
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        MainApp recovered = createApp();
+
+        recovered.init();
+
+        assertEquals(getTypicalAddressBook(), recovered.model.getAddressBook());
+    }
+
+    @Test
+    public void init_unexpectedFailure_releasesLock() throws Exception {
+        MainApp failed = new MainApp(prefsPath(), dataPath()) {
+            @Override
+            protected UserPrefs initPrefs(JsonUserPrefsStorage storage) {
+                throw new IllegalStateException("Unexpected initialization failure");
+            }
+        };
+        applications.add(failed);
+
+        assertThrows(IllegalStateException.class, failed::init);
+        MainApp recovered = createApp();
+        recovered.init();
+
+        assertNotNull(recovered.logic);
+    }
+
+    @Test
+    public void stop_releasesLockAndAllowsRelaunch() throws Exception {
+        MainApp first = createApp();
+        first.init();
+        first.logic.execute("add n/Window One p/91110001 e/windowone@example.com");
+        first.stop();
+        MainApp reopened = createApp();
+
+        reopened.init();
+
+        assertEquals(first.model.getAddressBook(), reopened.model.getAddressBook());
+    }
+
+    @Test
     public void init_corruptData_preventsCommandsAndPreservesFile() throws Exception {
         assertLoadFailurePreservesFile("invalid JSON");
+    }
+
+    @Test
+    public void init_trailingData_preventsCommandsAndPreservesEntireFile() throws Exception {
+        for (String suffix : new String[]{
+            "{\"persons\":[{\"name\":\"Trailing Client\",\"phone\":\"91110012\","
+                    + "\"email\":\"trailing@example.com\"}]}",
+            "[]", "null", "true", "42", "\"extra\"", "garbage", "{"
+        }) {
+            assertLoadFailurePreservesFile("{\"persons\":[]}\n" + suffix);
+        }
     }
 
     @Test
@@ -189,6 +314,27 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_unusableGuiPreferences_savesDefaultsAndPreservesClients() throws Exception {
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        byte[] originalData = Files.readAllBytes(dataPath());
+        for (String settings : new String[]{
+            "null", "[]", "{\"windowWidth\":0}", "{\"windowHeight\":-1}", "{\"windowWidth\":\"NaN\"}"
+        }) {
+            Files.writeString(prefsPath(), "{\"guiSettings\":" + settings + "}");
+            MainApp app = createApp();
+
+            app.init();
+
+            assertEquals(getTypicalAddressBook(), app.model.getAddressBook());
+            assertEquals(new UserPrefs(), app.model.getUserPrefs());
+            assertNotNull(app.logic);
+            assertEquals(new UserPrefs(), new JsonUserPrefsStorage(prefsPath()).readUserPrefs().orElseThrow());
+            assertArrayEquals(originalData, Files.readAllBytes(dataPath()));
+            app.stop();
+        }
+    }
+
+    @Test
     public void initPrefs_saveFailure_returnsLoadedPreferences() throws Exception {
         UserPrefs prefs = createPrefs();
         new JsonUserPrefsStorage(prefsPath()).saveUserPrefs(prefs);
@@ -242,6 +388,9 @@ public class MainAppTest {
 
         assertDoesNotThrow(app::stop);
         assertEquals(1, saves.get());
+        try (DataFileLock lock = DataFileLock.acquire(dataPath())) {
+            assertNotNull(lock);
+        }
     }
 
     @Test
@@ -257,11 +406,14 @@ public class MainAppTest {
     }
 
     private MainApp createApp() {
-        return new MainApp(prefsPath(), dataPath());
+        MainApp app = new MainApp(prefsPath(), dataPath());
+        applications.add(app);
+        return app;
     }
 
     private void assertLoadFailurePreservesFile(String invalidData) throws Exception {
         Files.writeString(dataPath(), invalidData);
+        byte[] original = Files.readAllBytes(dataPath());
         MainApp app = createApp();
 
         app.init();
@@ -271,6 +423,7 @@ public class MainAppTest {
         assertNotNull(app.ui, "Startup must provide an error UI");
         assertDoesNotThrow(app::stop);
         assertEquals(invalidData, Files.readString(dataPath()));
+        assertArrayEquals(original, Files.readAllBytes(dataPath()));
     }
 
     private Path prefsPath() {
