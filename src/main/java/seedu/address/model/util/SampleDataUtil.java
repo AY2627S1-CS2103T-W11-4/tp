@@ -10,6 +10,7 @@ import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Remark;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
@@ -30,13 +31,16 @@ public class SampleDataUtil {
             new Person(new Name("Bernice Yu"), new Phone("99272758"), new Email("berniceyu@example.com"),
                 new Remark(""), List.of(
                     new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
-                        new PropertyLocation("Tampines Street 86"), new PropertyPrice("1250000")))),
+                        new PropertyLocation("Tampines Street 86"), new PropertyPrice("1250000"),
+                        PropertyStatus.UNSPECIFIED, new PropertyBedrooms("3")))),
             new Person(new Name("Charlotte Oliveiro"), new Phone("93210283"), new Email("charlotte@example.com"),
                 new Remark(""), List.of(
                     new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
-                        new PropertyLocation("Upper Bukit Timah Road"), new PropertyPrice("1700000")),
+                        new PropertyLocation("Upper Bukit Timah Road"), new PropertyPrice("1700000"),
+                        PropertyStatus.UNSPECIFIED, new PropertyBedrooms("4")),
                     new Property(PropertyType.HDB, PropertyIntention.SELLING,
-                        new PropertyLocation("Toa Payoh Lorong 1"), new PropertyPrice("780000")))),
+                        new PropertyLocation("Toa Payoh Lorong 1"), new PropertyPrice("780000"),
+                        PropertyStatus.UNSPECIFIED, new PropertyBedrooms("3")))),
             new Person(new Name("David Li"), new Phone("91031282"), new Email("lidavid@example.com"),
                 new Remark("")),
             new Person(new Name("Irfan Ibrahim"), new Phone("92492021"), new Email("irfan@example.com"),
