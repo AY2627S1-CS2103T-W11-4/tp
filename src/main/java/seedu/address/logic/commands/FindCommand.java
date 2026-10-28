@@ -40,8 +40,8 @@ public class FindCommand extends Command {
             + "Status search also accepts Not specified as an alias for unspecified.\n"
             + "Property type search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_TYPE + "HDB|Condominium|Landed\n"
             + "Property price search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE
-            + "MIN-MAX (either side optional)\n"
-            + "Property bedrooms search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "NUMBER\n"
+            + "MIN-MAX (either side optional) or unknown\n"
+            + "Property bedrooms search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "NUMBER or unknown\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_EMAIL + "alexyeoh@example.com";
 
     public static final String MESSAGE_INVALID_INTENTION =
@@ -50,8 +50,15 @@ public class FindCommand extends Command {
     public static final String MESSAGE_INVALID_TYPE = PropertyType.MESSAGE_CONSTRAINTS;
     public static final String MESSAGE_INVALID_BEDROOMS = PropertyBedrooms.MESSAGE_CONSTRAINTS;
     public static final String MESSAGE_INVALID_PRICE_RANGE = "Price range must look like 500000-800000, 500000- "
-            + "or -800000, using whole-dollar amounts without commas, and the minimum must not exceed the maximum.";
-    public static final String MESSAGE_MISSING_ARGUMENTS = "Search field and search keyword are missing.";
+            + "or -800000 (or use unknown), using whole-dollar amounts without commas, and the minimum must not "
+            + "exceed the maximum.";
+    /** Search value that selects properties whose price or number of bedrooms is not recorded. */
+    public static final String UNKNOWN_VALUE = "unknown";
+
+    public static final String MESSAGE_FORMAT_HINT = "Format: " + COMMAND_WORD + " FIELD/KEYWORD [MORE_KEYWORDS]\n"
+            + "Example: " + COMMAND_WORD + " " + PREFIX_NAME + "alex";
+    public static final String MESSAGE_MISSING_ARGUMENTS =
+            "Search field and search keyword are missing.\n" + MESSAGE_FORMAT_HINT;
     public static final String MESSAGE_MISSING_PROPERTY =
             "Search field is missing. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", " + PREFIX_INTENTION
@@ -63,7 +70,7 @@ public class FindCommand extends Command {
                     + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + ", " + PREFIX_PROPERTY_PRICE
                     + ", or " + PREFIX_PROPERTY_BEDROOMS + ".";
     public static final String MESSAGE_MULTIPLE_PROPERTIES = "Specify exactly one search field.";
-    public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.";
+    public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.\n" + MESSAGE_FORMAT_HINT;
 
     private final Predicate<Person> predicate;
 

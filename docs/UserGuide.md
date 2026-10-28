@@ -208,6 +208,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`
 * Client edits preserve all property entries.
   Use `editp` to change a property.
 * After a successful `edit`, the list is reset to show all clients.
+* If the new details are the same as the current ones, RESIDEX replies "No change" instead of reporting an edit, and
+  nothing is added to the `undo` history.
 * Client intention cannot be edited directly. Any `i/` field is rejected without changing the client.
 * The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
   Changing only the capitalisation or spacing of the selected client's own name is allowed.
@@ -365,7 +367,10 @@ Property bedrooms | `bd/`
   Missing, unknown, repeated, or mixed prefixes are rejected. For example, use `find n/alice`.
   Long search field aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
+  If you enter `find` alone, or a field with no keyword, the error shows the format and an example (`find n/alex`).
 * Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
+* Phone searches compare digits only. Spaces, hyphens, brackets and a leading `+65` in your keyword are ignored, so
+  `find p/8743-8807` and `find p/+6587438807` both find the phone `87438807`. A keyword with no digits matches nothing.
 * Multiple keywords use `OR` matching: a client is returned if any keyword matches the selected search field.
 * Location searches check all property entries attached to each client. A client appears once if any location matches;
   clients without property entries do not match. Enter keywords without quotation marks.
@@ -394,6 +399,8 @@ Property bedrooms | `bd/`
   Properties without a price never match.
 * Bedrooms searches require exactly one whole number from 1 to 20, such as `find bd/3`. A client matches if **any property**
   has exactly that number of bedrooms. Properties without a recorded number of bedrooms never match.
+* To find incomplete records, use `find pr/unknown` or `find bd/unknown`. A client matches if **any property** has no
+  recorded price (or no recorded number of bedrooms). Clients without properties do not match.
 * Type, price and bedrooms results retain normal client order.
 * Status results retain normal client order. Client indexes refer to the currently displayed results.
   Use `list` to show all clients again. Searches do not modify stored clients.
@@ -417,6 +424,8 @@ Examples:
 * `find pr/500000-800000` lists clients with a property priced from $500,000 to $800,000.
 * `find pr/-800000` lists clients with a property priced at $800,000 or less.
 * `find bd/3` lists clients with at least one 3-bedroom property.
+* `find pr/unknown` lists clients with a property whose price is not recorded.
+* `find bd/unknown` lists clients with a property whose number of bedrooms is not recorded.
 
 The following example shows `find n/Alex David` using the sample clients:
 
@@ -447,6 +456,8 @@ Format: `remark INDEX r/[REMARK]`
 * The supplied remark replaces the existing remark. Enter `r/` without text to remove it.
 * Contact details, intention and properties are kept.
 * After a successful `remark`, the list is reset to show all clients.
+* If the remark is already set to that value (including removing a remark that is already empty), RESIDEX replies
+  "No change" and nothing is added to the `undo` history.
 
 Examples:
 
@@ -547,7 +558,7 @@ Action     | Format, Examples
 **Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000 bd/3`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `editp 1 2 l/Toa Payoh`, `editp 1 2 bd/4`
-**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`, `find t/HDB`, `find pr/500000-800000`, `find bd/3`
+**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`, `find t/HDB`, `find pr/500000-800000`, `find bd/3`, `find pr/unknown`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`

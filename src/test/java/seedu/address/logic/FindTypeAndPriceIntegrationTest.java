@@ -236,4 +236,21 @@ public class FindTypeAndPriceIntegrationTest {
         return new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi"), null,
                 PropertyStatus.UNSPECIFIED, bedrooms == null ? null : new PropertyBedrooms(bedrooms));
     }
+
+    @Test
+    public void findUnknownPriceAndBedrooms_listsClientsWithAMissingValueOnAnyProperty() throws Exception {
+        // noPrice has a property without a price and without bedrooms; hdbCheap/landedExpensive/mixed have prices
+        // but no bedrooms; noProperties has no properties at all.
+        search("find pr/unknown");
+        assertEquals(List.of(noPrice), model.getFilteredPersonList());
+
+        search("find bd/unknown");
+        assertEquals(List.of(hdbCheap, landedExpensive, mixed, noPrice), model.getFilteredPersonList());
+
+        search("find BD/UNKNOWN");
+        assertEquals(List.of(hdbCheap, landedExpensive, mixed, noPrice), model.getFilteredPersonList());
+
+        search("list");
+        assertEquals(5, model.getFilteredPersonList().size());
+    }
 }

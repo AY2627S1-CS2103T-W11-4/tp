@@ -246,6 +246,11 @@ never match, and a client appears once even if several properties match.
 `find bd/` accepts exactly one number and validates it with `PropertyParserUtil.parseBedrooms()`, so it shares the
 1 to 20 range with `addp` and `editp`. `PropertyBedroomsMatchesPredicate` matches a client if any property has exactly
 that number of bedrooms; properties with unknown bedrooms never match.
+`find pr/unknown` and `find bd/unknown` use `PropertyPriceMissingPredicate` and `PropertyBedroomsMissingPredicate`,
+which match a client when any property has no price (or no bedrooms). Clients without properties never match.
+`PhoneContainsKeywordsPredicate` reduces each keyword to its digits (dropping a leading `+65`, spaces, hyphens and
+brackets) before the substring check, because phones are stored as digits only; a keyword with no digits is ignored.
+`FindCommand#MESSAGE_FORMAT_HINT` is appended to the missing-argument and missing-keyword errors.
 These predicates clear the intention comparator, so their results use normal client order.
 Replacing a property re-evaluates the active status predicate, so clients may leave the displayed results.
 `PropertyStatusSearchIntegrationTest` checks stages, selector coexistence, saved order and displayed-index targeting.
@@ -1612,6 +1617,15 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
 
    1. Try `find t/`, `find t/villa`, `find t/HDB Landed` and `find t/HDB n/Type`.<br>
       Expected: Each is rejected with an error and the displayed list is unchanged.
+
+1. Searching for missing values
+
+   1. Enter `addp 1 t/HDB i/Buying l/Yishun`, then `find pr/unknown` and `find bd/unknown`.<br>
+      Expected: Type Test is listed for both, because the new property has no price and no bedrooms. A client
+      with no properties is not listed.
+
+   1. Enter `find pr/unknown 500000` and `find pr/unknow`.<br>
+      Expected: Both are rejected with an error, and the displayed list is unchanged.
 
 1. Searching by price
 

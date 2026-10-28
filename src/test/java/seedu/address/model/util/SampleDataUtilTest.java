@@ -17,6 +17,7 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ClientIntention;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
@@ -37,12 +38,25 @@ public class SampleDataUtilTest {
                 List.of(new Property(PropertyType.HDB, PropertyIntention.BUYING,
                         new PropertyLocation("Clementi Ave 3"), new PropertyPrice("480000"), PropertyStatus.VIEWING)),
                 List.of(new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
-                        new PropertyLocation("Tampines Street 86"), new PropertyPrice("1250000"))),
+                        new PropertyLocation("Tampines Street 86"), new PropertyPrice("1250000"),
+                        PropertyStatus.UNSPECIFIED, new PropertyBedrooms("3"))),
                 List.of(new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
-                        new PropertyLocation("Upper Bukit Timah Road"), new PropertyPrice("1700000")),
+                        new PropertyLocation("Upper Bukit Timah Road"), new PropertyPrice("1700000"),
+                        PropertyStatus.UNSPECIFIED, new PropertyBedrooms("4")),
                         new Property(PropertyType.HDB, PropertyIntention.SELLING,
-                                new PropertyLocation("Toa Payoh Lorong 1"), new PropertyPrice("780000"))),
+                                new PropertyLocation("Toa Payoh Lorong 1"), new PropertyPrice("780000"),
+                                PropertyStatus.UNSPECIFIED, new PropertyBedrooms("3"))),
                 List.of(), List.of(), List.of()), properties);
+    }
+
+    @Test
+    public void sampleBedroomSearch_findsClientsWithThreeBedroomProperties() throws Exception {
+        ModelManager model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
+
+        new AddressBookParser().parseCommand("find bd/3").execute(model);
+
+        assertEquals(List.of("Bernice Yu", "Charlotte Oliveiro"),
+                model.getFilteredPersonList().stream().map(person -> person.getName().fullName).toList());
     }
 
     @Test

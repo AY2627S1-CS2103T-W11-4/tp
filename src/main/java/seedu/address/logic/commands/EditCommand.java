@@ -42,6 +42,7 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
+    public static final String MESSAGE_UNCHANGED = "No change: %1$s already has these details.";
     public static final String MESSAGE_DUPLICATE_PERSON = Messages.MESSAGE_DUPLICATE_PERSON;
 
     private final Index index;
@@ -71,6 +72,10 @@ public class EditCommand extends Command {
         Person personToEdit = lastShownList.get(index.getZeroBased());
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
+        if (editedPerson.equals(personToEdit)) {
+            return new CommandResult(String.format(MESSAGE_UNCHANGED, personToEdit.getName()));
+        }
+
         if (!personToEdit.isSamePerson(editedPerson)) {
             Optional<Person> duplicate = model.getAddressBook().getPersonList().stream()
                     .filter(editedPerson::isSamePerson).findFirst();
@@ -83,9 +88,7 @@ public class EditCommand extends Command {
 
         model.setPerson(personToEdit, editedPerson);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        if (!editedPerson.equals(personToEdit)) {
-            model.commitAddressBook();
-        }
+        model.commitAddressBook();
         return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
     }
 

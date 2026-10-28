@@ -92,7 +92,9 @@ public class RemarkCommandTest {
 
     @Test
     public void execute_deleteRemarkUnfilteredList_success() {
-        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person firstPerson = new PersonBuilder(model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()))
+                .withRemark("Call later").build();
+        model.setPerson(model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()), firstPerson);
         Person editedPerson = new PersonBuilder(firstPerson).withRemark("").build();
         RemarkCommand remarkCommand = new RemarkCommand(INDEX_FIRST_PERSON, new Remark(""));
 
@@ -103,6 +105,32 @@ public class RemarkCommandTest {
         expectedModel.setPerson(firstPerson, editedPerson);
 
         assertCommandSuccess(remarkCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_sameRemarkAgain_reportsNoChangeAndKeepsUndoHistory() throws Exception {
+        Person first = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        RemarkCommand setRemark = new RemarkCommand(INDEX_FIRST_PERSON, new Remark("Call later"));
+        setRemark.execute(model);
+        assertTrue(model.canUndoAddressBook());
+
+        CommandResult result = setRemark.execute(model);
+
+        assertEquals(String.format(RemarkCommand.MESSAGE_UNCHANGED, first.getName()), result.getFeedbackToUser());
+        assertEquals("Call later", model.getFilteredPersonList().get(0).getRemark().value);
+        model.undoAddressBook();
+        assertEquals(first.getRemark(), model.getFilteredPersonList().get(0).getRemark());
+    }
+
+    @Test
+    public void execute_removeRemarkAlreadyEmpty_reportsNoChange() throws Exception {
+        Person first = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertTrue(first.getRemark().value.isEmpty());
+
+        CommandResult result = new RemarkCommand(INDEX_FIRST_PERSON, new Remark("")).execute(model);
+
+        assertEquals(String.format(RemarkCommand.MESSAGE_UNCHANGED, first.getName()), result.getFeedbackToUser());
+        assertFalse(model.canUndoAddressBook());
     }
 
     @Test

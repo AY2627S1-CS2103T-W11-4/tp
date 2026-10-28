@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -17,7 +18,9 @@ import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.person.PropertyBedroomsMatchesPredicate;
+import seedu.address.model.person.PropertyBedroomsMissingPredicate;
 import seedu.address.model.person.PropertyPriceInRangePredicate;
+import seedu.address.model.person.PropertyPriceMissingPredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.PropertyTypeMatchesPredicate;
 import seedu.address.model.property.PropertyBedrooms;
@@ -464,5 +467,39 @@ public class FindCommandParserTest {
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "bd/2 t/HDB", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
         assertParseFailure(parser, "bd/2 BD/3", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+    }
+
+    @Test
+    public void parse_unknownPriceOrBedrooms_returnsMissingValueFindCommand() {
+        for (String value : List.of("unknown", "UNKNOWN", "Unknown")) {
+            assertParseSuccess(parser, "pr/" + value, new FindCommand(new PropertyPriceMissingPredicate()));
+            assertParseSuccess(parser, "PR/ " + value + " ", new FindCommand(new PropertyPriceMissingPredicate()));
+            assertParseSuccess(parser, "bd/" + value, new FindCommand(new PropertyBedroomsMissingPredicate()));
+            assertParseSuccess(parser, "BD/ " + value + " ", new FindCommand(new PropertyBedroomsMissingPredicate()));
+        }
+    }
+
+    @Test
+    public void parse_unknownMixedWithOtherInput_throwsParseException() {
+        assertParseFailure(parser, "pr/unknown 500000",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "bd/unknown 3",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "pr/unknown n/alex", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        assertParseFailure(parser, "t/unknown", FindCommand.MESSAGE_INVALID_TYPE);
+        assertParseFailure(parser, "pr/unknow", FindCommand.MESSAGE_INVALID_PRICE_RANGE);
+        assertParseFailure(parser, "bd/unknow", FindCommand.MESSAGE_INVALID_BEDROOMS);
+    }
+
+    @Test
+    public void parse_missingArguments_errorShowsFormatAndExample() {
+        for (String args : List.of("", "   ")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_MISSING_ARGUMENTS);
+        }
+        assertParseFailure(parser, "n/", FindCommand.MESSAGE_MISSING_KEYWORD);
+        for (String message : List.of(FindCommand.MESSAGE_MISSING_ARGUMENTS, FindCommand.MESSAGE_MISSING_KEYWORD)) {
+            assertTrue(message.contains("Format: find FIELD/KEYWORD [MORE_KEYWORDS]"), message);
+            assertTrue(message.contains("Example: find n/alex"), message);
+        }
     }
 }
