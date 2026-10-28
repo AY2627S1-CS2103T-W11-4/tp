@@ -177,15 +177,28 @@ first-run behavior, which loads sample clients. A valid file containing an empty
 
 `HelpCommand` returns a `CommandResult` with `showHelp` set to `true`. The existing `MainWindow#handleHelp()`
 method shows or focuses a single `HelpWindow`. The `F1` shortcut uses the same method.
+`HelpWindow#focus()` clears the stage's iconified state before bringing it forward and requesting focus.
+Restoring an existing window keeps its size, position and scroll position; it does not construct a new reference.
 
 `HelpContent` holds each command's description, syntax, notes and examples, using shared command words,
 prefixes and validation messages where appropriate. `HelpWindow` creates a `CommandHelpCard` for each entry.
-The cards are display-only and sit inside a scrolling pane, with the heading and User Guide footer outside it.
+The cards sit inside a scrolling pane, with the heading and User Guide footer outside it.
+Each read-only example has a keyboard-accessible Copy button. `CommandHelpCard` copies its original example string
+using JavaFX's clipboard API; visual wrapping does not add line breaks. The button reports Copied or Failed and
+can be used again. Copy actions do not invoke command logic.
+The copy result updates the button's accessible text, retaining the example, and sends an accessibility text-change
+notification. A package-private constructor accepts a clipboard writer so tests can exercise failure and retry.
 The layout and styles are defined in `HelpWindow.fxml`, `CommandHelpCard.fxml` and `HelpWindow.css`.
+Help loads `Residex.css` first so text, buttons and focus indicators follow the main UI's light theme.
+`HelpWindow.css` scopes the reference layout and example-row sizing to the Help window.
 
 The reference is bundled with the app and works offline. The footer's Copy URL button copies the RESIDEX User Guide URL.
 Update `HelpContent` and the User Guide together when commands change. `HelpContentTest` checks that the documented
 examples parse as the intended commands without executing them or starting JavaFX.
+`ResidexUiTest` checks deiconification, bounds and scroll-state preservation without a native window manager.
+Other automated checks cover exact example copying, accessible success/failure feedback and retry,
+the guide URL action, and off-screen wrapping at the
+default and minimum Help sizes. Clipboard contents are restored after tests that use the system clipboard.
 
 ### Find command
 
@@ -1244,6 +1257,9 @@ testers are expected to do more *exploratory* testing.
    1. With help already open, enter `help` again in the main window.<br>
       Expected: The existing help window is focused; no second help window is created.
 
+   1. Scroll down, resize and minimise Help, then enter `help` again. Repeat using `F1`.<br>
+      Expected: The same Help window is restored and focused, keeping its size and scroll position.
+
    1. Close help, focus the main command box and press `F1`.<br>
       Expected: The same command-reference window opens.
 
@@ -1254,13 +1270,29 @@ testers are expected to do more *exploratory* testing.
       Client `add` and `edit` have no budget option; property commands retain `pr/PRICE` and transaction status.
       The heading and User Guide footer remain visible while the cards scroll.
 
-   1. Resize the window narrower and wider.<br>
-      Expected: Long text and examples wrap inside their cards. The cards can be read without horizontal scrolling.
+   1. Resize the window narrower and wider, including its minimum size.<br>
+      Expected: Long text and examples wrap inside their cards. Copy buttons remain beside their examples,
+      and the cards can be read without horizontal scrolling. The footer remains visible.
+
+   1. Compare Help with the main window.<br>
+      Expected: Help uses the same light background, dark text, white cards and button styling.
 
 1. Copying the guide URL
 
    1. Click **Copy URL** and paste the clipboard contents into a text editor.<br>
       Expected: `https://ay2627s1-cs2103t-w11-4.github.io/tp/UserGuide.html` is pasted.
+
+1. Copying examples
+
+   1. Click **Copy** beside a long `editp` example, then paste into the main command box.<br>
+      Expected: The exact example is pasted without extra line breaks, and the button shows **Copied**.
+      Nothing runs until Enter is pressed in the main command box. Adjust example values before executing.
+
+   1. Copy a different example, then use **Copy URL** again.<br>
+      Expected: Each action copies its own text. Copying examples does not change the guide URL action.
+
+   1. Use Tab to reach a Copy button, then activate it with Space.<br>
+      Expected: The example can be copied without a mouse. If a button shows **Failed**, click it again to retry.
 
 ### Viewing complete client details
 
