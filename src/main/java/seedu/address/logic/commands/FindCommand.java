@@ -42,7 +42,7 @@ public class FindCommand extends Command {
             + "Property price search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE
             + "MIN-MAX (either side optional)\n"
             + "Property bedrooms search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "NUMBER\n"
-            + "Example: " + COMMAND_WORD + " " + PREFIX_EMAIL + "alexyeoh@example.com";
+            + "Example: " + COMMAND_WORD + " " + PREFIX_EMAIL + "gmail";
 
     public static final String MESSAGE_INVALID_INTENTION =
             "Intention must be buyer, seller or both (case-insensitive).";
