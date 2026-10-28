@@ -79,13 +79,14 @@ public final class DocumentationScreenshots {
             enterCommand(main, "list");
             saveScreenshot(main, "Ui.png");
 
-            main = layout(window.getPrimaryStage(), 1100, 1050);
-            enterCommand(main, "view 3");
-            saveScreenshot(main, "clientDetails.png");
-
             main = layout(window.getPrimaryStage(), 1100, 760);
             enterCommand(main, "find n/Alex David");
             saveScreenshot(main, "findAlexDavidResult.png");
+
+            main = layout(window.getPrimaryStage(), 1100, 1050);
+            enterCommand(main, "list");
+            enterCommand(main, "view 3");
+            saveScreenshot(main, "clientDetails.png");
 
             saveScreenshot(layout(help.getRoot(), 960, 1100), "helpMessage.png");
         } finally {
