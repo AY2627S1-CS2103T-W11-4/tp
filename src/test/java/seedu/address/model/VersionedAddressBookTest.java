@@ -71,6 +71,20 @@ public class VersionedAddressBookTest {
     }
 
     @Test
+    public void discardRedoHistory_afterUndo_preventsRedo() {
+        versionedAddressBook.addPerson(ALICE);
+        versionedAddressBook.commit();
+        versionedAddressBook.undo();
+        assertTrue(versionedAddressBook.canRedo());
+
+        versionedAddressBook.discardRedoHistory();
+
+        assertFalse(versionedAddressBook.canRedo());
+        assertThrows(NoRedoableStateException.class, versionedAddressBook::redo);
+        assertEquals(List.of(), versionedAddressBook.getPersonList());
+    }
+
+    @Test
     public void commit_afterUndo_discardsRedoHistory() {
         versionedAddressBook.addPerson(ALICE);
         versionedAddressBook.commit();

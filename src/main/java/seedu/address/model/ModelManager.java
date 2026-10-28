@@ -113,6 +113,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void discardRedoHistory() {
+        addressBook.discardRedoHistory();
+    }
+
+    @Override
     public boolean hasPerson(Person person) {
         requireNonNull(person);
         return addressBook.hasPerson(person);

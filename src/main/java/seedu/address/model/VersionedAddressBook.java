@@ -80,6 +80,14 @@ public class VersionedAddressBook extends AddressBook {
         return currentStatePointer < states.size() - 1;
     }
 
+    /**
+     * Discards any states after the current pointer so they cannot be redone.
+     */
+    public void discardRedoHistory() {
+        states.subList(currentStatePointer + 1, states.size()).clear();
+        assert isPointerValid() : "The current state pointer must identify a saved state";
+    }
+
     private boolean isPointerValid() {
         return currentStatePointer >= 0 && currentStatePointer < states.size();
     }

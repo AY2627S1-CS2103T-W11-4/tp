@@ -69,6 +69,48 @@ public class SaveFailureRollbackIntegrationTest {
     }
 
     @Test
+    @EnabledOnOs({OS.MAC, OS.LINUX})
+    public void execute_undoWhenFileIsReadOnly_keepsLatestRemarkAndDoesNotSkipHistory() throws Exception {
+        logic.execute("add n/Remark Client p/88119990 e/remark@example.com");
+        logic.execute("remark 1 r/one");
+        logic.execute("remark 1 r/two");
+        logic.execute("remark 1 r/three");
+        String saved = Files.readString(dataFile);
+        Files.setPosixFilePermissions(dataFile, Set.of(PosixFilePermission.OWNER_READ));
+        try {
+            assertThrows(CommandException.class, () -> logic.execute("undo"));
+
+            assertEquals("three", model.getAddressBook().getPersonList().get(0).getRemark().value);
+            assertEquals(saved, Files.readString(dataFile));
+        } finally {
+            Files.setPosixFilePermissions(dataFile, Set.of(PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE));
+        }
+
+        logic.execute("undo");
+        assertEquals("two", model.getAddressBook().getPersonList().get(0).getRemark().value);
+    }
+
+    @Test
+    @EnabledOnOs({OS.MAC, OS.LINUX})
+    public void execute_failedAddThenRedo_doesNotRestoreUnsavedClient() throws Exception {
+        logic.execute("add n/Initial Client p/88119990 e/initial@example.com");
+        Files.setPosixFilePermissions(dataFile, Set.of(PosixFilePermission.OWNER_READ));
+        try {
+            assertThrows(CommandException.class, () ->
+                    logic.execute("add n/SaveFail p/88119991 e/savefail@example.com"));
+            assertEquals(1, model.getAddressBook().getPersonList().size());
+        } finally {
+            Files.setPosixFilePermissions(dataFile, Set.of(PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE));
+        }
+
+        assertThrows(CommandException.class, () -> logic.execute("redo"));
+        assertEquals(1, model.getAddressBook().getPersonList().size());
+        assertEquals("Initial Client", model.getAddressBook().getPersonList().get(0).getName().fullName);
+    }
+
+    @Test
     public void execute_addWhenSaveSucceeds_keepsClientInListAndFile() throws Exception {
         logic.execute("add n/Initial Client p/88119990 e/initial@example.com");
         assertEquals("Initial Client", model.getAddressBook().getPersonList().get(0).getName().fullName);
