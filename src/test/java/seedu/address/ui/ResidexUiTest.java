@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -49,10 +50,12 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
@@ -468,6 +471,20 @@ public class ResidexUiTest {
                 "Persons list contains duplicate person(s).");
     }
 
+    // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
+    @Test
+    public void dataLoadingError_missingOrNullClientList_showsStorageValidationReason() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : List.of("{}", "{\"persons\": null}")) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertDataLoadingError(assertInstanceOf(IllegalValueException.class, failure.getCause()),
+                    "Client list is missing from the data file.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
     @Test
     public void dataLoadingError_accessDenied_showsPermissionMessage() throws Exception {
         assertDataLoadingError(new AccessDeniedException("addressbook.json"),
@@ -540,6 +557,8 @@ public class ResidexUiTest {
                     assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
                     assertTrue(message.contains("Reason: " + expectedReason));
                     assertFalse(message.contains("Parser details."));
+                    assertFalse(message.contains("NullPointerException"));
+                    assertFalse(message.contains("JsonSerializableAddressBook"));
                     assertTrue(message.contains("has not been changed"));
                     assertTrue(message.contains("RESIDEX will close"));
                     assertTrue(message.contains("repair it or replace it with a valid backup"));
@@ -658,6 +677,58 @@ public class ResidexUiTest {
                 assertFalse(properties.isManaged());
                 assertEquals("Intention: Not specified", label(root, "intention").getText());
                 assertTrue(model.getFilteredPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_thirtyDigitPhone_keepsEmptyListAndShowsPhoneConstraint() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/Carl p/123456789012345678901234567890 e/c@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(Phone.MESSAGE_CONSTRAINTS, result.getText());
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_unknownParameterAfterEmail_keepsEmptyListAndNamesTheParameter() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                command.setText("add n/Fay p/91230006 e/f@example.com x/foo");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertEquals("add n/Fay p/91230006 e/f@example.com x/foo", command.getText());
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(String.format(Messages.MESSAGE_UNEXPECTED_PARAMETER, "x/foo"), result.getText());
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
             } finally {
                 window.getPrimaryStage().close();
             }

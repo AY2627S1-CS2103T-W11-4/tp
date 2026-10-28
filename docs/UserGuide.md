@@ -29,6 +29,8 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
    ![RESIDEX client list with contact details, derived roles and property summaries](images/Ui.png)
 
    This screenshot uses the bundled sample clients with example remarks and property statuses.
+   <!-- Codex assisted Brendan-Lim with the fresh-sample search documentation. -->
+   With fresh sample data, `find s/viewing` returns Alex Yeoh; `find s/unspecified` returns Bernice Yu and Charlotte Oliveiro.
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
@@ -106,6 +108,9 @@ Format: `help`
 Adds a client to RESIDEX.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL`
+
+Phone numbers must contain 3 to 15 digits only. The same rule applies when editing a client's phone number.
+An unexpected field such as `x/foo` is rejected with `Unexpected parameter: x/foo` in both `add` and `edit`.
 
 A client is a duplicate only when both their name and phone number match an existing client.
 Name matching ignores capitalisation, surrounding spaces and repeated spaces between words.
@@ -249,6 +254,8 @@ Status is independent of the derived client role.
 
 Status belongs to each property, so a client's properties can be at different stages.
 Use these single-word values with `s/`; capitalization does not matter.
+<!-- Codex assisted Brendan-Lim with the status-search alias documentation. -->
+For status searches, `find s/Not specified` is also accepted as an alias for `find s/unspecified`.
 
 | Value | Display | Meaning |
 | --- | --- | --- |
@@ -379,6 +386,7 @@ Property bedrooms | `bd/`
 * Only the selected search field is searched. Each search filters the entire client list, replacing any previous filter.
 
 * Status searches require exactly one complete stage: `unspecified`, `enquiring`, `viewing`, `negotiating`, `closing` or `completed`.
+  The displayed phrase `Not specified` is also accepted, ignoring case and extra whitespace between its words.
   A client matches if **any existing property** has that stage and appears only once even if several properties match.
   A client with no properties does **not** match `find s/unspecified`.
 * Type searches require exactly one value: `HDB`, `Condominium` or `Landed` (or `h`, `c`, `l`), in any capitalization.
@@ -407,7 +415,7 @@ Examples:
 * `find i/seller` lists Seller clients followed by Buyer / Seller clients.
 * `find i/both` lists Buyer / Seller clients only.
 * `find s/viewing` lists clients with at least one property at Viewing.
-* `find S/UNSPECIFIED` lists clients with at least one property whose stage is Not specified.
+* `find S/UNSPECIFIED` or `find s/Not specified` lists clients with at least one property whose stage is Not specified.
 * `find t/HDB` lists clients with at least one HDB property.
 * `find pr/500000-800000` lists clients with a property priced from $500,000 to $800,000.
 * `find pr/-800000` lists clients with a property priced at $800,000 or less.
@@ -509,6 +517,10 @@ Furthermore, certain edits can cause RESIDEX to behave in unexpected ways (e.g.,
 
 If RESIDEX cannot load an existing client data file, it shows an error and closes. Commands and automatic saving are unavailable, so the failed file cannot be overwritten by an empty client list.
 
+<!-- Codex assisted Brendan-Lim with the missing-client-list recovery documentation. -->
+If the error says `Client list is missing from the data file.`, the required `persons` list is absent or null.
+A valid empty file contains `{"persons": []}`. Restore your client records from a valid backup if they should be present.
+
 1. Locate the file using the path shown in the error dialog and make a backup copy.
 2. Repair the invalid data or replace the file with a valid backup, then restart RESIDEX.
 3. If you want to start fresh instead, move or rename the failed file before restarting. RESIDEX will start with sample clients, as it does when no data file exists. Keep the original file if you want to recover its contents later.
@@ -533,7 +545,7 @@ Your client data is loaded normally if it is valid.
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **Names** may contain only letters, digits and spaces, so names with hyphens or apostrophes (for example `Ng Wei-Ling`) cannot be entered.
-3. **Phone numbers** must have at least 3 digits, but there is no upper limit on their length.
+3. **Phone numbers** must contain 3 to 15 digits. Spaces, hyphens and a leading `+` are not supported.
 4. **Property locations** cannot contain a word followed by a slash, such as `N/A`, because it is read as a field prefix. Write `NA` instead. Numbers such as `1/2` are fine.
 5. **Undo history** is kept only while RESIDEX is running. After you close it, earlier changes cannot be undone.
 6. **If you minimize the Help Window** and then run the `help` command (or use the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.

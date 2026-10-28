@@ -54,6 +54,7 @@ public class MainAppTest {
         UserPrefs prefs = createPrefs();
         new JsonUserPrefsStorage(prefsPath()).saveUserPrefs(prefs);
         new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        String savedData = Files.readString(dataPath());
 
         app.init();
 
@@ -63,8 +64,10 @@ public class MainAppTest {
         assertNotNull(app.ui);
         assertEquals(dataPath(), app.storage.getAddressBookFilePath());
         assertEquals(prefsPath(), app.storage.getUserPrefsFilePath());
+        assertEquals(savedData, Files.readString(dataPath()));
     }
 
+    // Codex assisted Brendan-Lim with the fresh-sample search and existing-file preservation assertions.
     @Test
     public void init_missingFiles_usesSampleClientsAndSavesDefaultPreferences() throws Exception {
         MainApp app = createApp();
@@ -74,6 +77,25 @@ public class MainAppTest {
         assertEquals(SampleDataUtil.getSampleAddressBook(), app.model.getAddressBook());
         assertEquals(new UserPrefs(), app.model.getUserPrefs());
         assertEquals(new UserPrefs(), new JsonUserPrefsStorage(prefsPath()).readUserPrefs().orElseThrow());
+        assertFalse(Files.exists(dataPath()));
+
+        app.logic.execute("find s/viewing");
+
+        assertEquals(List.of("Alex Yeoh"), app.model.getFilteredPersonList().stream()
+                .map(person -> person.getName().fullName).toList());
+        assertEquals(SampleDataUtil.getSampleAddressBook(),
+                new JsonAddressBookStorage(dataPath()).readAddressBook().orElseThrow());
+    }
+
+    // Codex assisted Brendan-Lim with the missing/null client-list startup regressions.
+    @Test
+    public void init_missingClientList_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("{}");
+    }
+
+    @Test
+    public void init_nullClientList_preventsCommandsAndPreservesFile() throws Exception {
+        assertLoadFailurePreservesFile("{\"persons\": null}");
     }
 
     @Test

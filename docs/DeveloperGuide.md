@@ -162,6 +162,14 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Client input validation
+
+Client `add` and `edit` call `ParserUtil.rejectUnknownClientParameters()` before tokenization so an unknown
+alphabetic field prefix such as `x/` is reported as an unexpected parameter instead of being absorbed into a value.
+The existing manual-intention and removed-budget checks retain their dedicated messages.
+`Phone` accepts only 3 to 15 digits. Command parsing and saved-client loading share this validation;
+invalid saved phone numbers follow the normal data-loading error path without replacing the client file.
+
 ### Protecting client data after a failed load
 
 `JsonUtil#fromJsonString()` reads a complete value using Jackson's parser and checks that no token follows it.
@@ -252,8 +260,10 @@ displayed indexes, live role changes, normal-order restoration and saved source 
 `ModelManagerIntentionOrderTest` additionally checks replacements, source resets and 1,000 clients without
 timing assertions: intention sorting must not scan clients using `Person#equals()` to resolve ties.
 
-Status searches accept exactly one `PropertyStatus` token, ignoring case.
-`FindCommandParser` shares `PropertyParserUtil.parseStatus()` with property commands while retaining
+<!-- Codex assisted Brendan-Lim with the status-search alias documentation and manual checks. -->
+Status searches accept one `PropertyStatus` token or the displayed phrase `Not specified`, ignoring case.
+`FindCommandParser` recognises the display alias after selector validation and otherwise shares
+`PropertyParserUtil.parseStatus()` with property commands while retaining
 the find command's validation order and error messages.
 `PropertyStatusMatchesPredicate` matches a client if any existing property has the requested status.
 The predicate returns false for an empty property list, including when searching for `UNSPECIFIED`.
@@ -379,7 +389,9 @@ This is a recorded assessment, not a one-way state machine. All old/new status p
 including Viewing to Enquiring, Closing to Negotiating and corrections from Completed.
 Completed does not delete, archive or lock a property or client. Explicit `delp`/`delete` remains necessary.
 There is no client-level status, stage history, viewing-date field or automatic transition.
-The CLI token for Not specified is `unspecified`, not `not-specified` or the display text.
+The property-command token for Not specified is `unspecified`. Status search also accepts the display text
+`Not specified`, ignoring case and whitespace between its words; `not-specified` remains invalid.
+`FindCommandParser` handles this search alias after validating selectors, leaving property parsing and saved statuses unchanged.
 
 `PropertyIntention` describes an individual property's buying or selling action.
 It is separate from `ClientIntention`, the role derived from all of the client's properties.
@@ -1542,7 +1554,7 @@ Run these steps in order. Client indexes always refer to the current displayed l
    1. Enter `find S/VIEWING`.<br>
       Expected: Stage First then Stage Second, each once even though Stage Second has two matching properties.
 
-   1. Enter `find s/unspecified`.<br>
+   1. Enter `find s/unspecified`, then `find s/Not specified` and `find s/not SPECIFIED`.<br>
       Expected: Only Stage First. Stage Empty is excluded because it has no properties.
 
    1. Try `find s/enquiring`, `find s/negotiating`, `find s/closing` and `find s/completed`.<br>
@@ -1592,7 +1604,7 @@ Run these steps in order. Client indexes always refer to the current displayed l
       and `addp 1 t/HDB i/Selling l/Bedok s/`.<br>
       Expected: Each input error leaves the properties, displayed filter and saved data unchanged.
 
-   1. Try `find s/`, `find s/unknown`, `find s/Not specified`, `find s/viewing s/closing`
+   1. Try `find s/`, `find s/unknown`, `find s/Not specified extra`, `find s/viewing s/closing`
       and `find s/viewing n/Stage`.<br>
       Expected: Input errors. The previous phone-filtered client remains displayed.
 
@@ -1765,7 +1777,11 @@ Use a copy of the application in a separate folder for these tests, and keep a b
       Expected: It still contains `invalid JSON`.
    3. Repeat with `null`, `{"persons": [null]}`, and a client with an invalid field value.
       Expected: The same error and file-preservation behavior.
-   4. Repeat with `{"persons": []}` followed by a second JSON object or ordinary text.
+   <!-- Codex assisted Brendan-Lim with the missing-client-list manual checks. -->
+   4. Repeat with `{}` and `{"persons": null}`.
+      Expected: The reason is `Client list is missing from the data file.` rather than an internal exception.
+      The original file stays unchanged and RESIDEX closes without creating a replacement client list.
+   5. Repeat with `{"persons": []}` followed by a second JSON object or ordinary text.
       Expected: Startup rejects the entire file and preserves all its contents.
       Whitespace after a single valid object is accepted.
 

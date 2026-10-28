@@ -13,10 +13,12 @@ import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyPrice;
+import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.property.PropertyType;
 
 /**
  * Contains utility methods for populating {@code AddressBook} with sample data.
+ * Codex assisted Brendan-Lim with the sample property at the Viewing stage.
  */
 public class SampleDataUtil {
     public static Person[] getSamplePersons() {
@@ -24,7 +26,7 @@ public class SampleDataUtil {
             new Person(new Name("Alex Yeoh"), new Phone("87438807"), new Email("alexyeoh@example.com"),
                 new Remark(""), List.of(
                     new Property(PropertyType.HDB, PropertyIntention.BUYING,
-                        new PropertyLocation("Clementi Ave 3"), new PropertyPrice("480000")))),
+                        new PropertyLocation("Clementi Ave 3"), new PropertyPrice("480000"), PropertyStatus.VIEWING))),
             new Person(new Name("Bernice Yu"), new Phone("99272758"), new Email("berniceyu@example.com"),
                 new Remark(""), List.of(
                     new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
