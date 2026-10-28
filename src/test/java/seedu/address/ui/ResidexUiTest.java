@@ -844,6 +844,29 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void editCommand_consecutiveUnderscoreEmail_updatesCardAndCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Property Client p/88110092 e/prop@example.com");
+                runCommand(root, "edit 1 e/first__last@example.com");
+
+                assertFalse(result.getText().contains("Emails should be of the format"));
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("first__last@example.com", label(root, "email").getText());
+                assertEquals("first__last@example.com",
+                        model.getAddressBook().getPersonList().get(0).getEmail().value);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void findCommand_gmailOnSampleData_listsAlexAndKeepsFullCount() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
