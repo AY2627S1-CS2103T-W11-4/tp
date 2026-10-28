@@ -28,7 +28,7 @@
         </HBox>
         <VBox styleClass="app-content" spacing="12" minHeight="0" VBox.vgrow="ALWAYS">
           <StackPane fx:id="commandBoxPlaceholder" VBox.vgrow="NEVER" />
-          <StackPane fx:id="resultDisplayPlaceholder" minHeight="70" prefHeight="70" maxHeight="70"
+          <StackPane fx:id="resultDisplayPlaceholder" minHeight="70" prefHeight="160" maxHeight="160"
                      VBox.vgrow="NEVER" />
           <StackPane fx:id="personListPanelPlaceholder" minHeight="0" VBox.vgrow="ALWAYS">
             <VBox.margin>
