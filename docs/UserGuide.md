@@ -29,6 +29,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
    ![RESIDEX client list with contact details, derived roles and property summaries](images/Ui.png)
 
    This screenshot uses the bundled sample clients with example remarks and property statuses.
+   Fresh sample data includes remarks for Alex Yeoh and Charlotte Oliveiro. Existing saved remarks are unchanged.
    <!-- Codex assisted Brendan-Lim with the fresh-sample search documentation. -->
    With fresh sample data, `find s/viewing` returns Alex Yeoh; `find s/unspecified` returns Bernice Yu and Charlotte Oliveiro.
 

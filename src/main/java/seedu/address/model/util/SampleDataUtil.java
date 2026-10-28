@@ -24,7 +24,7 @@ public class SampleDataUtil {
     public static Person[] getSamplePersons() {
         return new Person[] {
             new Person(new Name("Alex Yeoh"), new Phone("87438807"), new Email("alexyeoh@gmail.com"),
-                new Remark(""), List.of(
+                new Remark("Prefers a home near an MRT station."), List.of(
                     new Property(PropertyType.HDB, PropertyIntention.BUYING,
                         new PropertyLocation("Clementi Ave 3"), new PropertyPrice("480000"), PropertyStatus.VIEWING))),
             new Person(new Name("Bernice Yu"), new Phone("99272758"), new Email("berniceyu@example.com"),
@@ -32,7 +32,7 @@ public class SampleDataUtil {
                     new Property(PropertyType.CONDOMINIUM, PropertyIntention.SELLING,
                         new PropertyLocation("Tampines Street 86"), new PropertyPrice("1250000")))),
             new Person(new Name("Charlotte Oliveiro"), new Phone("93210283"), new Email("charlotte@example.com"),
-                new Remark(""), List.of(
+                new Remark("Buying a condominium and selling the current HDB flat."), List.of(
                     new Property(PropertyType.CONDOMINIUM, PropertyIntention.BUYING,
                         new PropertyLocation("Upper Bukit Timah Road"), new PropertyPrice("1700000")),
                     new Property(PropertyType.HDB, PropertyIntention.SELLING,

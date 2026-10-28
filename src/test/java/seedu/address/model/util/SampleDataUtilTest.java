@@ -28,6 +28,13 @@ public class SampleDataUtilTest {
     @TempDir
     public Path temporaryFolder;
 
+    @Test
+    public void getSamplePersons_remarks_includesExamplesAndEmptyRemarks() {
+        assertEquals(List.of("Prefers a home near an MRT station.", "",
+                "Buying a condominium and selling the current HDB flat.", "", "", ""),
+                Arrays.stream(SampleDataUtil.getSamplePersons()).map(person -> person.getRemark().value).toList());
+    }
+
     // Codex assisted Brendan-Lim with the sample-stage, identity and storage regression tests.
     @Test
     public void getSamplePersons_preservesOrderedPropertyFieldsWithRepresentativeStages() {

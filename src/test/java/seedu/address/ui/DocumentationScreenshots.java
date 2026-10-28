@@ -106,8 +106,6 @@ public final class DocumentationScreenshots {
         enterCommand(main, "editp 2 1 s/Negotiating");
         enterCommand(main, "editp 3 1 s/Enquiring");
         enterCommand(main, "editp 3 2 s/Closing");
-        enterCommand(main, "remark 1 r/Prefers a home near an MRT station.");
-        enterCommand(main, "remark 3 r/Buying a condominium and selling the current HDB flat.");
         enterCommand(main, "list");
         return window;
     }

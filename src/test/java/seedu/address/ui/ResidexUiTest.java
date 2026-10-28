@@ -797,6 +797,25 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void clientCards_sampleRemarks_showsExamplesAndHidesEmptyRemarks() throws Exception {
+        runOnFxThread(() -> {
+            Person[] samples = SampleDataUtil.getSamplePersons();
+            for (int i = 0; i < samples.length; i++) {
+                Region card = new PersonCard(samples[i], i + 1).getRoot();
+                styleCard(card);
+                Label remark = label(card, "remark");
+                boolean hasRemark = i == 0 || i == 2;
+
+                assertEquals(hasRemark, remark.isVisible());
+                assertEquals(hasRemark, remark.isManaged());
+                if (hasRemark) {
+                    assertEquals(samples[i].getRemark().value, remark.getText());
+                }
+            }
+        });
+    }
+
+    @Test
     public void clientCards_showNumberedPropertiesWithAndWithoutPrices() throws Exception {
         runOnFxThread(() -> {
             Property viewing = new Property(TAMPINES_CONDO.getType(), TAMPINES_CONDO.getIntention(),

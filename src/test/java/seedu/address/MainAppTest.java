@@ -105,6 +105,10 @@ public class MainAppTest {
         assertEquals(SampleDataUtil.getSampleAddressBook(), app.model.getAddressBook());
         assertEquals(new UserPrefs(), app.model.getUserPrefs());
         assertEquals(new UserPrefs(), new JsonUserPrefsStorage(prefsPath()).readUserPrefs().orElseThrow());
+        assertEquals("Prefers a home near an MRT station.",
+                app.model.getAddressBook().getPersonList().get(0).getRemark().value);
+        assertEquals("Buying a condominium and selling the current HDB flat.",
+                app.model.getAddressBook().getPersonList().get(2).getRemark().value);
         assertFalse(Files.exists(dataPath()));
 
         app.logic.execute("find s/viewing");
@@ -113,6 +117,21 @@ public class MainAppTest {
                 .map(person -> person.getName().fullName).toList());
         assertEquals(SampleDataUtil.getSampleAddressBook(), app.model.getAddressBook());
         assertFalse(Files.exists(dataPath()));
+    }
+
+    @Test
+    public void init_existingSampleClientWithEmptyRemark_preservesSavedData() throws Exception {
+        AddressBook saved = new AddressBook();
+        saved.addPerson(new PersonBuilder(SampleDataUtil.getSamplePersons()[0]).withRemark("").build());
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(saved);
+        byte[] original = Files.readAllBytes(dataPath());
+        MainApp app = createApp();
+
+        app.init();
+
+        assertEquals(saved, app.model.getAddressBook());
+        assertEquals("", app.model.getAddressBook().getPersonList().get(0).getRemark().value);
+        assertArrayEquals(original, Files.readAllBytes(dataPath()));
     }
 
     @Test

@@ -323,6 +323,8 @@ Equality and hashing use the properties, so they also reflect everything that de
 Fresh sample data gives Alex buying properties, Bernice selling properties and Charlotte both directions,
 while David, Irfan and Roy have no properties. This demonstrates every derived role and intention-search ordering
 without changing how real saved clients are loaded.
+Alex and Charlotte also have example remarks matching the UG screenshots; the remaining sample remarks are empty.
+The screenshot helper uses these bundled remarks directly. Existing data is loaded as saved, including empty remarks.
 All property-copy methods derive the new role automatically while leaving the original `Person` unchanged.
 `copyWithProperties` asserts that the replacement preserves client identity, an internal copy invariant.
 This assertion does not validate user input or perform required work. Gradle tests enable assertions by default.
