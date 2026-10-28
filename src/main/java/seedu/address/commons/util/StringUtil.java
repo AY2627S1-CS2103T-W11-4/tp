@@ -63,8 +63,8 @@ public class StringUtil {
         }
 
         try {
-            int value = Integer.parseInt(s);
-            return value > 0;
+            Integer.parseInt(s);
+            return true;
         } catch (NumberFormatException nfe) {
             return false;
         }
