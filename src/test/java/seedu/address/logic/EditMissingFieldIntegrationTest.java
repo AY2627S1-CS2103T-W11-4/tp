@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -23,8 +24,7 @@ import seedu.address.storage.StorageManager;
  * and an example, and must not change the client.
  */
 public class EditMissingFieldIntegrationTest {
-    private static final String EXPECTED_MESSAGE = "Provide at least one field: n/NAME, p/PHONE_NUMBER or e/EMAIL.\n"
-            + "Example: edit 1 p/91234567";
+    private static final String EXPECTED_MESSAGE = EditCommand.MESSAGE_NOT_EDITED;
 
     @TempDir
     public Path temporaryFolder;

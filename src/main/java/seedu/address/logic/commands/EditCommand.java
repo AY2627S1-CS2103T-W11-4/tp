@@ -41,8 +41,11 @@ public class EditCommand extends Command {
             + PREFIX_EMAIL + "johndoe@example.com";
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
-    public static final String MESSAGE_NOT_EDITED = "Provide at least one field: n/NAME, p/PHONE_NUMBER or e/EMAIL.\n"
-            + "Example: edit 1 p/91234567";
+    public static final String MESSAGE_NOT_EDITED = "Provide at least one field: "
+            + PREFIX_NAME + "NAME, "
+            + PREFIX_PHONE + "PHONE_NUMBER or "
+            + PREFIX_EMAIL + "EMAIL.\n"
+            + "Example: " + COMMAND_WORD + " 1 " + PREFIX_PHONE + "91234567";
     public static final String MESSAGE_DUPLICATE_PERSON = Messages.MESSAGE_DUPLICATE_PERSON;
 
     private final Index index;

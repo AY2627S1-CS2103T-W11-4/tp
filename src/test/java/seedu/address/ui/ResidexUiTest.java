@@ -60,6 +60,7 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -851,8 +852,7 @@ public class ResidexUiTest {
                 runCommand(root, "edit 1");
 
                 assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
-                assertEquals("Provide at least one field: n/NAME, p/PHONE_NUMBER or e/EMAIL.\n"
-                        + "Example: edit 1 p/91234567", result.getText());
+                assertEquals(EditCommand.MESSAGE_NOT_EDITED, result.getText());
                 assertEquals("1 of 1 clients", label(root, "clientCount").getText());
                 assertEquals("Edit Client", label(root, "name").getText());
                 assertEquals("88110081", label(root, "phone").getText());
