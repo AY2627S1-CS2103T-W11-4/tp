@@ -20,9 +20,14 @@
       <Label text="Phone" styleClass="field-caption" minWidth="56" prefWidth="56" />
       <Label fx:id="phone" styleClass="client-detail" />
     </HBox>
-    <HBox spacing="12" alignment="CENTER_LEFT">
+    <HBox spacing="12" alignment="TOP_LEFT" minWidth="0">
       <Label text="Email" styleClass="field-caption" minWidth="56" prefWidth="56" />
-      <Label fx:id="email" styleClass="client-detail" />
+      <Label fx:id="email" styleClass="client-detail" wrapText="true" minWidth="0" maxWidth="Infinity"
+             HBox.hgrow="ALWAYS">
+        <minHeight>
+          <Region fx:constant="USE_PREF_SIZE" />
+        </minHeight>
+      </Label>
     </HBox>
     <Label fx:id="remark" styleClass="client-remark" wrapText="true" />
     <VBox fx:id="properties" spacing="6" minWidth="0" styleClass="client-properties" />
