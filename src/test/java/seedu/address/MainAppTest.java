@@ -245,6 +245,13 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_emptyOrWrongStructure_preventsCommandsAndPreservesFile() throws Exception {
+        for (String json : new String[]{"", " \t\r\n", "[]", "{\"persons\":\"x\"}", "{\"persons\": ["}) {
+            assertLoadFailurePreservesFile(json);
+        }
+    }
+
+    @Test
     public void init_trailingData_preventsCommandsAndPreservesEntireFile() throws Exception {
         for (String suffix : new String[]{
             "{\"persons\":[{\"name\":\"Trailing Client\",\"phone\":\"91110012\","

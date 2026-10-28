@@ -626,6 +626,41 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void dataLoadingError_emptyFiles_showsPlainReasonAndPreservesFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : new String[]{"", " \t\r\n", "\uFEFF", "\uFEFF \t\r\n"}) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+            assertDataLoadingError((Exception) failure.getCause(), "The data file is empty.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void dataLoadingError_invalidJson_showsPlainReasonAndPreservesFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : new String[]{"[]", "{\"persons\":\"x\"}", "invalid JSON", "{\"persons\": ["}) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+            assertDataLoadingError((Exception) failure.getCause(),
+                    "The data file is not in the expected JSON format.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void dataLoadingError_missingReason_showsRecoveryFallback() throws Exception {
+        for (Exception cause : new Exception[]{null, new IOException(), new IOException(" \t")}) {
+            assertDataLoadingError(cause,
+                    "The data file could not be read. Check that it exists and is readable.");
+        }
+    }
+
+    @Test
     public void dataLoadingError_duplicateClients_showsValidationMessage() throws Exception {
         assertDataLoadingError(new IllegalValueException("Persons list contains duplicate person(s)."),
                 "Persons list contains duplicate person(s).");
@@ -720,6 +755,10 @@ public class ResidexUiTest {
                     assertFalse(message.contains("Parser details."));
                     assertFalse(message.contains("NullPointerException"));
                     assertFalse(message.contains("JsonSerializableAddressBook"));
+                    assertFalse(message.contains("com.fasterxml.jackson"));
+                    assertFalse(message.contains("JsonMappingException"));
+                    assertFalse(message.contains("JsonParseException"));
+                    assertFalse(message.contains("[Source:"));
                     assertTrue(message.contains("has not been changed"));
                     assertTrue(message.contains("RESIDEX will close"));
                     assertTrue(message.contains("repair it or replace it with a valid backup"));

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +27,16 @@ public class JsonUtilTest {
 
     @TempDir
     public Path temporaryFolder;
+
+    @Test
+    public void fromJsonString_emptyContent_throwsEofException() {
+        for (String json : new String[]{"", " ", "\t\r\n", "\uFEFF", "\uFEFF \t\r\n"}) {
+            EOFException failure = assertThrows(EOFException.class, () ->
+                    JsonUtil.fromJsonString(json, JsonNode.class));
+
+            assertEquals("The data file is empty.", failure.getMessage());
+        }
+    }
 
     @Test
     public void fromJsonString_optionalLeadingBom_readsCompleteValueAndPreservesContent() throws IOException {

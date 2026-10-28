@@ -524,6 +524,10 @@ Furthermore, certain edits can cause RESIDEX to behave in unexpected ways (e.g.,
 
 If RESIDEX cannot load an existing client data file, it shows an error and closes. Commands and automatic saving are unavailable, so the failed file cannot be overwritten by an empty client list.
 
+`The data file is empty.` means there is no JSON content, even if the file contains whitespace or only a byte-order mark.
+`The data file is not in the expected JSON format.` means the JSON is malformed or has the wrong structure.
+The dialog shows recovery instructions; detailed parser information is kept in the application log.
+
 <!-- Codex assisted Brendan-Lim with the missing-client-list recovery documentation. -->
 If the error says `Client list is missing from the data file.`, the required `persons` list is absent or null.
 A valid empty file contains `{"persons": []}`. Restore your client records from a valid backup if they should be present.

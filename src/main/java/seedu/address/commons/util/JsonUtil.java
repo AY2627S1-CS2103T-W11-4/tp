@@ -2,6 +2,7 @@ package seedu.address.commons.util;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -96,6 +97,9 @@ public class JsonUtil {
      */
     public static <T> T fromJsonString(String json, Class<T> instanceClass) throws IOException {
         String content = json.startsWith("\uFEFF") ? json.substring(1) : json;
+        if (content.isBlank()) {
+            throw new EOFException("The data file is empty.");
+        }
         try (JsonParser parser = objectMapper.getFactory().createParser(content)) {
             T value = objectMapper.readValue(parser, instanceClass);
             if (parser.nextToken() != null) {
