@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
 import java.util.logging.Logger;
@@ -14,6 +15,7 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.Logic;
+import seedu.address.storage.DataFileLock;
 
 /**
  * The manager of the UI component.
@@ -75,6 +77,22 @@ public class UiManager implements Ui {
                 + "\n\nTo start fresh with sample clients, move the file aside before restarting.";
         showAlertDialogAndWait(null, AlertType.ERROR, "Unable to load client data",
                 "RESIDEX could not open your client data", message);
+    }
+
+    /**
+     * Explains why this instance cannot obtain exclusive access, before any user files are loaded or saved.
+     */
+    public static void showDataFileLockError(Path dataFilePath, IOException error) {
+        boolean isInUse = error instanceof DataFileLock.InUseException;
+        String header = isInUse ? "This client data is already open in RESIDEX"
+                : "RESIDEX could not secure access to your client data";
+        String recovery = isInUse ? "Close the other RESIDEX instance, then launch again."
+                : "Check folder permissions or move RESIDEX to a writable local folder, then try again."
+                        + "\nReason: " + error.getMessage();
+        String message = "Client data file:\n" + dataFilePath.toAbsolutePath().normalize()
+                + "\n\n" + recovery
+                + "\n\nThis instance has not changed your client data or preferences. It will now close.";
+        showAlertDialogAndWait(null, AlertType.ERROR, "Unable to open RESIDEX", header, message);
     }
 
     void showAlertDialogAndWait(Alert.AlertType type, String title, String headerText, String contentText) {

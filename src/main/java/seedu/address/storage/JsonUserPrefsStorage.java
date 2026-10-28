@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyUserPrefs;
@@ -40,7 +41,17 @@ public class JsonUserPrefsStorage {
      * @throws DataLoadingException if the file format is not as expected.
      */
     public Optional<UserPrefs> readUserPrefs(Path prefsFilePath) throws DataLoadingException {
-        return JsonUtil.readJsonFile(prefsFilePath, UserPrefs.class);
+        Optional<UserPrefs> userPrefs = JsonUtil.readJsonFile(prefsFilePath, UserPrefs.class);
+        if (userPrefs.isPresent()) {
+            GuiSettings settings = userPrefs.get().getGuiSettings();
+            if (settings == null
+                    || !Double.isFinite(settings.getWindowWidth()) || settings.getWindowWidth() <= 0
+                    || !Double.isFinite(settings.getWindowHeight()) || settings.getWindowHeight() <= 0) {
+                throw new DataLoadingException(
+                        new IOException("Saved GUI settings are missing or have invalid window dimensions."));
+            }
+        }
+        return userPrefs;
     }
 
     /**
