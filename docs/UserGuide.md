@@ -115,6 +115,9 @@ Adds a client to RESIDEX.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL`
 
+Phone numbers must contain 3 to 15 digits only. The same rule applies when editing a client's phone number.
+An unexpected field such as `x/foo` is rejected with `Unexpected parameter: x/foo` in both `add` and `edit`.
+
 A client is a duplicate only when both their name and phone number match an existing client.
 Name matching ignores capitalisation, surrounding spaces and repeated spaces between words.
 For example, `Alice Tan` and `ALICE   TAN` match when their phone numbers are the same.
@@ -497,13 +500,21 @@ Format: `exit`
 
 RESIDEX automatically saves data after every command. You do not need to save manually.
 
+Only one RESIDEX instance can use the same client data file at a time. A second launch shows an error and closes
+without changing client data or preferences. Close the existing instance before launching again.
+
+RESIDEX creates `data/addressbook.json.lock` to coordinate access. Leave this file in place; it requires no
+maintenance. Its presence does not mean RESIDEX is running, and a crash does not leave the data locked.
+
 ### Editing the data file
 
 RESIDEX data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+Close RESIDEX before editing or replacing this file.
 
 <box type="warning" seamless>
 
 **Caution:**
+The file must contain exactly one JSON object. Whitespace after it is allowed; another JSON value or extra text is invalid.<br>
 If your changes make the data file invalid, RESIDEX shows an error with the file's location and closes without changing the client data file. Back up the file before editing it.<br>
 Furthermore, certain edits can cause RESIDEX to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
@@ -519,6 +530,10 @@ A valid empty file contains `{"persons": []}`. Restore your client records from 
 1. Locate the file using the path shown in the error dialog and make a backup copy.
 2. Repair the invalid data or replace the file with a valid backup, then restart RESIDEX.
 3. If you want to start fresh instead, move or rename the failed file before restarting. RESIDEX will start with sample clients, as it does when no data file exists. Keep the original file if you want to recover its contents later.
+
+Window settings are stored separately in `preferences.json`. If that file is invalid, or its GUI settings are null
+or contain invalid window dimensions, RESIDEX uses default window settings and attempts to save them back.
+Your client data is loaded normally if it is valid.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -536,7 +551,7 @@ A valid empty file contains `{"persons": []}`. Restore your client records from 
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **Names** may contain only letters, digits and spaces, so names with hyphens or apostrophes (for example `Ng Wei-Ling`) cannot be entered.
-3. **Phone numbers** must have at least 3 digits, but there is no upper limit on their length.
+3. **Phone numbers** must contain 3 to 15 digits. Spaces, hyphens and a leading `+` are not supported.
 4. **Property locations** cannot contain a word followed by a slash, such as `N/A`, because it is read as a field prefix. Write `NA` instead. Numbers such as `1/2` are fine.
 5. **Undo history** is kept only while RESIDEX is running. After you close it, earlier changes cannot be undone.
 

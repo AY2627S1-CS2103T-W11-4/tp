@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -60,6 +61,47 @@ public class JsonUserPrefsStorageTest {
     public void readUserPrefs_valuesMissingFromFile_defaultValuesUsed() throws DataLoadingException {
         UserPrefs actual = readUserPrefs("EmptyUserPrefs.json").get();
         assertEquals(new UserPrefs(), actual);
+    }
+
+    @Test
+    public void readUserPrefs_nullGuiSettings_throwsWithoutChangingFile() throws IOException {
+        assertInvalidSettingsPreserved("{\"guiSettings\": null}");
+    }
+
+    @Test
+    public void readUserPrefs_invalidDimensions_throwsWithoutChangingFile() throws IOException {
+        for (String field : new String[]{"windowWidth", "windowHeight"}) {
+            for (String value : new String[]{"0", "-1", "null", "\"NaN\"", "\"Infinity\"", "\"-Infinity\""}) {
+                assertInvalidSettingsPreserved("{\"guiSettings\": {\"" + field + "\": " + value + "}}");
+            }
+        }
+    }
+
+    @Test
+    public void readUserPrefs_emptyGuiSettings_usesDefaultSettings() throws Exception {
+        Path file = testFolder.resolve("emptySettings.json");
+        Files.writeString(file, "{\"guiSettings\": {}}");
+
+        assertEquals(new UserPrefs(), new JsonUserPrefsStorage(file).readUserPrefs().orElseThrow());
+    }
+
+    @Test
+    public void readUserPrefs_negativeCoordinates_keepsValidSettings() throws Exception {
+        UserPrefs expected = new UserPrefs();
+        expected.setGuiSettings(new GuiSettings(1000, 700, -300, -100));
+        Path file = testFolder.resolve("negativeCoordinates.json");
+        JsonUserPrefsStorage storage = new JsonUserPrefsStorage(file);
+        storage.saveUserPrefs(expected);
+
+        assertEquals(expected, storage.readUserPrefs().orElseThrow());
+    }
+
+    private void assertInvalidSettingsPreserved(String content) throws IOException {
+        Path file = testFolder.resolve("invalidSettings.json");
+        Files.writeString(file, content);
+
+        assertThrows(DataLoadingException.class, () -> new JsonUserPrefsStorage(file).readUserPrefs());
+        assertEquals(content, Files.readString(file));
     }
 
     @Test

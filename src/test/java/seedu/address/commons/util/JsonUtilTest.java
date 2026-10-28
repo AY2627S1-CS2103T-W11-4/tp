@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.testutil.SerializableTestClass;
 import seedu.address.testutil.TestUtil;
@@ -24,6 +26,31 @@ public class JsonUtilTest {
 
     @TempDir
     public Path temporaryFolder;
+
+    @Test
+    public void fromJsonString_trailingContent_throwsIoException() {
+        for (String suffix : new String[]{"{}", "[]", "null", "true", "42", "\"extra\"", "garbage", "{"}) {
+            assertThrows(IOException.class, () -> JsonUtil.fromJsonString("{\"value\": 1} " + suffix, JsonNode.class));
+        }
+    }
+
+    @Test
+    public void fromJsonString_trailingWhitespace_readsCompleteValue() throws IOException {
+        JsonNode value = JsonUtil.fromJsonString("{\"value\": 1} \t\r\n", JsonNode.class);
+
+        assertEquals(1, value.get("value").asInt());
+        assertEquals(2, JsonUtil.fromJsonString("[1, 2] \n", JsonNode.class).size());
+    }
+
+    @Test
+    public void readJsonFile_trailingContent_throwsWithoutChangingFile() throws IOException {
+        Path file = temporaryFolder.resolve("trailing.json");
+        String content = "{\"value\": 1}\n{\"value\": 2}";
+        Files.writeString(file, content);
+
+        assertThrows(DataLoadingException.class, () -> JsonUtil.readJsonFile(file, JsonNode.class));
+        assertEquals(content, Files.readString(file));
+    }
 
     @Test
     public void readJsonFile_nullContent_throwsDataLoadingException() throws IOException {
