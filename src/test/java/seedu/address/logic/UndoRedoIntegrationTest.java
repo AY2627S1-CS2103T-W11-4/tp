@@ -140,4 +140,17 @@ public class UndoRedoIntegrationTest {
 
         assertEquals(original.getPersonList().size(), model.getFilteredPersonList().size());
     }
+
+    @Test
+    public void noOpRemarkAndEdit_reportNoChange_andUndoRevertsTheRealChange() throws Exception {
+        String firstName = model.getFilteredPersonList().get(0).getName().fullName;
+        run("remark 1 r/Call later");
+
+        assertTrue(run("remark 1 r/Call later").getFeedbackToUser().startsWith("No change"));
+        assertTrue(run("edit 1 n/" + firstName).getFeedbackToUser().startsWith("No change"));
+        run("undo");
+
+        assertEquals(original, model.getAddressBook());
+        assertFalse(model.canUndoAddressBook());
+    }
 }
