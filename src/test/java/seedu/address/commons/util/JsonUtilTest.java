@@ -28,6 +28,23 @@ public class JsonUtilTest {
     public Path temporaryFolder;
 
     @Test
+    public void fromJsonString_optionalLeadingBom_readsCompleteValueAndPreservesContent() throws IOException {
+        for (String prefix : new String[]{"", "\uFEFF", "\uFEFF \t\r\n"}) {
+            JsonNode value = JsonUtil.fromJsonString(prefix + "{\"text\":\"Keep\uFEFFthis\"} \n", JsonNode.class);
+
+            assertEquals("Keep\uFEFFthis", value.get("text").asText());
+        }
+    }
+
+    @Test
+    public void fromJsonString_invalidBomContent_throwsIoException() {
+        for (String json : new String[]{"\uFEFF", "\uFEFF \t\r\n", "\uFEFF\uFEFF{}", " \uFEFF{}", "{}\uFEFF",
+            "\uFEFF{", "\uFEFF{} {}", "\uFEFF{} garbage"}) {
+            assertThrows(IOException.class, () -> JsonUtil.fromJsonString(json, JsonNode.class));
+        }
+    }
+
+    @Test
     public void fromJsonString_trailingContent_throwsIoException() {
         for (String suffix : new String[]{"{}", "[]", "null", "true", "42", "\"extra\"", "garbage", "{"}) {
             assertThrows(IOException.class, () -> JsonUtil.fromJsonString("{\"value\": 1} " + suffix, JsonNode.class));

@@ -89,12 +89,14 @@ public class JsonUtil {
 
 
     /**
-     * Converts one complete JSON value to an instance of a class, allowing only whitespace after it.
+     * Converts one complete JSON value to an instance of a class, accepting one initial UTF-8 byte-order mark
+     * and allowing only whitespace after the value.
      * @param <T> The generic type to create an instance of
      * @return The instance of T with the specified values in the JSON string
      */
     public static <T> T fromJsonString(String json, Class<T> instanceClass) throws IOException {
-        try (JsonParser parser = objectMapper.getFactory().createParser(json)) {
+        String content = json.startsWith("\uFEFF") ? json.substring(1) : json;
+        try (JsonParser parser = objectMapper.getFactory().createParser(content)) {
             T value = objectMapper.readValue(parser, instanceClass);
             if (parser.nextToken() != null) {
                 throw new IOException("JSON file must contain only one top-level value.");

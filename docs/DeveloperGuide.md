@@ -173,6 +173,8 @@ invalid saved phone numbers follow the normal data-loading error path without re
 ### Protecting client data after a failed load
 
 `JsonUtil#fromJsonString()` reads a complete value using Jackson's parser and checks that no token follows it.
+It accepts one initial UTF-8 byte-order mark for both client data and preferences, without removing marks
+inside JSON strings or rewriting the file during reading. Repeated or misplaced marks remain invalid.
 Trailing whitespace is accepted; additional values and malformed trailing text cause a loading error.
 
 `MainApp#initModelManager()` propagates `DataLoadingException` when an existing client data file cannot

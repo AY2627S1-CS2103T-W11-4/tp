@@ -67,6 +67,33 @@ public class MainAppTest {
         assertEquals(savedData, Files.readString(dataPath()));
     }
 
+    @Test
+    public void init_utf8Bom_restoresClientsAndPreferencesWithoutChangingClientFile() throws Exception {
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        Files.writeString(dataPath(), "\uFEFF" + Files.readString(dataPath()));
+        byte[] originalData = Files.readAllBytes(dataPath());
+        UserPrefs prefs = createPrefs();
+        new JsonUserPrefsStorage(prefsPath()).saveUserPrefs(prefs);
+        Files.writeString(prefsPath(), "\uFEFF" + Files.readString(prefsPath()));
+        MainApp app = createApp();
+
+        app.init();
+
+        assertEquals(getTypicalAddressBook(), app.model.getAddressBook());
+        assertEquals(prefs, app.model.getUserPrefs());
+        assertNotNull(app.logic);
+        assertArrayEquals(originalData, Files.readAllBytes(dataPath()));
+    }
+
+    @Test
+    public void init_invalidBomData_preventsCommandsAndPreservesFile() throws Exception {
+        for (String json : new String[]{"\uFEFF", "\uFEFF \t\r\n", "\uFEFF\uFEFF{\"persons\":[]}",
+            " \uFEFF{\"persons\":[]}", "\uFEFF{", "\uFEFF{\"persons\":[]} {}",
+            "\uFEFF{\"persons\":[]} garbage"}) {
+            assertLoadFailurePreservesFile(json);
+        }
+    }
+
     // Codex assisted Brendan-Lim with the fresh-sample search and existing-file preservation assertions.
     @Test
     public void init_missingFiles_usesSampleClientsAndSavesDefaultPreferences() throws Exception {

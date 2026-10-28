@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -51,6 +52,20 @@ public class JsonAddressBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readAddressBook_utf8Bom_loadsEmptyAndPopulatedBooksWithoutChangingFile() throws Exception {
+        Path file = testFolder.resolve("bom.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        for (ReadOnlyAddressBook expected : List.of(new AddressBook(), getTypicalAddressBook())) {
+            storage.saveAddressBook(expected);
+            Files.writeString(file, "\uFEFF" + Files.readString(file));
+            byte[] original = Files.readAllBytes(file);
+
+            assertEquals(expected, storage.readAddressBook().orElseThrow());
+            assertArrayEquals(original, Files.readAllBytes(file));
+        }
+    }
 
     // Codex assisted Brendan-Lim with the client-list validation and file-preservation regressions.
     @Test

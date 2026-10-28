@@ -510,6 +510,7 @@ maintenance. Its presence does not mean RESIDEX is running, and a crash does not
 
 RESIDEX data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 Close RESIDEX before editing or replacing this file.
+Save it as UTF-8. A single byte-order mark at the start, as added by some text editors, is accepted.
 
 <box type="warning" seamless>
 
