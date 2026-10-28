@@ -58,4 +58,18 @@ public class Messages {
         return builder.toString();
     }
 
+    /**
+     * Formats a deleted {@code person}, including numbered property lines that match the client card.
+     */
+    public static String formatDeletedClient(Person person) {
+        final StringBuilder builder = new StringBuilder(format(person));
+        for (int i = 0; i < person.getProperties().size(); i++) {
+            builder.append("\n")
+                    .append(i + 1)
+                    .append(". ")
+                    .append(person.getProperties().get(i).toDisplay());
+        }
+        return builder.toString();
+    }
+
 }

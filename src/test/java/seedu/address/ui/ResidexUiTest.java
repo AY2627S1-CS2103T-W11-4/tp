@@ -840,6 +840,65 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void deleteCommand_clientWithProperty_namesRemovedPropertyAndClearsList() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Property Client p/88110092 e/prop@example.com");
+                runCommand(root, "addp 1 t/HDB i/Buying l/Clementi s/Viewing");
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("1. HDB | Buying | Clementi | Viewing",
+                        propertyTexts((VBox) root.lookup("#properties")).get(0));
+
+                runCommand(root, "delete 1");
+
+                assertEquals("Deleted client: Property Client; Phone: 88110092; Email: prop@example.com; Remark: \n"
+                        + "1. HDB | Buying | Clementi | Viewing", result.getText());
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
+                assertEquals(List.of(), model.getFilteredPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void deleteCommand_clientWithThreeProperties_showsAllNumberedLinesInResult() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                Region resultPane = (Region) root.lookup("#resultDisplayPlaceholder");
+
+                runCommand(root, "add n/Property Client p/88110092 e/prop@example.com");
+                runCommand(root, "addp 1 t/HDB i/Buying l/Clementi s/Viewing");
+                runCommand(root, "addp 1 t/Condominium i/Selling l/Tampines s/Negotiating");
+                runCommand(root, "addp 1 t/Landed i/Buying l/Bukit Timah s/Completed");
+                runCommand(root, "delete 1");
+
+                String feedback = result.getText();
+                assertTrue(feedback.startsWith(
+                        "Deleted client: Property Client; Phone: 88110092; Email: prop@example.com; Remark: "));
+                assertTrue(feedback.contains("\n1. HDB | Buying | Clementi | Viewing"));
+                assertTrue(feedback.contains("\n2. Condominium | Selling | Tampines | Negotiating"));
+                assertTrue(feedback.contains("\n3. Landed | Buying | Bukit Timah | Completed"));
+                assertEquals(160, resultPane.getHeight(), 0.5);
+                result.setScrollTop(0);
+                assertTrue(result.isWrapText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void addCommand_saveFailure_doesNotKeepUnsavedClientInList() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
@@ -1027,7 +1086,7 @@ public class ResidexUiTest {
                         .build());
             }
             MainWindow window = createWindow(model);
-            Region root = layoutWindow(window, 1100, 1430);
+            Region root = layoutWindow(window, 1100, 1520);
             assertEquals("RESIDEX", window.getPrimaryStage().getTitle());
             assertEquals("8 of 8 clients", label(root, "clientCount").getText());
             assertTrue(root.lookupAll(".menu-bar").isEmpty());
