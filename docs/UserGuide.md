@@ -283,7 +283,8 @@ An invalid saved status cannot be loaded; back up the data file before editing i
 
 **Existing property data:** Saved property intentions `Buyer` and `Seller` load automatically as `Buying` and `Selling`.
 New saves use `Buying` and `Selling` for properties; no manual conversion is needed.
-Saved property values must use these exact spellings, including capitalisation, or the legacy `Buyer`/`Seller` spellings.
+Saved property intentions accept `Buying`/`Selling` and legacy `Buyer`/`Seller`, ignoring case and surrounding whitespace,
+just like saved statuses. Loading does not rewrite the file; the next successful data-changing command saves canonical values.
 Legacy client-level intention is ignored; new saves omit it and derive the role from the properties.
 
 <box type="warning" seamless>

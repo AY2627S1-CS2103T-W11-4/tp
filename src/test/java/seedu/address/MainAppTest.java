@@ -25,6 +25,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.DataFileLock;
 import seedu.address.storage.JsonAddressBookStorage;
@@ -290,13 +291,34 @@ public class MainAppTest {
 
     @Test
     public void init_invalidPropertyIntention_preventsCommandsAndPreservesFile() throws Exception {
-        for (String intention : new String[]{"Both", "buying", "Selling "}) {
+        for (String intention : new String[]{"Both", "buy", "selling now"}) {
             assertLoadFailurePreservesFile("""
                     {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
                       "intention": "Buyer", "properties": [
                         {"type": "HDB", "intention": "%s", "location": "Clementi"}
                       ]}]}
                     """.formatted(intention));
+        }
+    }
+
+    @Test
+    public void init_propertyIntentionVariants_loadsWithoutRewritingFile() throws Exception {
+        String[] intentions = {"buying", " BUYER ", "SELLING", " SeLlEr "};
+        for (int i = 0; i < intentions.length; i++) {
+            String json = """
+                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                      "properties": [{"type": "HDB", "intention": "%s", "location": "Clementi"}]}]}
+                    """.formatted(intentions[i]);
+            Files.writeString(dataPath(), json);
+            MainApp app = createApp();
+
+            app.init();
+
+            assertNotNull(app.logic);
+            assertEquals(i < 2 ? PropertyIntention.BUYING : PropertyIntention.SELLING,
+                    app.model.getAddressBook().getPersonList().get(0).getProperties().get(0).getIntention());
+            assertEquals(json, Files.readString(dataPath()));
+            app.stop();
         }
     }
 

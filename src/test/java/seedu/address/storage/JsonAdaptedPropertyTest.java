@@ -23,20 +23,25 @@ import seedu.address.model.property.PropertyType;
 public class JsonAdaptedPropertyTest {
 
     @Test
-    public void json_legacyIntentions_loadsAndSavesCanonicalValues() throws Exception {
-        String[] savedIntentions = {"Buyer", "Seller"};
+    public void json_intentionVariants_loadsAndSavesCanonicalValues() throws Exception {
+        String[][] savedIntentions = {
+            {"Buying", "buying", "BUYING", "bUyInG", "Buyer", "buyer", "BUYER", " bUyEr ", "\u2003Buying\t"},
+            {"Selling", "selling", "SELLING", "sElLiNg", "Seller", "seller", "SELLER", " SeLlEr ", "\tSelling\u2003"}
+        };
         PropertyIntention[] modelIntentions = {PropertyIntention.BUYING, PropertyIntention.SELLING};
         for (int i = 0; i < savedIntentions.length; i++) {
-            String json = "{\"type\":\"HDB\",\"intention\":\"" + savedIntentions[i]
-                    + "\",\"location\":\"Clementi\",\"price\":\"800000\"}";
             Property expected = new Property(PropertyType.HDB, modelIntentions[i],
                     new PropertyLocation("Clementi"), new PropertyPrice("800000"));
-            assertEquals(expected, JsonUtil.fromJsonString(json, JsonAdaptedProperty.class).toModelType());
+            for (String intention : savedIntentions[i]) {
+                String json = JsonUtil.toJsonString(new JsonAdaptedProperty("HDB", intention, "Clementi", "800000"));
+                Property loaded = JsonUtil.fromJsonString(json, JsonAdaptedProperty.class).toModelType();
+                assertEquals(expected, loaded);
 
-            String savedJson = JsonUtil.toJsonString(new JsonAdaptedProperty(expected));
-            assertEquals(modelIntentions[i].toString(), JsonUtil.fromJsonString(savedJson, JsonNode.class)
-                    .get("intention").asText());
-            assertEquals(expected, JsonUtil.fromJsonString(savedJson, JsonAdaptedProperty.class).toModelType());
+                String savedJson = JsonUtil.toJsonString(new JsonAdaptedProperty(loaded));
+                assertEquals(modelIntentions[i].toString(), JsonUtil.fromJsonString(savedJson, JsonNode.class)
+                        .get("intention").asText());
+                assertEquals(expected, JsonUtil.fromJsonString(savedJson, JsonAdaptedProperty.class).toModelType());
+            }
         }
     }
 
@@ -88,8 +93,8 @@ public class JsonAdaptedPropertyTest {
 
     @Test
     public void toModelType_invalidIntention_throwsIllegalValueException() {
-        for (String intention : new String[]{"", " ", "\t\n", "\u2003", "Tenant", "Both", "buyer", "SELLER",
-            "Seller ", " Buyer", "buying", "SELLING", " Buying", "Selling ", "Buying/Selling", "42"}) {
+        for (String intention : new String[]{"", " ", "\t\n", "\u2003", "Tenant", "Both", "Buy", "Sell",
+            "buy ing", "buyers", "selling now", "Buying/Selling", "42"}) {
             JsonAdaptedProperty property = new JsonAdaptedProperty("HDB", intention, "Clementi", null);
             assertThrows(IllegalValueException.class,
                     JsonAdaptedProperty.MESSAGE_INVALID_INTENTION, property::toModelType);
