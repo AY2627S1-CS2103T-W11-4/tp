@@ -60,15 +60,19 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyStatus;
+import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.DataFileLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -626,6 +630,8 @@ public class ResidexUiTest {
                 "Persons list contains duplicate person(s).");
     }
 
+    // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
+
     @Test
     public void dataLoadingError_missingOrNullClientList_showsStorageValidationReason() throws Exception {
         Path dataFile = temporaryFolder.resolve("addressbook.json");
@@ -862,6 +868,204 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void editCommand_consecutiveUnderscoreEmail_updatesCardAndCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Property Client p/88110092 e/prop@example.com");
+                runCommand(root, "edit 1 e/first__last@example.com");
+
+                assertFalse(result.getText().contains("Emails should be of the format"));
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("first__last@example.com", label(root, "email").getText());
+                assertEquals("first__last@example.com",
+                        model.getAddressBook().getPersonList().get(0).getEmail().value);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void findCommand_gmailOnSampleData_listsAlexAndKeepsFullCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "find e/gmail");
+
+                assertEquals("1 person(s) found!", result.getText());
+                assertEquals("1 of 6 clients", label(root, "clientCount").getText());
+                assertEquals("Filtered clients", label(root, "clientListHeading").getText());
+                assertEquals("Alex Yeoh", label(root, "name").getText());
+                assertEquals("alexyeoh@gmail.com", label(root, "email").getText());
+                assertEquals(6, model.getAddressBook().getPersonList().size());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void deleteCommand_leadingZeroIndex_keepsClientAndShowsInvalidFormat() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/First Client p/88110001 e/first@example.com");
+                runCommand(root, "delete 01");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE),
+                        result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("First Client", label(root, "name").getText());
+                assertEquals("First Client", model.getAddressBook().getPersonList().get(0).getName().fullName);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void deleteCommand_clientWithProperty_namesRemovedPropertyAndClearsList() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Property Client p/88110092 e/prop@example.com");
+                runCommand(root, "addp 1 t/HDB i/Buying l/Clementi s/Viewing");
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("1. HDB | Buying | Clementi | Viewing",
+                        propertyTexts((VBox) root.lookup("#properties")).get(0));
+
+                runCommand(root, "delete 1");
+
+                assertEquals("Deleted client: Property Client; Phone: 88110092; Email: prop@example.com; Remark: \n"
+                        + "1. HDB | Buying | Clementi | Viewing", result.getText());
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
+                assertEquals(List.of(), model.getFilteredPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void deleteCommand_clientWithThreeProperties_showsAllNumberedLinesInResult() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                Region resultPane = (Region) root.lookup("#resultDisplayPlaceholder");
+
+                runCommand(root, "add n/Property Client p/88110092 e/prop@example.com");
+                runCommand(root, "addp 1 t/HDB i/Buying l/Clementi s/Viewing");
+                runCommand(root, "addp 1 t/Condominium i/Selling l/Tampines s/Negotiating");
+                runCommand(root, "addp 1 t/Landed i/Buying l/Bukit Timah s/Completed");
+                runCommand(root, "delete 1");
+
+                String feedback = result.getText();
+                assertTrue(feedback.startsWith(
+                        "Deleted client: Property Client; Phone: 88110092; Email: prop@example.com; Remark: "));
+                assertTrue(feedback.contains("\n1. HDB | Buying | Clementi | Viewing"));
+                assertTrue(feedback.contains("\n2. Condominium | Selling | Tampines | Negotiating"));
+                assertTrue(feedback.contains("\n3. Landed | Buying | Bukit Timah | Completed"));
+                assertEquals(160, resultPane.getHeight(), 0.5);
+                result.setScrollTop(0);
+                assertTrue(result.isWrapText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_saveFailure_doesNotKeepUnsavedClientInList() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Path dataFile = temporaryFolder.resolve("unsaved.json");
+            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(dataFile) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    throw new AccessDeniedException(dataFile.toString());
+                }
+            };
+            Logic logic = new LogicManager(model, new StorageManager(failingStorage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("unsaved-prefs.json"))));
+            MainWindow window = new MainWindow(new Stage(), logic, dataFile);
+            window.fillInnerParts();
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/SaveFail p/88119991 e/savefail@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertTrue(result.getText().contains("Could not save data"));
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_hyphenAndApostropheNames_showOnCardsAndInCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/Ng Wei-Ling p/91230001 e/w@example.com");
+                run.fire();
+                command.setText("add n/O'Brien p/91230002 e/o@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), model.getAddressBook().getPersonList().stream()
+                        .map(person -> person.getName().fullName).toList());
+                assertEquals("2 of 2 clients", label(root, "clientCount").getText());
+                List<String> cardNames = root.lookupAll(".list-cell").stream()
+                        .map(ListCell.class::cast)
+                        .filter(cell -> !cell.isEmpty())
+                        .map(cell -> label((Region) cell.getGraphic(), "name").getText())
+                        .toList();
+                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), cardNames);
+                assertTrue(result.getText().contains("O'Brien"));
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void addCommand_thirtyDigitPhone_keepsEmptyListAndShowsPhoneConstraint() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
@@ -981,7 +1185,7 @@ public class ResidexUiTest {
                         .build());
             }
             MainWindow window = createWindow(model);
-            Region root = layoutWindow(window, 1100, 1430);
+            Region root = layoutWindow(window, 1100, 1520);
             assertEquals("RESIDEX", window.getPrimaryStage().getTitle());
             assertEquals("8 of 8 clients", label(root, "clientCount").getText());
             assertTrue(root.lookupAll(".menu-bar").isEmpty());

@@ -65,4 +65,17 @@ public class AddpZeroIndexIntegrationTest {
         assertEquals(1, new JsonAddressBookStorage(dataFile).readAddressBook()
                 .orElseThrow().getPersonList().get(0).getProperties().size());
     }
+
+    @Test
+    public void execute_delpZeroPropertyIndex_namesPositiveIntegerRuleAndLeavesProperty() throws Exception {
+        logic.execute("add n/Zero Index p/88110080 e/zero@example.com");
+        logic.execute("addp 1 t/h i/Buying l/singapore");
+        String saved = Files.readString(dataFile);
+
+        assertThrows(ParseException.class, Messages.MESSAGE_PROPERTY_INDEX_POSITIVE_INTEGER, () ->
+                logic.execute("delp 1 0"));
+
+        assertEquals(1, model.getFilteredPersonList().get(0).getProperties().size());
+        assertEquals(saved, Files.readString(dataFile));
+    }
 }

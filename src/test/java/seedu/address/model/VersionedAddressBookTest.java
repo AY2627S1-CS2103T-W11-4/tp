@@ -71,6 +71,60 @@ public class VersionedAddressBookTest {
     }
 
     @Test
+    public void discardRedoHistory_afterUndo_preventsRedo() {
+        versionedAddressBook.addPerson(ALICE);
+        versionedAddressBook.commit();
+        versionedAddressBook.undo();
+        assertTrue(versionedAddressBook.canRedo());
+
+        versionedAddressBook.discardRedoHistory();
+
+        assertFalse(versionedAddressBook.canRedo());
+        assertThrows(NoRedoableStateException.class, versionedAddressBook::redo);
+        assertEquals(List.of(), versionedAddressBook.getPersonList());
+    }
+
+    @Test
+    public void discardRedoHistory_noRedoHistory_leavesCurrentState() {
+        versionedAddressBook.addPerson(ALICE);
+        versionedAddressBook.commit();
+
+        versionedAddressBook.discardRedoHistory();
+
+        assertEquals(List.of(ALICE), versionedAddressBook.getPersonList());
+        assertTrue(versionedAddressBook.canUndo());
+        assertFalse(versionedAddressBook.canRedo());
+        versionedAddressBook.undo();
+        assertEquals(List.of(), versionedAddressBook.getPersonList());
+    }
+
+    @Test
+    public void discardRedoHistory_afterPartialUndo_keepsEarlierHistory() {
+        versionedAddressBook.addPerson(ALICE);
+        versionedAddressBook.commit();
+        versionedAddressBook.addPerson(BENSON);
+        versionedAddressBook.commit();
+        versionedAddressBook.addPerson(CARL);
+        versionedAddressBook.commit();
+
+        versionedAddressBook.undo();
+        versionedAddressBook.discardRedoHistory();
+
+        assertEquals(List.of(ALICE, BENSON), versionedAddressBook.getPersonList());
+        assertFalse(versionedAddressBook.canRedo());
+        assertTrue(versionedAddressBook.canUndo());
+        assertThrows(NoRedoableStateException.class, versionedAddressBook::redo);
+
+        versionedAddressBook.undo();
+        assertEquals(List.of(ALICE), versionedAddressBook.getPersonList());
+        assertTrue(versionedAddressBook.canRedo());
+
+        versionedAddressBook.redo();
+        assertEquals(List.of(ALICE, BENSON), versionedAddressBook.getPersonList());
+        assertFalse(versionedAddressBook.canRedo());
+    }
+
+    @Test
     public void commit_afterUndo_discardsRedoHistory() {
         versionedAddressBook.addPerson(ALICE);
         versionedAddressBook.commit();
