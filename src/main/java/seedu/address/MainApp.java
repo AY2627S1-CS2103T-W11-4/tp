@@ -20,6 +20,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.util.SampleDataUtil;
+import seedu.address.storage.DataFileLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
@@ -45,6 +46,7 @@ public class MainApp extends Application {
 
     private final Path userPrefsFilePath;
     private final Path addressBookFilePath;
+    private DataFileLock dataFileLock;
 
     /**
      * Creates the application with its default storage locations.
@@ -66,26 +68,44 @@ public class MainApp extends Application {
         logger.info("=============================[ Initializing RESIDEX ]===========================");
         super.init();
 
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
-        UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFilePath);
-        storage = new StorageManager(addressBookStorage, userPrefsStorage);
-
         try {
-            model = initModelManager(storage, userPrefs);
-        } catch (DataLoadingException e) {
-            logger.severe("Data file at " + storage.getAddressBookFilePath() + " could not be loaded: "
-                    + StringUtil.getDetails(e));
+            dataFileLock = DataFileLock.acquire(addressBookFilePath);
+        } catch (IOException e) {
+            logger.severe("Could not secure client data: " + StringUtil.getDetails(e));
             ui = primaryStage -> {
-                UiManager.showDataLoadingError(storage.getAddressBookFilePath(), e);
+                UiManager.showDataFileLockError(addressBookFilePath, e);
                 Platform.exit();
             };
             return;
         }
 
-        logic = new LogicManager(model, storage);
+        boolean isInitialized = false;
+        try {
+            JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
+            UserPrefs userPrefs = initPrefs(userPrefsStorage);
+            JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFilePath);
+            storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
-        ui = new UiManager(logic, storage.getAddressBookFilePath());
+            try {
+                model = initModelManager(storage, userPrefs);
+            } catch (DataLoadingException e) {
+                logger.severe("Data file at " + storage.getAddressBookFilePath() + " could not be loaded: "
+                        + StringUtil.getDetails(e));
+                ui = primaryStage -> {
+                    UiManager.showDataLoadingError(storage.getAddressBookFilePath(), e);
+                    Platform.exit();
+                };
+                return;
+            }
+
+            logic = new LogicManager(model, storage);
+            ui = new UiManager(logic, storage.getAddressBookFilePath());
+            isInitialized = true;
+        } finally {
+            if (!isInitialized) {
+                releaseDataFileLock();
+            }
+        }
     }
 
     /**
@@ -148,13 +168,27 @@ public class MainApp extends Application {
     @Override
     public void stop() {
         logger.info("============================ [ Stopping RESIDEX ] =============================");
-        if (model == null) {
+        try {
+            if (model != null && dataFileLock != null) {
+                storage.saveUserPrefs(model.getUserPrefs());
+            }
+        } catch (IOException e) {
+            logger.severe("Failed to save preferences " + StringUtil.getDetails(e));
+        } finally {
+            releaseDataFileLock();
+        }
+    }
+
+    private void releaseDataFileLock() {
+        if (dataFileLock == null) {
             return;
         }
         try {
-            storage.saveUserPrefs(model.getUserPrefs());
+            dataFileLock.close();
         } catch (IOException e) {
-            logger.severe("Failed to save preferences " + StringUtil.getDetails(e));
+            logger.severe("Failed to release client data lock " + StringUtil.getDetails(e));
+        } finally {
+            dataFileLock = null;
         }
     }
 }

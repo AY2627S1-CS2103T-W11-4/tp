@@ -73,6 +73,7 @@ public class HelpWindow extends UiPart<Stage> {
         logger.fine("Showing the command reference.");
         getRoot().show();
         getRoot().centerOnScreen();
+        focus();
     }
 
     /**
@@ -90,9 +91,11 @@ public class HelpWindow extends UiPart<Stage> {
     }
 
     /**
-     * Focuses on the help window.
+     * Restores and focuses the existing help window.
      */
     public void focus() {
+        getRoot().setIconified(false);
+        getRoot().toFront();
         getRoot().requestFocus();
     }
 

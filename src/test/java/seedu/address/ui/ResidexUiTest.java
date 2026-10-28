@@ -15,9 +15,12 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.AfterAll;
@@ -29,6 +32,7 @@ import org.junit.jupiter.api.io.TempDir;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Orientation;
+import javafx.scene.AccessibleAttribute;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -38,12 +42,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -55,17 +64,19 @@ import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyStatus;
+import seedu.address.storage.DataFileLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
- * Exercises the real FXML, CSS and command wiring without opening a visible window.
+ * Exercises real FXML, CSS and command wiring without opening a visible Help window.
  * Linux requires a display (such as Xvfb); model and logic tests still run without one.
  */
 @EnabledIf("hasDisplay")
@@ -90,6 +101,152 @@ public class ResidexUiTest {
     @AfterAll
     public static void stopToolkit() {
         Platform.exit();
+    }
+
+    @Test
+    public void helpExamples_copyFailureAndRetryUpdateAccessibleFeedback() throws Exception {
+        runOnFxThread(() -> {
+            HelpContent.CommandHelp command = HelpContent.getCommands().get(0);
+            String expected = command.examples().get(0);
+            AtomicInteger attempts = new AtomicInteger();
+            CommandHelpCard card = new CommandHelpCard(command, content -> {
+                assertEquals(expected, content.getString());
+                return attempts.incrementAndGet() > 1;
+            });
+            VBox examples = (VBox) card.getRoot().lookup("#examples");
+            Button copy = (Button) ((HBox) examples.getChildren().get(0)).getChildren().get(1);
+            copy.fire();
+            assertEquals("Failed", copy.getText());
+            assertEquals("Failed. Copy example: " + expected,
+                    copy.queryAccessibleAttribute(AccessibleAttribute.TEXT));
+            copy.fire();
+            assertEquals("Copied", copy.getText());
+            assertEquals("Copied. Copy example: " + expected,
+                    copy.queryAccessibleAttribute(AccessibleAttribute.TEXT));
+            assertEquals(2, attempts.get());
+        });
+    }
+
+    @Test
+    public void helpFocus_preservesWindowAndScrollState() throws Exception {
+        runOnFxThread(() -> {
+            HelpWindow help = new HelpWindow();
+            Stage stage = help.getRoot();
+            try {
+                stage.setX(120);
+                stage.setY(80);
+                stage.setWidth(740);
+                stage.setHeight(680);
+                ScrollPane scroll = (ScrollPane) stage.getScene().lookup("#commandScrollPane");
+                scroll.setVvalue(0.6);
+                stage.setIconified(true);
+                help.focus();
+                assertFalse(stage.isIconified());
+                assertEquals(120, stage.getX());
+                assertEquals(80, stage.getY());
+                assertEquals(740, stage.getWidth());
+                assertEquals(680, stage.getHeight());
+                assertEquals(0.6, scroll.getVvalue());
+                assertFalse(help.isShowing(), "Focusing a hidden stage must not create another window");
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void helpExamples_copyExactTextAndKeepGuideUrlAction() throws Exception {
+        runOnFxThread(() -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            Map<DataFormat, Object> original = clipboardContents();
+            HelpWindow help = new HelpWindow();
+            try {
+                Region root = (Region) help.getRoot().getScene().getRoot();
+                root.resize(740, 680);
+                root.applyCss();
+                root.layout();
+                VBox cards = (VBox) root.lookup("#commandCards");
+                assertEquals(HelpContent.getCommands().size(), cards.getChildren().size());
+                for (int i = 0; i < cards.getChildren().size(); i++) {
+                    VBox examples = (VBox) cards.getChildren().get(i).lookup("#examples");
+                    List<String> expected = HelpContent.getCommands().get(i).examples();
+                    assertEquals(expected.size(), examples.getChildren().size());
+                    for (int j = 0; j < expected.size(); j++) {
+                        HBox row = (HBox) examples.getChildren().get(j);
+                        Label text = (Label) row.getChildren().get(0);
+                        Button copy = (Button) row.getChildren().get(1);
+                        assertEquals(expected.get(j), text.getText());
+                        assertTrue(text.isWrapText());
+                        assertTrue(copy.isFocusTraversable());
+                        assertEquals("Copy example: " + expected.get(j), copy.getAccessibleText());
+                        copy.fire();
+                        assertEquals(expected.get(j), clipboard.getString());
+                        assertEquals("Copied", copy.getText());
+                        assertEquals("Copied. Copy example: " + expected.get(j),
+                                copy.queryAccessibleAttribute(AccessibleAttribute.TEXT));
+                        copy.fire();
+                        assertEquals(expected.get(j), clipboard.getString());
+                    }
+                }
+                Button copyGuide = (Button) root.lookup("#copyButton");
+                copyGuide.fire();
+                assertEquals(HelpWindow.USERGUIDE_URL, clipboard.getString());
+                assertFalse(help.isShowing(), "Copying must not open another window or run an example");
+            } finally {
+                clipboard.setContent(original);
+                help.getRoot().close();
+            }
+        });
+    }
+
+    @Test
+    public void helpLayout_matchesMainThemeAndWrapsExamplesAtMinimumSize() throws Exception {
+        runOnFxThread(() -> {
+            HelpWindow help = new HelpWindow();
+            try {
+                for (int width : new int[] {740, 520}) {
+                    Region root = layoutStage(help.getRoot(), width, width == 520 ? 420 : 680);
+                    assertEquals(Color.web("#f1f3f5"), root.getBackground().getFills().get(0).getFill());
+                    VBox cards = (VBox) root.lookup("#commandCards");
+                    boolean hasWrappedExample = false;
+                    for (Node node : cards.getChildren()) {
+                        VBox card = (VBox) node;
+                        assertEquals(Color.WHITE, card.getBackground().getFills().get(0).getFill());
+                        assertEquals(Color.web("#27313d"), label(card, "description").getTextFill());
+                        VBox examples = (VBox) card.lookup("#examples");
+                        for (Node example : examples.getChildren()) {
+                            HBox row = (HBox) example;
+                            Label text = (Label) row.getChildren().get(0);
+                            Button copy = (Button) row.getChildren().get(1);
+                            assertTrue(text.getWidth() > 0);
+                            assertTrue(text.getHeight() >= text.prefHeight(text.getWidth()));
+                            assertTrue(text.localToScene(text.getBoundsInLocal()).getMaxX()
+                                    <= copy.localToScene(copy.getBoundsInLocal()).getMinX());
+                            assertTrue(copy.localToScene(copy.getBoundsInLocal()).getMaxX()
+                                    <= row.localToScene(row.getBoundsInLocal()).getMaxX());
+                            assertEquals(Color.WHITE, copy.getTextFill());
+                            assertEquals(Color.web("#344d6b"), copy.getBackground().getFills().get(0).getFill());
+                            hasWrappedExample |= text.getHeight() > 30;
+                        }
+                    }
+                    if (width == 520) {
+                        assertTrue(hasWrappedExample, "Long examples must wrap at the minimum width");
+                    }
+                    ScrollPane scroll = (ScrollPane) root.lookup("#commandScrollPane");
+                    assertTrue(scroll.getHeight() > 0);
+                    Button copyGuide = (Button) root.lookup("#copyButton");
+                    assertTrue(copyGuide.localToScene(copyGuide.getBoundsInLocal()).getMaxY() <= root.getHeight());
+                    for (Node bar : scroll.lookupAll(".scroll-bar")) {
+                        if (((ScrollBar) bar).getOrientation() == Orientation.HORIZONTAL) {
+                            assertFalse(bar.isVisible());
+                        }
+                    }
+                    saveSnapshot(root, "help-" + width);
+                }
+            } finally {
+                help.getRoot().close();
+            }
+        });
     }
 
     @Test
@@ -469,7 +626,6 @@ public class ResidexUiTest {
                 "Persons list contains duplicate person(s).");
     }
 
-    // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
     @Test
     public void dataLoadingError_missingOrNullClientList_showsStorageValidationReason() throws Exception {
         Path dataFile = temporaryFolder.resolve("addressbook.json");
@@ -487,6 +643,56 @@ public class ResidexUiTest {
     public void dataLoadingError_accessDenied_showsPermissionMessage() throws Exception {
         assertDataLoadingError(new AccessDeniedException("addressbook.json"),
                 "Access to the file was denied. Check its permissions.");
+    }
+
+    @Test
+    public void dataFileLockError_inUse_explainsHowToReopen() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        try (DataFileLock owner = DataFileLock.acquire(dataFile)) {
+            assertNotNull(owner);
+            IOException error = assertThrows(DataFileLock.InUseException.class, () -> DataFileLock.acquire(dataFile));
+            assertDataFileLockError(dataFile, error, "This client data is already open in RESIDEX",
+                    "Close the other RESIDEX instance, then launch again.");
+        }
+    }
+
+    @Test
+    public void dataFileLockError_ioFailure_explainsAccessProblem() throws Exception {
+        assertDataFileLockError(temporaryFolder.resolve("addressbook.json"), new IOException("Test lock failure"),
+                "RESIDEX could not secure access to your client data",
+                "Check folder permissions or move RESIDEX to a writable local folder, then try again."
+                        + "\nReason: Test lock failure");
+    }
+
+    private void assertDataFileLockError(Path dataFile, IOException error, String expectedHeader,
+            String expectedRecovery) throws Exception {
+        runOnFxThread(() -> {
+            CompletableFuture<Void> checked = new CompletableFuture<>();
+            Platform.runLater(() -> {
+                List<Window> windows = List.copyOf(Window.getWindows());
+                try {
+                    DialogPane dialog = windows.stream().map(Window::getScene)
+                            .map(scene -> scene.lookup("#" + UiManager.ALERT_DIALOG_PANE_FIELD_ID))
+                            .filter(DialogPane.class::isInstance).map(DialogPane.class::cast)
+                            .findFirst().orElseThrow();
+                    assertEquals(expectedHeader, dialog.getHeaderText());
+                    String message = dialog.getContentText();
+                    assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
+                    assertTrue(message.contains(expectedRecovery));
+                    assertTrue(message.contains("This instance has not changed your client data or preferences."));
+                    assertTrue(message.contains("It will now close."));
+                    checked.complete(null);
+                } catch (Throwable e) {
+                    checked.completeExceptionally(e);
+                } finally {
+                    windows.forEach(Window::hide);
+                }
+            });
+
+            UiManager.showDataFileLockError(dataFile, error);
+
+            checked.get(5, TimeUnit.SECONDS);
+        });
     }
 
     private void assertDataLoadingError(Exception cause, String expectedReason) throws Exception {
@@ -648,6 +854,31 @@ public class ResidexUiTest {
                 assertEquals("buyer@xn--bcher-kva.de", label(root, "email").getText());
                 assertEquals("buyer@xn--bcher-kva.de",
                         model.getAddressBook().getPersonList().get(0).getEmail().value);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_thirtyDigitPhone_keepsEmptyListAndShowsPhoneConstraint() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/Carl p/123456789012345678901234567890 e/c@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(Phone.MESSAGE_CONSTRAINTS, result.getText());
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
             } finally {
                 window.getPrimaryStage().close();
             }
@@ -825,12 +1056,16 @@ public class ResidexUiTest {
     }
 
     private static Region layoutWindow(MainWindow window, double width, double height) {
-        Scene previousScene = window.getPrimaryStage().getScene();
+        return layoutStage(window.getPrimaryStage(), width, height);
+    }
+
+    private static Region layoutStage(Stage stage, double width, double height) {
+        Scene previousScene = stage.getScene();
         Region root = (Region) previousScene.getRoot();
         previousScene.setRoot(new Group());
         Scene scene = new Scene(root, width, height);
         scene.getStylesheets().addAll(previousScene.getStylesheets());
-        window.getPrimaryStage().setScene(scene);
+        stage.setScene(scene);
         root.resize(width, height);
         root.applyCss();
         root.layout();
@@ -866,6 +1101,18 @@ public class ResidexUiTest {
         ImageIO.write(bufferedImage, "png", output.toFile());
     }
 
+    private static Map<DataFormat, Object> clipboardContents() {
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        Map<DataFormat, Object> contents = new HashMap<>();
+        for (DataFormat format : clipboard.getContentTypes()) {
+            Object content = clipboard.getContent(format);
+            if (content != null) {
+                contents.put(format, content);
+            }
+        }
+        return contents;
+    }
+
     private static void runOnFxThread(FxAction action) throws Exception {
         CompletableFuture<Void> completed = new CompletableFuture<>();
         Platform.runLater(() -> {
@@ -883,4 +1130,5 @@ public class ResidexUiTest {
     private interface FxAction {
         void run() throws Exception;
     }
+
 }
