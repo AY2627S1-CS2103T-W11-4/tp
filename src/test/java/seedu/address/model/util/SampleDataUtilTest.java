@@ -74,6 +74,21 @@ public class SampleDataUtilTest {
     }
 
     @Test
+    public void sampleEmailSearch_gmail_listsAlexAndPreservesSourceData() throws Exception {
+        ModelManager model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
+        List<Person> source = List.copyOf(model.getAddressBook().getPersonList());
+        AddressBookParser parser = new AddressBookParser();
+
+        parser.parseCommand("find e/gmail").execute(model);
+
+        assertEquals(List.of("Alex Yeoh"), model.getFilteredPersonList().stream()
+                .map(person -> person.getName().fullName).toList());
+        assertEquals("alexyeoh@gmail.com", model.getFilteredPersonList().get(0).getEmail().value);
+        assertEquals(source, model.getAddressBook().getPersonList());
+        assertEquals(6, source.size());
+    }
+
+    @Test
     public void getSampleAddressBook_saveAndReload_preservesClientsAndProperties() throws Exception {
         ReadOnlyAddressBook sample = SampleDataUtil.getSampleAddressBook();
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("clients.json"));
@@ -87,7 +102,7 @@ public class SampleDataUtilTest {
                 .map(person -> List.of(person.getName().fullName, person.getPhone().value, person.getEmail().value))
                 .toList();
         assertEquals(List.of(
-                List.of("Alex Yeoh", "87438807", "alexyeoh@example.com"),
+                List.of("Alex Yeoh", "87438807", "alexyeoh@gmail.com"),
                 List.of("Bernice Yu", "99272758", "berniceyu@example.com"),
                 List.of("Charlotte Oliveiro", "93210283", "charlotte@example.com"),
                 List.of("David Li", "91031282", "lidavid@example.com"),
