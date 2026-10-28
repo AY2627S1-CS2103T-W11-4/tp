@@ -55,6 +55,14 @@ public class Messages {
                 .append(person.getEmail())
                 .append("; Remark: ")
                 .append(person.getRemark());
+        return builder.toString();
+    }
+
+    /**
+     * Formats a deleted {@code person}, including numbered property lines that match the client card.
+     */
+    public static String formatDeletedClient(Person person) {
+        final StringBuilder builder = new StringBuilder(format(person));
         for (int i = 0; i < person.getProperties().size(); i++) {
             builder.append("\n")
                     .append(i + 1)

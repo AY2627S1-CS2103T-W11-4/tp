@@ -29,12 +29,20 @@ public class MessagesTest {
     }
 
     @Test
-    public void format_personWithProperties_includesNumberedCardSummaries() {
+    public void format_personWithProperties_omitsPropertyLines() {
+        Person person = new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
+
+        assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; Remark: ",
+                Messages.format(person));
+    }
+
+    @Test
+    public void formatDeletedClient_personWithProperties_includesNumberedCardSummaries() {
         Person person = new PersonBuilder().withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
 
         assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; Remark: \n"
                 + "1. " + CLEMENTI_HDB.toDisplay() + "\n"
                 + "2. " + TAMPINES_CONDO.toDisplay(),
-                Messages.format(person));
+                Messages.formatDeletedClient(person));
     }
 }
