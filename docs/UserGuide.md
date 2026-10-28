@@ -375,6 +375,7 @@ Property bedrooms | `bd/`
   Long search field aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
 * Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
+* Phone searches compare digits only: spaces, hyphens, brackets and a leading `+65` in the keyword are ignored, so `find p/9123-4567` and `find p/+65 9123 4567` both match `91234567`.
 * Multiple keywords use `OR` matching: a client is returned if any keyword matches the selected search field.
 * Location searches check all property entries attached to each client. A client appears once if any location matches;
   clients without property entries do not match. Enter keywords without quotation marks.
