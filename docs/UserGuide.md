@@ -70,7 +70,8 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 **Notes about the command format:**<br>
 
 * Command words are case-insensitive; `ADDP` and `addp` run the same command.
-  Prefixes for property commands are also case-insensitive, while existing client commands retain their documented field rules.
+  Prefix letters are case-insensitive in every command; `N/` and `n/` select the same field.
+  Text after a prefix keeps the spelling you type.
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
@@ -114,6 +115,9 @@ Format: `help`
 Adds a client to RESIDEX.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL`
+
+Prefix letters may be uppercase or lowercase.
+`add N/Gus P/91230010 E/gus@example.com` stores the name `Gus`.
 
 Phone numbers must contain 3 to 15 digits only. The same rule applies when editing a client's phone number.
 An unexpected field such as `x/foo` is rejected with `Unexpected parameter: x/foo` in both `add` and `edit`.
@@ -210,6 +214,9 @@ Resets the search and restores the normal stored client order, including after a
 Edits an existing client in RESIDEX.
 
 Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`
+
+Prefix letters may be uppercase or lowercase.
+The new value keeps the spelling you type.
 
 * Edits the client at the specified `INDEX`. The index refers to the index number shown in the displayed client list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -451,6 +458,9 @@ Examples:
 Sets or removes a client's remark.
 
 Format: `remark INDEX r/[REMARK]`
+
+`R/` has the same effect as `r/`.
+The remark text keeps the spelling you type.
 
 * `INDEX` is a positive integer referring to the client in the currently displayed list, including search results.
 * The supplied remark replaces the existing remark. Enter `r/` without text to remove it.

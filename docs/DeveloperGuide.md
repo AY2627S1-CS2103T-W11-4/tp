@@ -427,6 +427,9 @@ identity as determined by `isSamePerson()`.
 #### Commands and parsing
 
 `AddressBookParser` normalises command words with `Locale.ROOT`, making command words case-insensitive.
+`ArgumentTokenizer` matches prefixes such as `n/`, `p/`, `e/` and `r/` without regard to letter case, and it leaves each field value unchanged.
+`add N/Gus P/91230010 E/gus@example.com` stores the name Gus.
+A repeated field still fails when the copies differ only by prefix case, such as `n/Amy N/Bob`.
 `AddPropertyCommandParser`, `DeletePropertyCommandParser` and `EditPropertyCommandParser` parse the three property commands.
 `PropertyParserUtil` recognises `t/`, `i/`, `l/`, `pr/`, `bd/` and `s/` case-insensitively without changing field values.
 Unknown and repeated fields are rejected, including repeated prefixes with different capitalisation.

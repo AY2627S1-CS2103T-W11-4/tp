@@ -48,6 +48,20 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_uppercasePrefixes_success() {
+        Person expectedPerson = new PersonBuilder().withName("Gus").withPhone("91230010")
+                .withEmail("gus@example.com").build();
+
+        assertParseSuccess(parser, " N/Gus P/91230010 E/gus@example.com", new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_mixedCaseDuplicatePrefix_failure() {
+        assertParseFailure(parser, " N/Gus n/Amy P/91230010 E/gus@example.com",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME));
+    }
+
+    @Test
     public void parse_allFieldsPresent_success() {
         Person expectedPerson = new PersonBuilder(BOB).build();
 
@@ -189,7 +203,8 @@ public class AddCommandParserTest {
     @Test
     public void parse_tagArguments_failure() {
         String personDetails = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB;
-        for (String tags : new String[] {" t/friends", " t/clients", " t/", " t/friends t/clients", " t/#invalid"}) {
+        for (String tags : new String[] {" t/friends", " T/friends", " t/clients", " t/", " t/friends t/clients",
+            " t/#invalid"}) {
             assertParseFailure(parser, tags + personDetails, Messages.MESSAGE_TAGS_NOT_SUPPORTED);
             assertParseFailure(parser, NAME_DESC_BOB + tags + PHONE_DESC_BOB + EMAIL_DESC_BOB,
                     Messages.MESSAGE_TAGS_NOT_SUPPORTED);
