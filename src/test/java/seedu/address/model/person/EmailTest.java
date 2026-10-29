@@ -77,6 +77,15 @@ public class EmailTest {
     }
 
     @Test
+    public void isValidEmail_consecutiveUnderscores_returnsTrue() {
+        assertTrue(Email.isValidEmail("first__last@example.com"));
+        assertTrue(Email.isValidEmail("first___last@example.com"));
+        assertFalse(Email.isValidEmail("first..last@example.com"));
+        assertFalse(Email.isValidEmail("_firstlast@example.com"));
+        assertFalse(Email.isValidEmail("firstlast_@example.com"));
+    }
+
+    @Test
     public void equals() {
         Email email = new Email("valid@email");
 

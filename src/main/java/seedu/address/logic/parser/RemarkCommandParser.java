@@ -32,9 +32,11 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_REMARK);
-        String remark = argMultimap.getValue(PREFIX_REMARK).orElse("");
+        if (argMultimap.getValue(PREFIX_REMARK).isEmpty()) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, RemarkCommand.MESSAGE_USAGE));
+        }
 
-        return new RemarkCommand(index, new Remark(remark));
+        return new RemarkCommand(index, new Remark(argMultimap.getValue(PREFIX_REMARK).get()));
     }
 
 }
