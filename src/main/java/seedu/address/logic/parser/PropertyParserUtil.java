@@ -62,8 +62,10 @@ final class PropertyParserUtil {
     }
 
     static List<Index> parseIndexes(String preamble, int count, String usage) throws ParseException {
-        String[] values = preamble.strip().split("\\s+");
-        if (values.length != count) {
+        requireNonNull(preamble);
+        String stripped = preamble.strip();
+        String[] values = stripped.split("\\s+");
+        if (stripped.isEmpty() || values.length != count) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
         }
         List<Index> indexes = new ArrayList<>();

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.commands.AddPropertyCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -48,6 +49,21 @@ public class AddpZeroIndexIntegrationTest {
         String expectedMessage = "Client index must be a positive integer, starting from 1.";
         assertThrows(ParseException.class, expectedMessage, () -> logic.execute(
                 "addp 0 t/h i/Buying l/singapore"));
+
+        Person client = model.getFilteredPersonList().get(0);
+        assertEquals("Zero Index", client.getName().fullName);
+        assertEquals(List.of(), client.getProperties());
+        assertEquals(saved, Files.readString(dataFile));
+    }
+
+    @Test
+    public void execute_addpWithoutArguments_showsUsageAndLeavesClientUnchanged() throws Exception {
+        logic.execute("add n/Zero Index p/88110080 e/zero@example.com");
+        String saved = Files.readString(dataFile);
+
+        String expectedMessage = String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
+                AddPropertyCommand.MESSAGE_USAGE);
+        assertThrows(ParseException.class, expectedMessage, () -> logic.execute("addp"));
 
         Person client = model.getFilteredPersonList().get(0);
         assertEquals("Zero Index", client.getName().fullName);
