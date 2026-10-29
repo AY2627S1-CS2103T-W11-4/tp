@@ -69,6 +69,8 @@ public class EmailTest {
     @Test
     public void isValidEmail_punycodeDomain_returnsTrue() {
         assertTrue(Email.isValidEmail("buyer@xn--bcher-kva.de"));
+        assertTrue(Email.isValidEmail("buyer@example.xn--p1ai"));
+        assertTrue(Email.isValidEmail("buyer@xn--bcher-kva.xn--p1ai"));
         assertFalse(Email.isValidEmail("buyer@-bcher.de"));
         assertFalse(Email.isValidEmail("buyer@bcher-.de"));
         assertFalse(Email.isValidEmail("buyer@xn--.de"));
