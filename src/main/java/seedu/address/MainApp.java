@@ -71,11 +71,7 @@ public class MainApp extends Application {
         try {
             dataFileLock = DataFileLock.acquire(addressBookFilePath);
         } catch (IOException e) {
-            logger.severe("Could not secure client data: " + StringUtil.getDetails(e));
-            ui = primaryStage -> {
-                UiManager.showDataFileLockError(addressBookFilePath, e);
-                Platform.exit();
-            };
+            prepareDataFileLockError(e);
             return;
         }
 
@@ -83,18 +79,12 @@ public class MainApp extends Application {
         try {
             JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
             UserPrefs userPrefs = initPrefs(userPrefsStorage);
-            JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFilePath);
-            storage = new StorageManager(addressBookStorage, userPrefsStorage);
+            storage = createStorage(userPrefsStorage);
 
             try {
                 model = initModelManager(storage, userPrefs);
             } catch (DataLoadingException e) {
-                logger.severe("Data file at " + storage.getAddressBookFilePath() + " could not be loaded: "
-                        + StringUtil.getDetails(e));
-                ui = primaryStage -> {
-                    UiManager.showDataLoadingError(storage.getAddressBookFilePath(), e);
-                    Platform.exit();
-                };
+                prepareDataLoadingError(e);
                 return;
             }
 
@@ -106,6 +96,28 @@ public class MainApp extends Application {
                 releaseDataFileLock();
             }
         }
+    }
+
+    private Storage createStorage(JsonUserPrefsStorage userPrefsStorage) {
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFilePath);
+        return new StorageManager(addressBookStorage, userPrefsStorage);
+    }
+
+    private void prepareDataFileLockError(IOException error) {
+        logger.severe("Could not secure client data: " + StringUtil.getDetails(error));
+        ui = primaryStage -> {
+            UiManager.showDataFileLockError(addressBookFilePath, error);
+            Platform.exit();
+        };
+    }
+
+    private void prepareDataLoadingError(DataLoadingException error) {
+        logger.severe("Data file at " + storage.getAddressBookFilePath() + " could not be loaded: "
+                + StringUtil.getDetails(error));
+        ui = primaryStage -> {
+            UiManager.showDataLoadingError(storage.getAddressBookFilePath(), error);
+            Platform.exit();
+        };
     }
 
     /**
