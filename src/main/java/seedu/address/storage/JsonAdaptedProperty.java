@@ -79,16 +79,7 @@ class JsonAdaptedProperty {
      * @throws IllegalValueException if a required field is missing or a supplied field is invalid.
      */
     public Property toModelType() throws IllegalValueException {
-        if (type == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "type"));
-        }
-        final PropertyType modelType;
-        try {
-            modelType = PropertyType.parse(type);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalValueException(PropertyType.MESSAGE_CONSTRAINTS, e);
-        }
-
+        PropertyType modelType = parseType();
         if (intention == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "intention"));
         }
@@ -98,22 +89,8 @@ class JsonAdaptedProperty {
             default -> throw new IllegalValueException(MESSAGE_INVALID_INTENTION);
         };
 
-        if (location == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "location"));
-        }
-        if (!PropertyLocation.isValidLocation(location)) {
-            throw new IllegalValueException(PropertyLocation.MESSAGE_CONSTRAINTS);
-        }
-        PropertyLocation modelLocation = new PropertyLocation(location);
-
-        final PropertyPrice modelPrice;
-        if (price == null) {
-            modelPrice = null;
-        } else if (!PropertyPrice.isValidPrice(price)) {
-            throw new IllegalValueException(PropertyPrice.MESSAGE_CONSTRAINTS);
-        } else {
-            modelPrice = new PropertyPrice(price);
-        }
+        PropertyLocation modelLocation = parseLocation();
+        PropertyPrice modelPrice = parsePrice();
 
         final PropertyStatus modelStatus;
         try {
@@ -132,5 +109,36 @@ class JsonAdaptedProperty {
         }
 
         return new Property(modelType, modelIntention, modelLocation, modelPrice, modelStatus, modelBedrooms);
+    }
+
+    private PropertyType parseType() throws IllegalValueException {
+        if (type == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "type"));
+        }
+        try {
+            return PropertyType.parse(type);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(PropertyType.MESSAGE_CONSTRAINTS, e);
+        }
+    }
+
+    private PropertyLocation parseLocation() throws IllegalValueException {
+        if (location == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "location"));
+        }
+        if (!PropertyLocation.isValidLocation(location)) {
+            throw new IllegalValueException(PropertyLocation.MESSAGE_CONSTRAINTS);
+        }
+        return new PropertyLocation(location);
+    }
+
+    private PropertyPrice parsePrice() throws IllegalValueException {
+        if (price == null) {
+            return null;
+        }
+        if (!PropertyPrice.isValidPrice(price)) {
+            throw new IllegalValueException(PropertyPrice.MESSAGE_CONSTRAINTS);
+        }
+        return new PropertyPrice(price);
     }
 }

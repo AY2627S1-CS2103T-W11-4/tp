@@ -20,6 +20,7 @@ import seedu.address.commons.core.LogsCenter;
  */
 final class CommandHelpCard extends UiPart<VBox> {
     private static final String FXML = "CommandHelpCard.fxml";
+    private static final double EXAMPLE_SPACING = 8;
     private static final Logger logger = LogsCenter.getLogger(CommandHelpCard.class);
 
     private final Predicate<ClipboardContent> clipboardWriter;
@@ -66,7 +67,7 @@ final class CommandHelpCard extends UiPart<VBox> {
         copy.getStyleClass().add("help-example-copy");
         copy.setAccessibleText("Copy example: " + example);
         copy.setOnAction(event -> copyExample(example, copy));
-        HBox row = new HBox(8, text, copy);
+        HBox row = new HBox(EXAMPLE_SPACING, text, copy);
         row.setAlignment(Pos.TOP_LEFT);
         row.setMinWidth(0);
         return row;

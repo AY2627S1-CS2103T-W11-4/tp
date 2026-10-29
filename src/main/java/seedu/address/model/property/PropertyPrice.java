@@ -13,7 +13,7 @@ import java.util.Locale;
 public final class PropertyPrice {
 
     public static final String MESSAGE_CONSTRAINTS = "Property price must be a positive whole-dollar amount "
-            + "no greater than 9223372036854775807, without commas, a decimal point, or leading zeros";
+            + "no greater than " + Long.MAX_VALUE + ", without commas, a decimal point, or leading zeros";
     public static final String VALIDATION_REGEX = "[1-9][0-9]*";
 
     public final long amount;
