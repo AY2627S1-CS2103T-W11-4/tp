@@ -66,6 +66,11 @@ public interface Model {
     void redoAddressBook();
 
     /**
+     * Discards address book states that could still be redone.
+     */
+    void discardRedoHistory();
+
+    /**
      * Returns true if a person with the same identity as {@code person} exists in the address book.
      */
     boolean hasPerson(Person person);
