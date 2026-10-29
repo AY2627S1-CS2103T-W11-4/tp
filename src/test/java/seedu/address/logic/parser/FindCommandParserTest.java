@@ -251,6 +251,20 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_alphabeticSlashLocationKeywords_remainReservedAsFieldPrefixes() {
+        for (String selector : List.of("l/", "L/")) {
+            for (String keyword : List.of("N/A", "n/a")) {
+                assertParseFailure(parser, selector + keyword, FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+                assertParseFailure(parser, selector + "1/2 " + keyword, FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+            }
+            for (String keyword : List.of("Park/Connector", "park/connector", "PARK/CONNECTOR")) {
+                assertParseFailure(parser, selector + keyword, FindCommand.MESSAGE_INVALID_PROPERTY);
+                assertParseFailure(parser, selector + "1/2 " + keyword, FindCommand.MESSAGE_INVALID_PROPERTY);
+            }
+        }
+    }
+
+    @Test
     public void parse_literalSlashesInOtherSearchFields_throwsParseException() {
         for (String selector : List.of("n/", "e/", "p/", "i/", "s/", "t/", "pr/", "bd/")) {
             assertParseFailure(parser, selector + "1/2", FindCommand.MESSAGE_INVALID_PROPERTY);

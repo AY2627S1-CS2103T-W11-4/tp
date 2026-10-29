@@ -134,7 +134,7 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         if (isLocationSelector(selector)) {
-            return new FindCommand(new LocationContainsKeywordsPredicate(parseKeywords(keywordArgs, true)));
+            return new FindCommand(new LocationContainsKeywordsPredicate(parseLocationKeywords(keywordArgs)));
         }
 
         if (isNameSelector(selector)) {
@@ -199,6 +199,14 @@ public class FindCommandParser implements Parser<FindCommand> {
             throw new ParseException(FindCommand.MESSAGE_INVALID_PROPERTY);
         }
         return keywords;
+    }
+
+    /**
+     * Parses location keywords while allowing literal slashes such as {@code 1/2}.
+     * Alphabetic slash keywords such as {@code N/A} and {@code Park/Connector} remain reserved as field prefixes.
+     */
+    private List<String> parseLocationKeywords(String keywordArgs) throws ParseException {
+        return parseKeywords(keywordArgs, true);
     }
 
     private boolean isNameSelector(String token) {

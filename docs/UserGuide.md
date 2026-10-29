@@ -373,7 +373,9 @@ Property bedrooms | `bd/`
   it does not search for the whole phrase or require an exact address match.
 * Location keywords can contain literal slashes: `find l/1/2` matches a location containing `1/2`.
   Alphabetic words immediately followed by `/` are reserved as field prefixes, so keywords such as `n/Alice`
-  or `x/foo` are rejected. Combining fields, such as `find l/1/2 n/Alice`, is also rejected.
+  or `x/foo` are rejected. This also limits literal location text: `find l/N/A` and `find l/Park/Connector`
+  are rejected even when you intend them as location keywords.
+  Combining fields, such as `find l/1/2 n/Alice`, is also rejected.
 * Intention searches require exactly one complete value: `buyer`, `seller` or `both`, in any capitalization.
   `find i/unspecified` is not supported.
 * `find i/buyer` shows Buyer clients first, then Buyer / Seller clients.

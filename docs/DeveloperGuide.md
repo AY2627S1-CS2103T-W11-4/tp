@@ -198,6 +198,9 @@ For example, `find l/clementi` matches clients with locations such as `Clementi 
 Location keywords retain literal slashes, so `find l/1/2` matches a stored location containing `1/2`.
 `FindCommandParser` allows these literals only for location searches. Tokens beginning with alphabetic letters
 immediately followed by `/` remain reserved as field prefixes, consistent with property-command parsing.
+The location branch calls `parseLocationKeywords` to make this parsing behaviour explicit.
+This has a known limitation: `N/A` and `Park/Connector` are rejected even when intended as literal location keywords.
+`N/A` is interpreted as a second `n/` selector; `Park/Connector` is interpreted as an unsupported selector.
 The compiled `FIELD_PREFIX` pattern checks only the start of each keyword with `Matcher.lookingAt()`,
 so field detection does not depend on the characters in its value, including Unicode line separators.
 Recognised additional selectors (including repeated selectors and uppercase variants) are rejected before
@@ -1437,6 +1440,9 @@ Prerequisite: Use test data without a client named Slash Test or a property loca
    and `find l/1/2 x/foo`.<br>
    Expected: Mixed or repeated fields report `Specify exactly one search field.`; `x/foo` reports an invalid
    search field. The previous results and stored client data remain unchanged.
+1. Try `find l/N/A` and `find l/Park/Connector`.<br>
+   Expected: Both are rejected as a known limitation of alphabetic slash keywords.
+   `N/A` is treated as an additional name selector; `Park/Connector` is treated as an unsupported selector.
 1. Delete the test client after verifying its displayed index.
 
 ### Deriving and finding client intentions
