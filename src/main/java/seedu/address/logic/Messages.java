@@ -15,6 +15,7 @@ public class Messages {
     public static final String MESSAGE_DERIVED_CLIENT_INTENTION =
             "Client intention is derived from property intentions and cannot be set directly. Remove i/.";
     public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
+    public static final String MESSAGE_EMPTY_COMMAND = "Please enter a command. Type help to see the list of commands.";
     public static final String MESSAGE_CLIENT_BUDGET_NOT_SUPPORTED =
             "Client budgets are no longer supported. Remove all b/ arguments and try again.";
     public static final String MESSAGE_TAGS_NOT_SUPPORTED =

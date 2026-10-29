@@ -89,6 +89,8 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `undo`, `redo` and `exit`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
+* Pressing Enter with an empty command box, or one that contains only spaces, does nothing.
+
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 

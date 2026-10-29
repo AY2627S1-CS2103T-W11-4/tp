@@ -453,6 +453,7 @@ identity as determined by `isSamePerson()`.
 #### Commands and parsing
 
 `AddressBookParser` normalises command words with `Locale.ROOT`, making command words case-insensitive.
+Blank input is rejected with `Messages.MESSAGE_EMPTY_COMMAND`, and `CommandBox` ignores blank input without running a command, so whitespace-only input never produces the `help` usage message.
 `AddPropertyCommandParser`, `DeletePropertyCommandParser` and `EditPropertyCommandParser` parse the three property commands.
 `PropertyParserUtil` recognises `t/`, `i/`, `l/`, `pr/`, `bd/` and `s/` case-insensitively without changing field values.
 Unknown and repeated fields are rejected, including repeated prefixes with different capitalisation.
