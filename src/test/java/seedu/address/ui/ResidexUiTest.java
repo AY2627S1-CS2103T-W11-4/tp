@@ -62,6 +62,7 @@ import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddPropertyCommand;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -887,6 +888,31 @@ public class ResidexUiTest {
                 assertEquals("1 of 1 clients", label(root, "clientCount").getText());
                 assertEquals("Zero Index", label(root, "name").getText());
                 assertTrue(model.getAddressBook().getPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void editCommand_missingField_keepsClientAndNamesPrefixes() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Edit Client p/88110081 e/edit@example.com");
+                runCommand(root, "edit 1");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(EditCommand.MESSAGE_NOT_EDITED, result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("Edit Client", label(root, "name").getText());
+                assertEquals("88110081", label(root, "phone").getText());
+                assertEquals("edit@example.com", model.getAddressBook().getPersonList().get(0).getEmail().value);
             } finally {
                 window.getPrimaryStage().close();
             }
