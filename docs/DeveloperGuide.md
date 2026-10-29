@@ -242,6 +242,7 @@ default and minimum Help sizes. Clipboard contents are restored after tests that
 `FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, `i/`, `s/`, `t/`, `pr/` or `bd/`.
 For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
 Name, email, phone, and location searches use case-insensitive substring matching with OR semantics across keywords.
+`PhoneContainsKeywordsPredicate` first reduces each keyword to its digits (dropping a leading `+65`, hyphens and brackets). A keyword containing any other character, or left with no digits, matches nothing. Because `FindCommandParser` splits input on whitespace, a number typed with spaces becomes several keywords combined with OR.
 `LocationContainsKeywordsPredicate` checks every entry in `Person#getProperties()` and returns a client once if any
 property location contains any keyword. Clients without properties do not match a location search.
 For example, `find l/clementi` matches clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.

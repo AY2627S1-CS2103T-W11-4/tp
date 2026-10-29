@@ -79,4 +79,49 @@ public class PhoneContainsKeywordsPredicateTest {
         String expected = PhoneContainsKeywordsPredicate.class.getCanonicalName() + "{keywords=" + keywords + "}";
         assertEquals(expected, predicate.toString());
     }
+
+    @Test
+    public void test_keywordWithHyphensSpacesOrBrackets_matchesDigitsOnly() {
+        Person person = new PersonBuilder().withPhone("87438807").build();
+        for (String keyword : List.of("8743-8807", "8743 8807", "(8743)8807", "-8807", "8743-")) {
+            assertTrue(new PhoneContainsKeywordsPredicate(List.of(keyword)).test(person), keyword);
+        }
+    }
+
+    @Test
+    public void test_leadingCountryCode_isIgnored() {
+        Person person = new PersonBuilder().withPhone("87438807").build();
+        for (String keyword : List.of("+6587438807", "+65 8743 8807", "+65-8743-8807", "+658743")) {
+            assertTrue(new PhoneContainsKeywordsPredicate(List.of(keyword)).test(person), keyword);
+        }
+        assertFalse(new PhoneContainsKeywordsPredicate(List.of("+6599999999")).test(person));
+        // only a leading +65 is dropped: 65 elsewhere in the keyword is a real digit
+        assertFalse(new PhoneContainsKeywordsPredicate(List.of("6587438807")).test(person));
+    }
+
+    @Test
+    public void test_keywordWithoutDigits_matchesNothing() {
+        Person person = new PersonBuilder().withPhone("87438807").build();
+        for (String keyword : List.of("-", "+65", "abc", " ", "()")) {
+            assertFalse(new PhoneContainsKeywordsPredicate(List.of(keyword)).test(person), keyword);
+        }
+        assertTrue(new PhoneContainsKeywordsPredicate(List.of("-", "8743")).test(person));
+    }
+
+    @Test
+    public void test_keywordWithUnsupportedCharacters_matchesNothing() {
+        Person person = new PersonBuilder().withPhone("87438807").build();
+        for (String keyword : List.of("abc8743", "8743x", "87#43", "8743.8807", "++658743", "8+743")) {
+            assertFalse(new PhoneContainsKeywordsPredicate(List.of(keyword)).test(person), keyword);
+        }
+    }
+
+    @Test
+    public void test_spaceSeparatedKeywords_useOrSemanticsAcrossParts() {
+        Person person = new PersonBuilder().withPhone("87438807").build();
+        // "find p/+65 9123 4567" reaches the predicate as three separate keywords, so a phone matches if it
+        // contains any one of the digit groups, not only the whole number.
+        assertTrue(new PhoneContainsKeywordsPredicate(List.of("+65", "8743", "9999")).test(person));
+        assertFalse(new PhoneContainsKeywordsPredicate(List.of("+65", "9123", "4567")).test(person));
+    }
 }
