@@ -5,6 +5,8 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -66,10 +68,7 @@ public class UiManager implements Ui {
      * Shows recovery instructions when client data cannot be loaded, before the main window is created.
      */
     public static void showDataLoadingError(Path dataFilePath, DataLoadingException error) {
-        Throwable cause = error.getCause();
-        String reason = cause instanceof AccessDeniedException
-                ? "Access to the file was denied. Check its permissions."
-                : cause.getMessage().split("\\R", 2)[0];
+        String reason = getDataLoadingErrorReason(error.getCause());
         String message = "Unable to load client data from:\n" + dataFilePath.toAbsolutePath().normalize()
                 + "\n\nReason: " + reason
                 + "\n\nYour client data file has not been changed. RESIDEX will close to prevent overwriting it."
@@ -77,6 +76,19 @@ public class UiManager implements Ui {
                 + "\n\nTo start fresh with sample clients, move the file aside before restarting.";
         showAlertDialogAndWait(null, AlertType.ERROR, "Unable to load client data",
                 "RESIDEX could not open your client data", message);
+    }
+
+    private static String getDataLoadingErrorReason(Throwable cause) {
+        if (cause instanceof AccessDeniedException) {
+            return "Access to the file was denied. Check its permissions.";
+        }
+        if (cause instanceof JsonProcessingException) {
+            return "The data file is not in the expected JSON format.";
+        }
+        if (cause == null || cause.getMessage() == null || cause.getMessage().isBlank()) {
+            return "The data file could not be read. Check that it exists and is readable.";
+        }
+        return cause.getMessage().split("\\R", 2)[0];
     }
 
     /**

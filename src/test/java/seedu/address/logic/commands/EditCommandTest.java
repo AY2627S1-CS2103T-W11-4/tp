@@ -113,15 +113,28 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_noFieldSpecifiedUnfilteredList_success() {
+    public void execute_noFieldSpecifiedUnfilteredList_reportsNoChange() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptor());
-        Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person unchangedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        String expectedMessage = String.format(EditCommand.MESSAGE_UNCHANGED, unchangedPerson.getName());
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertFalse(model.canUndoAddressBook());
+    }
+
+    @Test
+    public void execute_sameValuesAsCurrent_reportsNoChangeAndKeepsUndoHistory() throws Exception {
+        Person first = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withName(first.getName().fullName).withPhone(first.getPhone().value).build();
+
+        CommandResult result = new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
+
+        assertEquals(String.format(EditCommand.MESSAGE_UNCHANGED, first.getName()), result.getFeedbackToUser());
+        assertFalse(model.canUndoAddressBook());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.AfterAll;
@@ -49,6 +51,7 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -75,6 +78,7 @@ import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.DataFileLock;
@@ -629,9 +633,60 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void dataLoadingError_emptyFiles_showsPlainReasonAndPreservesFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : new String[]{"", " \t\r\n", "\uFEFF", "\uFEFF \t\r\n"}) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+            assertDataLoadingError((Exception) failure.getCause(), "The data file is empty.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void dataLoadingError_invalidJson_showsPlainReasonAndPreservesFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : new String[]{"[]", "{\"persons\":\"x\"}", "invalid JSON", "{\"persons\": ["}) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+            assertDataLoadingError((Exception) failure.getCause(),
+                    "The data file is not in the expected JSON format.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void dataLoadingError_missingReason_showsRecoveryFallback() throws Exception {
+        for (Exception cause : new Exception[]{null, new IOException(), new IOException(" \t")}) {
+            assertDataLoadingError(cause,
+                    "The data file could not be read. Check that it exists and is readable.");
+        }
+    }
+
+    @Test
     public void dataLoadingError_duplicateClients_showsValidationMessage() throws Exception {
-        assertDataLoadingError(new IllegalValueException("Persons list contains duplicate person(s)."),
+        assertSavedDataValidationError(Files.readString(Path.of("src", "test", "data",
+                "JsonSerializableAddressBookTest", "duplicatePersonAddressBook.json")),
                 "Persons list contains duplicate person(s).");
+    }
+
+    @Test
+    public void dataLoadingError_invalidProperty_showsSpecificValidationMessage() throws Exception {
+        String[] fields = {"\"price\":\"0\"", "\"status\":\"Cancelled\"", "\"bedrooms\":\"21\""};
+        String[] reasons = {PropertyPrice.MESSAGE_CONSTRAINTS, PropertyStatus.MESSAGE_CONSTRAINTS,
+            PropertyBedrooms.MESSAGE_CONSTRAINTS};
+        for (int i = 0; i < fields.length; i++) {
+            String json = """
+                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                      "properties": [{"type": "HDB", "intention": "Buying", "location": "Clementi", %s}]}]}
+                    """.formatted(fields[i]);
+
+            assertSavedDataValidationError(json, "Property 1 is invalid: " + reasons[i]);
+        }
     }
 
     // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
@@ -705,6 +760,19 @@ public class ResidexUiTest {
         });
     }
 
+    private void assertSavedDataValidationError(String json, String expectedReason) throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        Files.writeString(dataFile, json);
+        byte[] original = Files.readAllBytes(dataFile);
+        DataLoadingException failure = assertThrows(DataLoadingException.class,
+                new JsonAddressBookStorage(dataFile)::readAddressBook);
+        IllegalValueException cause = assertInstanceOf(IllegalValueException.class, failure.getCause());
+
+        assertEquals(expectedReason, cause.getMessage());
+        assertDataLoadingError(cause, expectedReason);
+        assertArrayEquals(original, Files.readAllBytes(dataFile));
+    }
+
     private void assertDataLoadingError(Exception cause, String expectedReason) throws Exception {
         runOnFxThread(() -> {
             Path dataFile = temporaryFolder.resolve("addressbook.json");
@@ -723,6 +791,10 @@ public class ResidexUiTest {
                     assertFalse(message.contains("Parser details."));
                     assertFalse(message.contains("NullPointerException"));
                     assertFalse(message.contains("JsonSerializableAddressBook"));
+                    assertFalse(message.contains("com.fasterxml.jackson"));
+                    assertFalse(message.contains("JsonMappingException"));
+                    assertFalse(message.contains("JsonParseException"));
+                    assertFalse(message.contains("[Source:"));
                     assertTrue(message.contains("has not been changed"));
                     assertTrue(message.contains("RESIDEX will close"));
                     assertTrue(message.contains("repair it or replace it with a valid backup"));
@@ -761,6 +833,25 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void clientCards_sampleRemarks_showsExamplesAndHidesEmptyRemarks() throws Exception {
+        runOnFxThread(() -> {
+            Person[] samples = SampleDataUtil.getSamplePersons();
+            for (int i = 0; i < samples.length; i++) {
+                Region card = new PersonCard(samples[i], i + 1).getRoot();
+                styleCard(card);
+                Label remark = label(card, "remark");
+                boolean hasRemark = i == 0 || i == 2;
+
+                assertEquals(hasRemark, remark.isVisible());
+                assertEquals(hasRemark, remark.isManaged());
+                if (hasRemark) {
+                    assertEquals(samples[i].getRemark().value, remark.getText());
+                }
+            }
+        });
+    }
+
+    @Test
     public void clientCards_showLabelledPropertiesWithAndWithoutOptionalValues() throws Exception {
         runOnFxThread(() -> {
             Property viewing = new Property(TAMPINES_CONDO.getType(), TAMPINES_CONDO.getIntention(),
@@ -783,13 +874,24 @@ public class ResidexUiTest {
                     propertyTexts(properties));
             for (Node node : properties.getChildren()) {
                 VBox entry = (VBox) node;
-                for (Node field : entry.getChildren().subList(1, entry.getChildren().size())) {
-                    Label value = (Label) field;
+                assertEquals(5, entry.getChildren().size(), "Related fields must share rows to reduce scrolling");
+                List<Label> fields = propertyLabels(entry);
+                for (Label value : fields.subList(1, fields.size())) {
                     assertTrue(value.getStyleClass().contains("property-detail"));
                     assertTrue(value.isWrapText());
                     assertEquals(0, value.getMinWidth());
                     assertEquals(Double.MAX_VALUE, value.getMaxWidth());
                     assertEquals(Region.USE_PREF_SIZE, value.getMinHeight());
+                }
+                for (int first : new int[] {1, 5}) {
+                    Label left = fields.get(first);
+                    Label right = fields.get(first + 1);
+                    assertEquals(left.localToScene(left.getBoundsInLocal()).getMinY(),
+                            right.localToScene(right.getBoundsInLocal()).getMinY(), 1,
+                            "Paired property fields must share a row");
+                    assertTrue(left.localToScene(left.getBoundsInLocal()).getMaxX()
+                            <= right.localToScene(right.getBoundsInLocal()).getMinX(),
+                            "Paired property fields must not overlap");
                 }
             }
 
@@ -1298,7 +1400,7 @@ public class ResidexUiTest {
             String unbrokenEmail = "a".repeat(64) + "@" + "b".repeat(63) + ".com";
             Property longLocation = new Property(CLEMENTI_HDB.getType(), CLEMENTI_HDB.getIntention(),
                     new PropertyLocation("HDB | Clementi Avenue 3 near the community centre and MRT station "
-                            + "A".repeat(120)), CLEMENTI_HDB.getPrice().orElseThrow(), PropertyStatus.UNSPECIFIED,
+                            + "A".repeat(120)), new PropertyPrice("9223372036854775807"), PropertyStatus.UNSPECIFIED,
                     new PropertyBedrooms("3"));
             model.addPerson(new PersonBuilder().withName("Long Email Client").withEmail(reportedEmail)
                     .withRemark("Call after 6 pm").withProperties(longLocation, TAMPINES_CONDO).build());
@@ -1342,22 +1444,35 @@ public class ResidexUiTest {
                         VBox properties = (VBox) card.lookup("#properties");
                         double previousBottom = remark.localToScene(remark.getBoundsInLocal()).getMaxY();
                         for (Node entry : properties.getChildren()) {
-                            for (Node node : ((VBox) entry).getChildren()) {
-                                Label field = (Label) node;
-                                Text renderedField = (Text) field.lookup(".text");
-                                assertEquals(field.getText(), renderedField.getText(),
-                                        "Property headings and values must be shown in full");
-                                assertTrue(field.getHeight() >= field.prefHeight(field.getWidth()) - 1,
-                                        "Property rows must grow to fit wrapped values");
-                                assertTrue(renderedField.getLayoutBounds().getWidth() <= field.getWidth() + 1,
-                                        "Property text must fit within its row");
+                            for (Node row : ((VBox) entry).getChildren()) {
                                 assertTrue(previousBottom
-                                        <= field.localToScene(field.getBoundsInLocal()).getMinY(),
+                                        <= row.localToScene(row.getBoundsInLocal()).getMinY(),
                                         "Property rows must not overlap preceding content");
-                                previousBottom = field.localToScene(field.getBoundsInLocal()).getMaxY();
-                                if (width == 700 && field.getText().startsWith("Location: HDB |")) {
-                                    assertTrue(field.getHeight() > field.getFont().getSize() * 2,
-                                            "Long locations must wrap at the minimum width");
+                                previousBottom = row.localToScene(row.getBoundsInLocal()).getMaxY();
+                                List<Label> fields = row instanceof GridPane pair
+                                        ? pair.getChildren().stream().map(Label.class::cast).toList()
+                                        : List.of((Label) row);
+                                double previousRight = row.localToScene(row.getBoundsInLocal()).getMinX();
+                                for (Label field : fields) {
+                                    Text renderedField = (Text) field.lookup(".text");
+                                    assertEquals(field.getText(), renderedField.getText(),
+                                            "Property headings and values must be shown in full");
+                                    assertTrue(field.getHeight() >= field.prefHeight(field.getWidth()) - 1,
+                                            "Property rows must grow to fit wrapped values");
+                                    assertTrue(renderedField.getLayoutBounds().getWidth() <= field.getWidth() + 1,
+                                            "Property text must fit within its row");
+                                    assertTrue(previousRight
+                                            <= field.localToScene(field.getBoundsInLocal()).getMinX(),
+                                            "Paired fields must not overlap horizontally");
+                                    previousRight = field.localToScene(field.getBoundsInLocal()).getMaxX();
+                                    assertTrue(previousRight <= row.localToScene(row.getBoundsInLocal()).getMaxX() + 1,
+                                            "Property fields must fit within the available row width");
+                                    assertTrue(field.localToScene(field.getBoundsInLocal()).getMaxY()
+                                            <= previousBottom + 1, "Rows must fit their tallest wrapped field");
+                                    if (width == 700 && field.getText().startsWith("Location: HDB |")) {
+                                        assertTrue(field.getHeight() > field.getFont().getSize() * 2,
+                                                "Long locations must wrap at the minimum width");
+                                    }
                                 }
                             }
                         }
@@ -1409,7 +1524,7 @@ public class ResidexUiTest {
                 vertical.setValue(vertical.getMax());
                 root.layout();
                 VBox lastProperty = (VBox) properties.getChildren().get(2);
-                Node lastField = lastProperty.getChildren().get(6);
+                Node lastField = propertyLabels(lastProperty).get(6);
                 assertTrue(lastField.localToScene(lastField.getBoundsInLocal()).getMinY()
                         >= list.localToScene(list.getBoundsInLocal()).getMinY(),
                         "Scrolling must reveal the last property field");
@@ -1611,8 +1726,14 @@ public class ResidexUiTest {
 
     private static List<List<String>> propertyTexts(VBox properties) {
         return properties.getChildren().stream().map(VBox.class::cast)
-                .map(entry -> entry.getChildren().stream().map(Label.class::cast).map(Label::getText).toList())
+                .map(entry -> propertyLabels(entry).stream().map(Label::getText).toList())
                 .toList();
+    }
+
+    private static List<Label> propertyLabels(VBox entry) {
+        return entry.getChildren().stream()
+                .flatMap(node -> node instanceof GridPane row ? row.getChildren().stream() : Stream.of(node))
+                .map(Label.class::cast).toList();
     }
 
     private static void saveSnapshot(Region root, String name) throws Exception {

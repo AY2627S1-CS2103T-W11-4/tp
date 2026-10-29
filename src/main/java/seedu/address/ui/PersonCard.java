@@ -1,12 +1,17 @@
 package seedu.address.ui;
 
 import javafx.fxml.FXML;
+import javafx.geometry.VPos;
 import javafx.scene.control.Label;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.model.person.Person;
 import seedu.address.model.property.Property;
+import seedu.address.model.property.PropertyBedrooms;
+import seedu.address.model.property.PropertyPrice;
 
 /**
  * A UI component that displays information of a {@code Person}.
@@ -64,33 +69,53 @@ public class PersonCard extends UiPart<Region> {
     }
 
     /**
-     * Labels each field on its own row so locations and missing values are unambiguous.
+     * Groups short labelled fields while keeping locations and statuses on separate rows.
      */
     private VBox createPropertyEntry(Property property, int index) {
         Label heading = new Label("Property " + index);
         heading.getStyleClass().add("field-caption");
-        VBox entry = new VBox(4, heading);
+        VBox entry = new VBox(4, heading,
+                createPropertyRow(createPropertyField("Type", property.getType().toString()),
+                        createPropertyField("Intention", property.getIntention().toString())),
+                createPropertyField("Location", property.getLocation().toString()),
+                createPropertyField("Status", property.getStatus().toString()),
+                createPropertyRow(createPropertyField("Price",
+                        property.getPrice().map(PropertyPrice::toDisplay).orElse(NOT_RECORDED)),
+                        createPropertyField("Bedrooms",
+                                property.getBedrooms().map(PropertyBedrooms::toString).orElse(NOT_RECORDED))));
         entry.setMinWidth(0);
-        addPropertyField(entry, "Type", property.getType().toString());
-        addPropertyField(entry, "Intention", property.getIntention().toString());
-        addPropertyField(entry, "Location", property.getLocation().toString());
-        addPropertyField(entry, "Status", property.getStatus().toString());
-        addPropertyField(entry, "Price", property.getPrice().map(value -> value.toDisplay()).orElse(NOT_RECORDED));
-        addPropertyField(entry, "Bedrooms", property.getBedrooms().map(value -> value.toString()).orElse(NOT_RECORDED));
         return entry;
     }
 
     /**
-     * Adds a wrapping field whose full height is preserved even in a tall client card.
+     * Gives paired fields equal space so either value can wrap without hiding its neighbour.
      */
-    private void addPropertyField(VBox entry, String caption, String value) {
+    private GridPane createPropertyRow(Label first, Label second) {
+        GridPane row = new GridPane();
+        row.setMinWidth(0);
+        row.setHgap(12);
+        for (int i = 0; i < 2; i++) {
+            ColumnConstraints column = new ColumnConstraints();
+            column.setPercentWidth(50);
+            row.getColumnConstraints().add(column);
+        }
+        GridPane.setValignment(first, VPos.TOP);
+        GridPane.setValignment(second, VPos.TOP);
+        row.addRow(0, first, second);
+        return row;
+    }
+
+    /**
+     * Creates a wrapping field whose full height is preserved even in a tall client card.
+     */
+    private Label createPropertyField(String caption, String value) {
         Label field = new Label(caption + ": " + value);
         field.getStyleClass().add("property-detail");
         field.setWrapText(true);
         field.setMinWidth(0);
         field.setMaxWidth(Double.MAX_VALUE);
         field.setMinHeight(Region.USE_PREF_SIZE);
-        entry.getChildren().add(field);
+        return field;
     }
 
 }

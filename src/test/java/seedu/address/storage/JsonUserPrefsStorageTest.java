@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -23,6 +24,19 @@ public class JsonUserPrefsStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readUserPrefs_utf8Bom_preservesSettingsAndFile() throws Exception {
+        Path file = testFolder.resolve("bom.json");
+        JsonUserPrefsStorage storage = new JsonUserPrefsStorage(file);
+        UserPrefs expected = getTypicalUserPrefs();
+        storage.saveUserPrefs(expected);
+        Files.writeString(file, "\uFEFF" + Files.readString(file));
+        byte[] original = Files.readAllBytes(file);
+
+        assertEquals(expected, storage.readUserPrefs().orElseThrow());
+        assertArrayEquals(original, Files.readAllBytes(file));
+    }
 
     @Test
     public void readUserPrefs_nullFilePath_throwsNullPointerException() {
