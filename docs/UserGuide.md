@@ -374,7 +374,7 @@ Property bedrooms | `bd/`
   Missing, unknown, repeated, or mixed prefixes are rejected. For example, use `find n/alice`.
   Long search field aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
-* If the search field or keyword is missing, the error message shows the `find` format and an example (`find n/alex`).
+* Entering `find` without arguments, or providing a search field without a keyword (e.g. `find n/`), shows the command format and an example (`find n/alex`).
 * Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
 * Multiple keywords use `OR` matching: a client is returned if any keyword matches the selected search field.
 * Location searches check all property entries attached to each client. A client appears once if any location matches;

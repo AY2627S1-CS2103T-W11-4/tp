@@ -472,10 +472,13 @@ public class FindCommandParserTest {
         for (String args : List.of("", "   ")) {
             assertParseFailure(parser, args, FindCommand.MESSAGE_MISSING_ARGUMENTS);
         }
-        assertParseFailure(parser, "n/", FindCommand.MESSAGE_MISSING_KEYWORD);
+        for (String args : List.of("n/", "e/", "p/", "l/", "i/", "s/", "t/", "pr/", "bd/", "E/   ")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_MISSING_KEYWORD);
+        }
         for (String message : List.of(FindCommand.MESSAGE_MISSING_ARGUMENTS, FindCommand.MESSAGE_MISSING_KEYWORD)) {
             assertTrue(message.contains("Format: find FIELD/KEYWORD [MORE_KEYWORDS]"), message);
             assertTrue(message.contains("Example: find n/alex"), message);
         }
+        assertTrue(FindCommand.MESSAGE_USAGE.contains("Name search: find n/KEYWORD [MORE_KEYWORDS]"));
     }
 }
