@@ -155,6 +155,7 @@ public class HelpContentTest {
                 new FindCommand(new EmailContainsKeywordsPredicate(List.of("gmail"))),
                 new FindCommand(new PhoneContainsKeywordsPredicate(List.of("9123"))),
                 new FindCommand(new LocationContainsKeywordsPredicate(List.of("clementi"))),
+                new FindCommand(new LocationContainsKeywordsPredicate(List.of("1/2"))),
                 new FindCommand(new IntentionMatchesPredicate(ClientIntention.BUYER)),
                 new FindCommand(new IntentionMatchesPredicate(ClientIntention.BOTH)),
                 new FindCommand(new PropertyStatusMatchesPredicate(PropertyStatus.VIEWING)),
