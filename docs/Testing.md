@@ -29,6 +29,17 @@ You can run tests in two ways.
 
 --------------------------------------------------------------------------------------------------------------------
 
+## Testing Windows display scaling
+
+The Windows CI job repeats the feedback-layout tests at 125% display scaling. To reproduce this locally in PowerShell:
+
+```powershell
+.\gradlew.bat test --tests "*ResidexUiTest.resultDisplay*" "-PtestUiScale=1.25"
+```
+
+Use `"-PtestUiScale=1.0"` to compare with 100% scaling. Omit the property to use the computer's normal scale.
+The property applies to the test JVM and leaves the application's display settings unchanged.
+
 ## Types of tests
 
 This project has three types of tests:

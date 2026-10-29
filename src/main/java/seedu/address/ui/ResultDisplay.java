@@ -5,8 +5,10 @@ import static java.util.Objects.requireNonNull;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.skin.ScrollPaneSkin;
 import javafx.scene.control.skin.TextAreaSkin;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
@@ -18,6 +20,7 @@ import javafx.scene.text.TextBoundsType;
 public class ResultDisplay extends UiPart<Region> {
 
     private static final String FXML = "ResultDisplay.fxml";
+    private static final double HEIGHT_ROUNDING_ALLOWANCE = 1;
 
     @FXML
     private TextArea resultDisplay;
@@ -40,6 +43,9 @@ public class ResultDisplay extends UiPart<Region> {
      */
     private void configureHeight() {
         ScrollPane scrollPane = (ScrollPane) resultDisplay.getChildrenUnmodifiable().get(0);
+        ScrollPaneSkin scrollSkin = new ScrollPaneSkin(scrollPane);
+        scrollPane.setSkin(scrollSkin);
+        ScrollBar verticalBar = scrollSkin.getVerticalScrollBar();
         Region content = (Region) scrollPane.getContent();
         Text measurement = new Text();
         // Match TextAreaSkin's paragraph metrics, including the space above and below each line.
@@ -47,18 +53,23 @@ public class ResultDisplay extends UiPart<Region> {
         resultDisplay.prefHeightProperty().bind(Bindings.createDoubleBinding(() -> {
             measurement.setText(resultDisplay.getText());
             measurement.setFont(resultDisplay.getFont());
+            // Reserve the styled scrollbar width even while it is hidden, so overflow cannot add a wrapped line.
             measurement.setWrappingWidth(Math.max(1, resultDisplay.getWidth()
-                    - resultDisplay.getInsets().getLeft() - resultDisplay.getInsets().getRight()
-                    - scrollPane.getInsets().getLeft() - scrollPane.getInsets().getRight()
-                    - content.getInsets().getLeft() - content.getInsets().getRight()));
-            return Math.ceil(measurement.getLayoutBounds().getHeight())
-                    + content.getInsets().getTop() + content.getInsets().getBottom()
-                    + scrollPane.getInsets().getTop() + scrollPane.getInsets().getBottom()
-                    + resultDisplay.getInsets().getTop() + resultDisplay.getInsets().getBottom();
+                    - resultDisplay.snappedLeftInset() - resultDisplay.snappedRightInset()
+                    - scrollPane.snappedLeftInset() - scrollPane.snappedRightInset()
+                    - content.snappedLeftInset() - content.snappedRightInset()
+                    - scrollPane.snapSizeX(verticalBar.prefWidth(-1))));
+            // Leave a small allowance before snapping to avoid fractional-pixel overflow at 125% scaling.
+            return content.snapSizeY(measurement.getLayoutBounds().getHeight() + HEIGHT_ROUNDING_ALLOWANCE)
+                    + content.snappedTopInset() + content.snappedBottomInset()
+                    + scrollPane.snappedTopInset() + scrollPane.snappedBottomInset()
+                    + resultDisplay.snappedTopInset() + resultDisplay.snappedBottomInset();
         }, resultDisplay.textProperty(), resultDisplay.fontProperty(), resultDisplay.widthProperty(),
-                content.insetsProperty(), scrollPane.insetsProperty(), resultDisplay.insetsProperty()));
+                content.insetsProperty(), scrollPane.insetsProperty(), resultDisplay.insetsProperty(),
+                verticalBar.prefWidthProperty(), verticalBar.insetsProperty(), scrollPane.viewportBoundsProperty(),
+                resultDisplay.sceneProperty()));
         getRoot().prefHeightProperty().bind(Bindings.createDoubleBinding(() ->
-                resultDisplay.getPrefHeight() + getRoot().getInsets().getTop() + getRoot().getInsets().getBottom(),
+                resultDisplay.getPrefHeight() + getRoot().snappedTopInset() + getRoot().snappedBottomInset(),
                 resultDisplay.prefHeightProperty(), getRoot().insetsProperty()));
     }
 

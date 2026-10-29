@@ -32,6 +32,10 @@ test {
     enableAssertions = true
     useJUnitPlatform()
     finalizedBy jacocoTestReport
+    if (project.hasProperty('testUiScale')) {
+        systemProperty 'glass.win.uiScale', project.property('testUiScale')
+        systemProperty 'glass.win.forceIntegerRenderScale', 'false'
+    }
 }
 
 tasks.register('captureDocumentationScreenshots', JavaExec) {

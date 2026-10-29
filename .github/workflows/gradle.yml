@@ -36,6 +36,10 @@ jobs:
         if: runner.os == 'Linux'
         run: xvfb-run -a ./gradlew check coverage
 
+      - name: Check feedback layout at 125% display scaling
+        if: runner.os == 'Windows'
+        run: ./gradlew test --tests '*ResidexUiTest.resultDisplay*' '-PtestUiScale=1.25'
+
       - name: Upload coverage reports to Codecov
         if: runner.os == 'Linux'
         uses: codecov/codecov-action@v7

@@ -55,6 +55,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 * **Command:** Type a command and press Enter or click **Run**. The feedback box below shows its result or an input error.
   It grows to fit wrapped messages and shrinks again for short results. For unusually long output or a small window,
   scroll inside the feedback box to read the remaining lines; space is kept for the client list below.
+  The scrollbar has a separate strip on the right, with padding to keep it clear of the message.
 * **Client list:** The heading is **All clients**, **Filtered clients** or **Client details**.
   The count shows how many clients are displayed out of all stored clients.
 * **Client cards:** Each card shows its displayed index, name, phone, email, derived intention,

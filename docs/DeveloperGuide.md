@@ -85,6 +85,10 @@ The current screens are illustrated in the [User Guide](UserGuide.html#reading-t
 its preferred height. It recalculates when feedback or wrapping changes, including window resizing.
 The measurement uses JavaFX's `LOGICAL_VERTICAL_CENTER` text bounds to match `TextAreaSkin` line metrics;
 the default `Text` bounds can underestimate the height with some fonts.
+Wrapping always reserves the styled vertical scrollbar's preferred width, including when it is hidden.
+This prevents the scrollbar appearing and making the measured text wrap onto an extra line.
+Insets and text height are snapped to JavaFX's physical pixel grid, with a small height allowance for rounding
+at fractional display scales. Padding separates the message, scrollbar track and feedback-box border.
 `MainWindow` keeps a minimum feedback height of 70 pixels and caps it at half the content area's height,
 preserving room for the client list. Longer output remains scrollable in the read-only text area.
 Each new result resets the caret and scroll position to the start of the feedback.
@@ -1396,6 +1400,9 @@ testers are expected to do more *exploratory* testing.
    Expected: The client list remains usable below the feedback. Scroll inside the feedback box to reach its end.
 5. Enter another invalid command, then `list`.<br>
    Expected: New feedback starts at the first line. The short list result shrinks the box again.
+6. On Windows, repeat at 125% display scaling, including resizing to 700 pixels wide.<br>
+   Expected: Messages that fit the height limit remain fully visible without a scrollbar. When scrolling is needed,
+   the bar stays to the right of the text and the last line is fully readable after scrolling to the end.
 
 ### Reading long email addresses on client cards
 

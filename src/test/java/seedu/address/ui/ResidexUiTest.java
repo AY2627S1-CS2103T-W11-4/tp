@@ -1299,12 +1299,42 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void resultDisplay_scrollbarWidthChanges_reserveSpaceBeforeOverflow() throws Exception {
+        runOnFxThread(() -> {
+            MainWindow window = createWindow(new ModelManager());
+            try {
+                Region root = layoutWindow(window, 700, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                runCommand(root, "add n/Eve p/91230005 e/eve@b");
+                assertFeedbackFits(root);
+                double initialHeight = result.getPrefHeight();
+                verticalScrollBar(result).setStyle("-fx-pref-width: 200px;");
+                assertFeedbackFits(root);
+                assertEquals(200, verticalScrollBar(result).prefWidth(-1), 0.1);
+                assertTrue(result.getPrefHeight() > initialHeight,
+                        "A wider scrollbar must increase the space reserved for wrapped feedback");
+                for (int width : new int[]{720, 740, 760, 740, 720, 700}) {
+                    root.resize(width, 900);
+                    assertFeedbackFits(root);
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void resultDisplay_windowResize_updatesOnNormalJavaFxPulses() throws Exception {
         CompletableFuture<MainWindow> created = new CompletableFuture<>();
         runOnFxThread(() -> {
             MainWindow window = createWindow(new ModelManager());
             window.getPrimaryStage().setOpacity(0);
             window.show();
+            if (System.getProperty("os.name").startsWith("Windows")
+                    && System.getProperty("glass.win.uiScale") != null) {
+                assertEquals(Double.parseDouble(System.getProperty("glass.win.uiScale")),
+                        window.getPrimaryStage().getOutputScaleX(), 0.01);
+            }
             created.complete(window);
         });
         MainWindow window = created.get(15, TimeUnit.SECONDS);
@@ -1366,15 +1396,26 @@ public class ResidexUiTest {
                 assertTrue(((Region) root.lookup("#personListPanelPlaceholder")).getHeight() > 80,
                         "Long feedback must leave room for the client list at the minimum window size");
                 assertTrue(verticalScrollBar(result).isVisible());
+                Text feedback = (Text) result.lookup(".text");
+                ScrollBar verticalBar = verticalScrollBar(result);
+                assertTrue(feedback.localToScene(feedback.getLayoutBounds()).getMaxX()
+                        < verticalBar.localToScene(verticalBar.getBoundsInLocal()).getMinX(),
+                        "The scrollbar must have its own space to the right of the feedback");
+                saveSnapshot(root, "feedback-scrollable");
                 result.setScrollTop(Double.MAX_VALUE);
                 layoutFeedback(root);
                 assertTrue(result.getScrollTop() > 0, "All feedback must remain reachable by scrolling");
+                Region viewport = (Region) result.lookup(".viewport");
+                assertTrue(feedback.localToScene(feedback.getLayoutBounds()).getMaxY()
+                        <= viewport.localToScene(viewport.getBoundsInLocal()).getMaxY(),
+                        "The last line must be fully visible when scrolled to the end");
 
                 runCommand(root, "add n/Eve p/91230005 e/eve@b");
                 layoutFeedback(root);
                 assertEquals(Email.MESSAGE_CONSTRAINTS, result.getText());
                 assertEquals(0, result.getScrollTop(), 1);
                 assertEquals(0, result.getCaretPosition());
+                saveSnapshot(root, "feedback-email-compact");
 
                 root.resize(1100, 900);
                 assertFeedbackFits(root);
