@@ -89,8 +89,11 @@ Wrapping always reserves the styled vertical scrollbar's preferred width, includ
 This prevents the scrollbar appearing and making the measured text wrap onto an extra line.
 Insets and text height are snapped to JavaFX's physical pixel grid, with a small height allowance for rounding
 at fractional display scales. Padding separates the message, scrollbar track and feedback-box border.
-`MainWindow` keeps a minimum feedback height of 70 pixels and caps it at half the content area's height,
-preserving room for the client list. Longer output remains scrollable in the read-only text area.
+`MainWindow` keeps a minimum feedback height of 70 pixels. The feedback can use the remaining content height
+after the command box, padding, spacing and margins, while reserving 96 pixels for the client panel.
+Below 700 pixels of content height, the `compact` pseudo-class reduces the header to 36 pixels and tightens
+the top padding, command-label gap and section gaps. This lets the full email-format error fit at the minimum
+window size without shrinking the text. Unusually long output remains scrollable in the read-only text area.
 Each new result resets the caret and scroll position to the start of the feedback.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-W11-4/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-W11-4/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
@@ -1400,9 +1403,10 @@ testers are expected to do more *exploratory* testing.
    Expected: The client list remains usable below the feedback. Scroll inside the feedback box to reach its end.
 5. Enter another invalid command, then `list`.<br>
    Expected: New feedback starts at the first line. The short list result shrinks the box again.
-6. On Windows, repeat at 125% display scaling, including resizing to 700 pixels wide.<br>
-   Expected: Messages that fit the height limit remain fully visible without a scrollbar. When scrolling is needed,
-   the bar stays to the right of the text and the last line is fully readable after scrolling to the end.
+6. On Windows, repeat at 100%, 125% and 200% display scaling, including the minimum 700-by-600 window size.<br>
+   Expected: The header and gaps become compact. The entire email-format error is visible without scrolling,
+   and the client list remains visible below it. Unusually long results still scroll, with the bar to the right
+   of the text and the last line fully readable after scrolling to the end.
 
 ### Reading long email addresses on client cards
 

@@ -39,6 +39,21 @@
     -fx-padding: 18 24 0 24;
 }
 
+.app-shell:compact .app-header {
+    -fx-min-height: 36;
+    -fx-pref-height: 36;
+    -fx-max-height: 36;
+}
+
+.app-shell:compact .app-content {
+    -fx-padding: 8 24 0 24;
+    -fx-spacing: 6;
+}
+
+.app-shell:compact .command-box {
+    -fx-spacing: 4;
+}
+
 .section-heading {
     -fx-font-size: 16px;
     -fx-font-weight: bold;

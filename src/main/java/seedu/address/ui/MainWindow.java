@@ -4,11 +4,13 @@ import java.nio.file.Path;
 import java.util.logging.Logger;
 
 import javafx.beans.binding.Bindings;
+import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -25,7 +27,9 @@ public class MainWindow extends UiPart<Stage> {
 
     private static final String FXML = "MainWindow.fxml";
     private static final double MIN_RESULT_HEIGHT = 70;
-    private static final double MAX_RESULT_HEIGHT_RATIO = 0.5;
+    private static final double MIN_CLIENT_PANEL_HEIGHT = 96;
+    private static final double COMPACT_LAYOUT_HEIGHT = 700;
+    private static final PseudoClass COMPACT_LAYOUT = PseudoClass.getPseudoClass("compact");
 
     private final Logger logger = LogsCenter.getLogger(getClass());
 
@@ -37,6 +41,12 @@ public class MainWindow extends UiPart<Stage> {
     private PersonListPanel personListPanel;
     private ResultDisplay resultDisplay;
     private HelpWindow helpWindow;
+
+    @FXML
+    private VBox appShell;
+
+    @FXML
+    private VBox appContent;
 
     @FXML
     private StackPane commandBoxPlaceholder;
@@ -64,6 +74,8 @@ public class MainWindow extends UiPart<Stage> {
 
         // Configure the UI
         setWindowDefaultSize(logic.getGuiSettings());
+        appShell.heightProperty().addListener(observable -> appShell.pseudoClassStateChanged(COMPACT_LAYOUT,
+                appShell.getHeight() < COMPACT_LAYOUT_HEIGHT));
 
         setAccelerators();
 
@@ -95,16 +107,29 @@ public class MainWindow extends UiPart<Stage> {
 
         resultDisplay = new ResultDisplay();
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());
-        Region content = (Region) resultDisplayPlaceholder.getParent();
-        resultDisplayPlaceholder.prefHeightProperty().bind(Bindings.max(MIN_RESULT_HEIGHT,
-                Bindings.min(resultDisplay.getRoot().prefHeightProperty(),
-                        content.heightProperty().multiply(MAX_RESULT_HEIGHT_RATIO))));
+        configureFeedbackHeight();
 
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);
         statusbarPlaceholder.getChildren().add(statusBarFooter.getRoot());
 
         CommandBox commandBox = new CommandBox(this::executeCommand);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
+    }
+
+    /**
+     * Fits feedback into the remaining content area while preserving space for the client list.
+     */
+    private void configureFeedbackHeight() {
+        Insets listMargin = VBox.getMargin(personListPanelPlaceholder);
+        resultDisplayPlaceholder.prefHeightProperty().bind(Bindings.createDoubleBinding(() -> {
+            double availableHeight = appContent.getHeight()
+                    - appContent.snappedTopInset() - appContent.snappedBottomInset()
+                    - commandBoxPlaceholder.getHeight() - 2 * appContent.snapSpaceY(appContent.getSpacing())
+                    - appContent.snapSpaceY(listMargin.getTop()) - appContent.snapSpaceY(listMargin.getBottom())
+                    - MIN_CLIENT_PANEL_HEIGHT;
+            return Math.max(MIN_RESULT_HEIGHT, Math.min(resultDisplay.getRoot().getPrefHeight(), availableHeight));
+        }, appContent.heightProperty(), appContent.insetsProperty(), appContent.spacingProperty(),
+                commandBoxPlaceholder.heightProperty(), resultDisplay.getRoot().prefHeightProperty()));
     }
 
     /**

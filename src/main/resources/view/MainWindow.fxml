@@ -20,13 +20,13 @@
       <stylesheets>
         <URL value="@Residex.css" />
       </stylesheets>
-      <VBox styleClass="app-shell">
+      <VBox fx:id="appShell" styleClass="app-shell">
         <HBox styleClass="app-header" alignment="CENTER_LEFT" VBox.vgrow="NEVER">
           <Label text="R E S I D E X" styleClass="brand" />
           <Region HBox.hgrow="ALWAYS" />
           <Label text="Client manager for property agents" styleClass="app-subtitle" />
         </HBox>
-        <VBox styleClass="app-content" spacing="12" minHeight="0" VBox.vgrow="ALWAYS">
+        <VBox fx:id="appContent" styleClass="app-content" spacing="12" minHeight="0" VBox.vgrow="ALWAYS">
           <StackPane fx:id="commandBoxPlaceholder" VBox.vgrow="NEVER" />
           <!-- Preserve the preferred feedback height while the client list takes the remaining space. -->
           <StackPane fx:id="resultDisplayPlaceholder" minHeight="-Infinity"

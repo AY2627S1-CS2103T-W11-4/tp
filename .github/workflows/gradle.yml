@@ -40,6 +40,10 @@ jobs:
         if: runner.os == 'Windows'
         run: ./gradlew test --tests '*ResidexUiTest.resultDisplay*' '-PtestUiScale=1.25'
 
+      - name: Check minimum feedback layout at 200% display scaling
+        if: runner.os == 'Windows'
+        run: ./gradlew test --tests '*ResidexUiTest.resultDisplay*' '-PtestUiScale=2.0'
+
       - name: Upload coverage reports to Codecov
         if: runner.os == 'Linux'
         uses: codecov/codecov-action@v7

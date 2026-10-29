@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="8" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<VBox styleClass="command-box" spacing="8" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
   <Label text="Command" styleClass="section-heading" labelFor="$commandTextField" />
   <HBox spacing="12" alignment="CENTER_LEFT">
     <TextField fx:id="commandTextField" onAction="#handleCommandEntered" HBox.hgrow="ALWAYS"

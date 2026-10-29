@@ -1327,7 +1327,9 @@ public class ResidexUiTest {
     public void resultDisplay_windowResize_updatesOnNormalJavaFxPulses() throws Exception {
         CompletableFuture<MainWindow> created = new CompletableFuture<>();
         runOnFxThread(() -> {
-            MainWindow window = createWindow(new ModelManager());
+            Model model = new ModelManager();
+            model.addPerson(new PersonBuilder().build());
+            MainWindow window = createWindow(model);
             window.getPrimaryStage().setOpacity(0);
             window.show();
             if (System.getProperty("os.name").startsWith("Windows")
@@ -1354,8 +1356,19 @@ public class ResidexUiTest {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 assertVisibleFeedbackFits((TextArea) root.lookup("#resultDisplay"));
                 assertTrue(((Region) root.lookup("#resultDisplayPlaceholder")).getHeight() > wideHeight[0]);
-                runCommand(root, "find i/buyer seller");
                 window.getPrimaryStage().setHeight(600);
+            });
+            awaitFxPulses();
+            runOnFxThread(() -> {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                assertEquals(Email.MESSAGE_CONSTRAINTS, result.getText());
+                saveSnapshot(root, "feedback-minimum-window");
+                assertVisibleFeedbackFits(result);
+                assertEquals(36, ((Region) root.lookup(".app-header")).getHeight(), 1);
+                assertTrue(((Region) root.lookup("#personListPanelPlaceholder")).getHeight() >= 95,
+                        "The compact window must preserve a usable client-list area");
+                runCommand(root, "find i/buyer seller");
             });
             awaitFxPulses();
             runOnFxThread(() -> {
@@ -1367,6 +1380,7 @@ public class ResidexUiTest {
             runOnFxThread(() -> {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 assertVisibleFeedbackFits((TextArea) root.lookup("#resultDisplay"));
+                assertEquals(60, ((Region) root.lookup(".app-header")).getHeight(), 1);
                 runCommand(root, "list");
             });
             awaitFxPulses();
