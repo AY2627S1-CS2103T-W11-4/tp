@@ -2,6 +2,8 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static seedu.address.logic.Messages.MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.List;
@@ -151,6 +153,18 @@ public class PropertyCommandParserTest {
     public void parse_deleteIndexes_success() throws Exception {
         assertEquals(new DeletePropertyCommand(Index.fromOneBased(2), Index.fromOneBased(3)),
                 parser.parseCommand("DeLp 2 3"));
+    }
+
+    @Test
+    public void parse_addpWithoutArguments_throwsInvalidFormat() {
+        assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                AddPropertyCommand.MESSAGE_USAGE), () -> parser.parseCommand("addp"));
+    }
+
+    @Test
+    public void parse_addpZeroIndex_throwsPositiveIntegerRule() {
+        assertThrows(ParseException.class, MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER, () ->
+                parser.parseCommand("addp 0 t/HDB i/Buying l/Clementi"));
     }
 
     @Test

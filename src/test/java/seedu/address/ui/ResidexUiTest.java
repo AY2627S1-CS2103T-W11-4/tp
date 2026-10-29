@@ -54,6 +54,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -61,8 +62,10 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.AddPropertyCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -934,6 +937,103 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void editCommand_punycodeDomain_updatesCardAndCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/International Client p/91110013 e/international@example.com");
+                runCommand(root, "edit 1 e/buyer@xn--bcher-kva.de");
+
+                assertFalse(result.getText().contains("Emails should be of the format"));
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("buyer@xn--bcher-kva.de", label(root, "email").getText());
+                assertEquals("buyer@xn--bcher-kva.de",
+                        model.getAddressBook().getPersonList().get(0).getEmail().value);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void remarkCommand_missingPrefix_keepsRemarkAndShowsUsage() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Remark Test p/91110011 e/remarktest@example.com");
+                runCommand(root, "remark 1 r/Call tomorrow");
+                runCommand(root, "remark 1");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, RemarkCommand.MESSAGE_USAGE),
+                        result.getText());
+                assertEquals("Call tomorrow", label(root, "remark").getText());
+                assertEquals("Call tomorrow", model.getAddressBook().getPersonList().get(0).getRemark().value);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addpCommand_missingArguments_keepsClientAndShowsUsage() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Zero Index p/88110080 e/zero@example.com");
+                runCommand(root, "addp");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
+                        AddPropertyCommand.MESSAGE_USAGE), result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("Zero Index", label(root, "name").getText());
+                assertTrue(model.getAddressBook().getPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addpCommand_zeroClientIndex_keepsClientAndNamesPositiveIntegerRule() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Zero Index p/88110080 e/zero@example.com");
+                runCommand(root, "addp 0 t/h i/Buying l/singapore");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals("Client index must be a positive integer, starting from 1.", result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("Zero Index", label(root, "name").getText());
+                assertTrue(model.getAddressBook().getPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void editCommand_missingField_keepsClientAndNamesPrefixes() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
@@ -1256,6 +1356,107 @@ public class ResidexUiTest {
             command.setText("list");
             assertFalse(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
             window.getPrimaryStage().close();
+        });
+    }
+
+    @Test
+    public void clientCards_longEmails_wrapWithoutClippingWhenResized() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            String reportedEmail = "christopher.alexander.property.management@internationalrealestateconsulting.com";
+            String unbrokenEmail = "a".repeat(64) + "@" + "b".repeat(63) + ".com";
+            model.addPerson(new PersonBuilder().withName("Long Email Client").withEmail(reportedEmail)
+                    .withRemark("Call after 6 pm").withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build());
+            model.addPerson(new PersonBuilder().withName("Unbroken Email Client").withEmail(unbrokenEmail)
+                    .withRemark("Arrange a viewing").withProperties(CLEMENTI_HDB).build());
+            MainWindow window = createWindow(model);
+            try {
+                for (int width : new int[] {1100, 700, 1100}) {
+                    int height = width == 700 ? 600 : 900;
+                    Region root = layoutWindow(window, width, height);
+                    assertEquals(width, root.getScene().getWidth(), 1);
+                    assertEquals(height, root.getScene().getHeight(), 1);
+                    ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                    for (int index = 0; index < model.getFilteredPersonList().size(); index++) {
+                        list.scrollTo(index);
+                        root.applyCss();
+                        root.layout();
+                        final int displayedIndex = index;
+                        ListCell<?> cell = list.lookupAll(".list-cell").stream().map(ListCell.class::cast)
+                                .filter(candidate -> !candidate.isEmpty() && candidate.getIndex() == displayedIndex)
+                                .findFirst().orElseThrow();
+                        Region card = (Region) cell.getGraphic();
+                        Label email = label(card, "email");
+                        Text renderedEmail = (Text) email.lookup(".text");
+                        assertEquals(model.getFilteredPersonList().get(index).getEmail().value,
+                                renderedEmail.getText(), "The rendered email must include every character");
+                        if (width == 700) {
+                            assertTrue(email.getHeight() > email.getFont().getSize() * 2,
+                                    "Long emails must wrap onto multiple lines at the minimum width");
+                        }
+                        assertTrue(email.getHeight() >= email.prefHeight(email.getWidth()) - 1,
+                                "The email row must expand to fit its wrapped text");
+                        assertTrue(renderedEmail.getLayoutBounds().getWidth() <= email.getWidth() + 1,
+                                "The rendered text must fit within the email label");
+                        assertTrue(email.localToScene(email.getBoundsInLocal()).getMaxX()
+                                <= card.localToScene(card.getBoundsInLocal()).getMaxX());
+                        Label remark = label(card, "remark");
+                        assertTrue(email.localToScene(email.getBoundsInLocal()).getMaxY()
+                                <= remark.localToScene(remark.getBoundsInLocal()).getMinY(),
+                                "Wrapped emails must not overlap the remark below");
+                        assertTrue(cell.getHeight() >= card.getHeight() + 10,
+                                "The list cell must grow with the card and preserve the gap below it");
+                    }
+                    for (Node node : list.lookupAll(".scroll-bar")) {
+                        ScrollBar bar = (ScrollBar) node;
+                        if (bar.getOrientation() == Orientation.HORIZONTAL) {
+                            assertFalse(bar.isVisible(), "Reading a complete email must not need horizontal scrolling");
+                        }
+                    }
+                    saveSnapshot(root, "client-emails-" + width);
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void clientCards_emailEditsAndFiltering_resizeRowsForLongAndShortAddresses() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Person otherClient = new PersonBuilder().withName("Other Client").withEmail("other@example.com").build();
+            String shortEmail = "target@example.com";
+            String longEmail = "a".repeat(64) + "@" + "b".repeat(63) + ".com";
+            model.addPerson(otherClient);
+            model.addPerson(new PersonBuilder().withName("Target Client").withEmail(shortEmail).build());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 700, 600);
+                runCommand(root, "find n/Target");
+                double originalHeight = ((Region) root.lookup("#cardPane")).getHeight();
+                for (String emailValue : List.of(longEmail, shortEmail)) {
+                    runCommand(root, "edit 1 e/" + emailValue);
+                    runCommand(root, "find n/Target");
+                    Region card = (Region) root.lookup("#cardPane");
+                    Label email = label(card, "email");
+                    assertEquals(emailValue, ((Text) email.lookup(".text")).getText());
+                    assertTrue(email.getHeight() >= email.prefHeight(email.getWidth()) - 1);
+                    if (emailValue.equals(longEmail)) {
+                        assertTrue(card.getHeight() > originalHeight,
+                                "A long email must expand the card even without a remark or properties");
+                    } else {
+                        assertEquals(originalHeight, card.getHeight(), 1,
+                                "Returning to a short email must release the extra row height");
+                    }
+                    runCommand(root, "list");
+                    assertEquals(otherClient, model.getFilteredPersonList().get(0));
+                    assertEquals(emailValue, model.getFilteredPersonList().get(1).getEmail().value);
+                    runCommand(root, "find n/Target");
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
         });
     }
 

@@ -248,9 +248,23 @@ default and minimum Help sizes. Clipboard contents are restored after tests that
 `FindCommandParser` accepts exactly one of the shared `CliSyntax` prefixes: `n/`, `e/`, `p/`, `l/`, `i/`, `s/`, `t/`, `pr/` or `bd/`.
 For example, `find n/Alice Bob` searches names; prefix letters are case-insensitive.
 Name, email, phone, and location searches use case-insensitive substring matching with OR semantics across keywords.
+`PhoneContainsKeywordsPredicate` first reduces each keyword to its digits (dropping a leading `+65`, hyphens and brackets). A keyword containing any other character, or left with no digits, matches nothing. Because `FindCommandParser` splits input on whitespace, a number typed with spaces becomes several keywords combined with OR.
 `LocationContainsKeywordsPredicate` checks every entry in `Person#getProperties()` and returns a client once if any
 property location contains any keyword. Clients without properties do not match a location search.
 For example, `find l/clementi` matches clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
+Location keywords retain literal slashes, so `find l/1/2` matches a stored location containing `1/2`.
+`FindCommandParser` allows these literals only for location searches. Tokens beginning with alphabetic letters
+immediately followed by `/` remain reserved as field prefixes, consistent with property-command parsing.
+The location branch calls `parseLocationKeywords` to make this parsing behaviour explicit.
+This has a known limitation: `N/A` and `Park/Connector` are rejected even when intended as literal location keywords.
+`N/A` is interpreted as a second `n/` selector; `Park/Connector` is interpreted as an unsupported selector.
+The compiled `FIELD_PREFIX` pattern checks only the start of each keyword with `Matcher.lookingAt()`,
+so field detection does not depend on the characters in its value, including Unicode line separators.
+Recognised additional selectors (including repeated selectors and uppercase variants) are rejected before
+unsupported selectors, preserving mixed-field validation and its error precedence.
+`FindCommandParserTest` covers slash literals and selector validation; `LocationSearchIntegrationTest` adds
+locations through `addp` and verifies slash matching, ordinary searches, OR matching, JSON reloads,
+displayed-index targeting after filtering, and unchanged saved data on rejection.
 Intention searches accept exactly one value, `buyer`, `seller` or `both`, case-insensitively.
 Missing keywords, repeated or mixed prefixes, and unsupported selectors are rejected.
 `find i/unspecified` is rejected. `IntentionMatchesPredicate` includes `BOTH` in buyer/seller searches and matches
@@ -326,6 +340,8 @@ while David, Irfan and Roy have no properties. This demonstrates every derived r
 without changing how real saved clients are loaded.
 Alex and Charlotte also have example remarks matching the UG screenshots; the remaining sample remarks are empty.
 The screenshot helper uses these bundled remarks directly. Existing data is loaded as saved, including empty remarks.
+Bernice's and Charlotte's sample properties also record their number of bedrooms (3 or 4), so the User Guide's
+`find bd/3` example returns clients on a fresh install.
 All property-copy methods derive the new role automatically while leaving the original `Person` unchanged.
 `copyWithProperties` asserts that the replacement preserves client identity, an internal copy invariant.
 This assertion does not validate user input or perform required work. Gradle tests enable assertions by default.
@@ -495,6 +511,8 @@ For deletion, call `original.withoutProperty(propertyIndex)`. Both methods retur
 `IndexOutOfBoundsException` when the property index is outside this client's list.
 All three methods preserve unrelated client fields and leave the original person unchanged.
 Apply the returned person through `model.setPerson`; calling a method alone does not update the model.
+
+`EditCommand` and `RemarkCommand` return a "No change" result without calling `Model#commitAddressBook()` when the edited client equals the original, so no-op commands add nothing to the undo history, keep the redo history, and leave the current filter and client view unchanged.
 
 Existing `EditCommand` and `RemarkCommand` carry the property list into the replacement person so that changing contact
 details or remarks preserves all properties. Future code that reconstructs a `Person` must also preserve the list.
@@ -1340,6 +1358,17 @@ testers are expected to do more *exploratory* testing.
    1. Use Tab to reach a Copy button, then activate it with Space.<br>
       Expected: The example can be copied without a mouse. If a button shows **Failed**, click it again to retry.
 
+### Reading long email addresses on client cards
+
+1. Add a client with a long email, for example:<br>
+   `add n/Long Email Client p/88110090 e/christopher.alexander.property.management@internationalrealestateconsulting.com`
+2. Resize the window to its minimum size, then widen it again.<br>
+   Expected: The full email wraps when needed, without ellipses, horizontal scrolling or overlap with later fields.
+3. Run `find n/Long Email Client`, then `list`.<br>
+   Expected: The email remains fully readable in both filtered and complete lists.
+4. Repeat with an email containing a long run of letters without separators.<br>
+   Expected: The text wraps within the email row and the client card grows to fit it.
+
 ### Viewing complete client details
 
 Prerequisite: At least two clients exist. Choose one with a remark and multiple properties,
@@ -1489,6 +1518,28 @@ Run these steps in order; client indexes below refer to the filtered list.
       Missing, blank or invalid property intentions such as `"buying extra"` must also fail.
       Case variants such as `"buying"` and padded values such as `" SELLING "` load successfully without rewriting the file.
       Close the app without issuing commands and restore the valid backup before continuing.
+
+### Searching property locations containing slashes
+
+Prerequisite: Use test data without a client named Slash Test or a property location containing `9/9`.
+
+1. Enter `add n/Slash Test p/91008201 e/slashtest@example.com`, then `find p/91008201`.
+   Enter `addp 1 t/HDB i/Buying l/Tampines Street 1/2`, then
+   `addp 1 t/HDB i/Buying l/Clementi Avenue 1/2`.
+1. Enter `find l/1/2`, then `find L/1/2`.<br>
+   Expected: Slash Test appears once in each result, despite having two matching properties.
+1. Enter `find l/clementi`, then `find l/9/9 1/2`.<br>
+   Expected: Slash Test appears for both searches; ordinary substring and OR matching still work.
+1. Enter `find l/9/9`.<br>
+   Expected: No clients are listed. Enter `list` to restore all clients.
+1. Enter `find l/1/2`, then try `find l/1/2 n/Slash`, `find l/1/2 L/Clementi`
+   and `find l/1/2 x/foo`.<br>
+   Expected: Mixed or repeated fields report `Specify exactly one search field.`; `x/foo` reports an invalid
+   search field. The previous results and stored client data remain unchanged.
+1. Try `find l/N/A` and `find l/Park/Connector`.<br>
+   Expected: Both are rejected as a known limitation of alphabetic slash keywords.
+   `N/A` is treated as an additional name selector; `Park/Connector` is treated as an unsupported selector.
+1. Delete the test client after verifying its displayed index.
 
 ### Deriving and finding client intentions
 

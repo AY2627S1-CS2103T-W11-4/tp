@@ -58,6 +58,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 * **Client cards:** Each card shows its displayed index, name, phone, email, derived intention,
   any remark and numbered property summaries. A property summary shows type, intention, location,
   optional price and transaction status. Clients without properties have intention **Not specified**.
+  Long email addresses wrap onto additional lines so the full address remains readable at narrow window widths.
 * **Prices:** Monetary amounts belong to property entries. There is no client budget amount on the right of a card;
   the badge on the right shows the derived intention.
 * **Full details:** `view INDEX` replaces the list with the selected client's details and a reminder to enter `list`.
@@ -218,6 +219,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`
 * Client edits preserve all property entries.
   Use `editp` to change a property.
 * After a successful `edit`, the list is reset to show all clients.
+* If the new details are identical to the current ones, RESIDEX replies "No change", leaves the current list and view as they are, and does not add an entry to the undo history or clear the redo history.
 * Client intention cannot be edited directly. Any `i/` field is rejected without changing the client.
 * The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
   Changing only the capitalisation or spacing of the selected client's own name is allowed.
@@ -377,11 +379,18 @@ Property bedrooms | `bd/`
   Long search field aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
 * Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
+* Phone searches compare digits only: hyphens, brackets and a leading `+65` in a keyword are ignored, so `find p/9123-4567` and `find p/+6591234567` both match `91234567`. A keyword containing letters or other symbols matches nothing.
+* Spaces separate keywords, so `find p/9123 4567` lists clients whose phone contains `9123` **or** `4567`. To search for one full number, type it without spaces.
 * Multiple keywords use `OR` matching: a client is returned if any keyword matches the selected search field.
 * Location searches check all property entries attached to each client. A client appears once if any location matches;
   clients without property entries do not match. Enter keywords without quotation marks.
 * Spaces separate location keywords. A multiword location search matches any of its keywords independently;
   it does not search for the whole phrase or require an exact address match.
+* Location keywords can contain literal slashes: `find l/1/2` matches a location containing `1/2`.
+  Alphabetic words immediately followed by `/` are reserved as field prefixes, so keywords such as `n/Alice`
+  or `x/foo` are rejected. This also limits literal location text: `find l/N/A` and `find l/Park/Connector`
+  are rejected even when you intend them as location keywords.
+  Combining fields, such as `find l/1/2 n/Alice`, is also rejected.
 * Intention searches require exactly one complete value: `buyer`, `seller` or `both`, in any capitalization.
   `find i/unspecified` is not supported.
 * `find i/buyer` shows Buyer clients first, then Buyer / Seller clients.
@@ -417,6 +426,7 @@ Examples:
 * `find p/9123` finds phone numbers containing `9123`.
 * `find l/clementi` finds clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
 * `find l/clementi woodlands` finds clients with any property location containing `clementi` or `woodlands`.
+* `find l/1/2` finds clients with locations such as `Tampines Street 1/2`.
 * `find l/Clementi Ave 3` searches for `Clementi`, `Ave`, or `3` independently. It matches locations such as
   `Clementi Ave 3`, `Woodlands Clementi`, `Bedok Ave 1`, and `Tampines Street 3`.
 * `find i/buyer` lists Buyer clients followed by Buyer / Seller clients.
@@ -458,6 +468,7 @@ Format: `remark INDEX r/[REMARK]`
 * The supplied remark replaces the existing remark. Enter `r/` without text to remove it.
 * Contact details, intention and properties are kept.
 * After a successful `remark`, the list is reset to show all clients.
+* If the new remark is identical to the current one, RESIDEX replies "No change", leaves the current list and view as they are, and does not add an entry to the undo history or clear the redo history.
 
 Examples:
 
