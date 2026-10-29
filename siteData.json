@@ -77,6 +77,7 @@
         "viewing-complete-client-details-2": "Viewing complete client details",
         "detecting-duplicate-clients": "Detecting duplicate clients",
         "managing-client-properties": "Managing client properties",
+        "searching-property-locations-containing-slashes": "Searching property locations containing slashes",
         "deriving-and-finding-client-intentions": "Deriving and finding client intentions",
         "recording-and-finding-property-transaction-stages": "Recording and finding property transaction stages",
         "finding-clients-by-property-type-and-price": "Finding clients by property type and price",
