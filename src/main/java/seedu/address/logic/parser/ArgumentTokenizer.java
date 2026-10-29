@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
  * 2. Leading and trailing whitespaces of an argument value will be discarded.<br>
  * 3. An argument may be repeated and all its values will be accumulated e.g. the value of {@code t/}
  *    in the above example.<br>
+ * 4. Prefix letters are matched without regard to case. The argument value keeps its original spelling.<br>
  */
 public class ArgumentTokenizer {
 
@@ -60,19 +61,34 @@ public class ArgumentTokenizer {
     /**
      * Returns the index of the first occurrence of {@code prefix} in
      * {@code argsString} starting from index {@code fromIndex}. An occurrence
-     * is valid if there is a whitespace before {@code prefix}. Returns -1 if no
-     * such occurrence can be found.
+     * is valid if there is a whitespace before {@code prefix}. Prefix letters
+     * are compared without regard to case, so {@code N/} matches {@code n/}.
+     * Returns -1 if no such occurrence can be found.
      *
      * E.g if {@code argsString} = "e/hip/900", {@code prefix} = "p/" and
      * {@code fromIndex} = 0, this method returns -1 as there are no valid
      * occurrences of "p/" with whitespace before it. However, if
-     * {@code argsString} = "e/hi p/900", {@code prefix} = "p/" and
+     * {@code argsString} = "e/hi P/900", {@code prefix} = "p/" and
      * {@code fromIndex} = 0, this method returns 5.
      */
     private static int findPrefixPosition(String argsString, String prefix, int fromIndex) {
-        int prefixIndex = argsString.indexOf(" " + prefix, fromIndex);
+        int prefixIndex = indexOfIgnoreCase(argsString, " " + prefix, fromIndex);
         return prefixIndex == -1 ? -1
                 : prefixIndex + 1; // +1 as offset for whitespace
+    }
+
+    /**
+     * Returns the first index of {@code needle} at or after {@code fromIndex}.
+     * Letters are compared without regard to case. A match has the same length as {@code needle}.
+     */
+    private static int indexOfIgnoreCase(String argsString, String needle, int fromIndex) {
+        int limit = argsString.length() - needle.length();
+        for (int i = Math.max(fromIndex, 0); i <= limit; i++) {
+            if (argsString.regionMatches(true, i, needle, 0, needle.length())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**

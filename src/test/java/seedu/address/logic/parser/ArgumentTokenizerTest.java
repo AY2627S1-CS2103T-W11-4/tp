@@ -116,6 +116,26 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
+    public void tokenize_prefixLetterCase_matchesCanonicalPrefixAndPreservesValue() {
+        Prefix name = new Prefix("n/");
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" N/Gus P/91230010", name, pSlash);
+        assertPreambleEmpty(argMultimap);
+        assertArgumentPresent(argMultimap, name, "Gus");
+        assertArgumentPresent(argMultimap, pSlash, "91230010");
+
+        argMultimap = ArgumentTokenizer.tokenize(" n/Amy N/Bob", name);
+        assertArgumentPresent(argMultimap, name, "Amy", "Bob");
+
+        argMultimap = ArgumentTokenizer.tokenize(" E/hip/900", new Prefix("e/"), pSlash);
+        assertArgumentAbsent(argMultimap, pSlash);
+        assertArgumentPresent(argMultimap, new Prefix("e/"), "hip/900");
+
+        argMultimap = ArgumentTokenizer.tokenize(" pr/800000", pSlash);
+        assertArgumentAbsent(argMultimap, pSlash);
+        assertPreamblePresent(argMultimap, "pr/800000");
+    }
+
+    @Test
     public void tokenize_multipleArgumentsWithRepeats() {
         // Two arguments repeated, some have empty values
         String argsString = "SomePreambleString -t dashT-Value ^Q ^Q -t another dashT value p/ pSlash value -t";

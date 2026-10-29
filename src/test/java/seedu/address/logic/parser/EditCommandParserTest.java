@@ -123,6 +123,15 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_uppercaseNamePrefix_success() {
+        Index targetIndex = INDEX_FIRST_PERSON;
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Gus Tan").build();
+        EditCommand expectedCommand = new EditCommand(targetIndex, descriptor);
+
+        assertParseSuccess(parser, targetIndex.getOneBased() + " N/Gus Tan", expectedCommand);
+    }
+
+    @Test
     public void parse_oneFieldSpecified_success() {
         // name
         Index targetIndex = INDEX_THIRD_PERSON;
@@ -179,7 +188,8 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_tagArguments_failure() {
-        for (String tags : new String[] {" t/friends", " t/clients", " t/", " t/friends t/clients", " t/#invalid"}) {
+        for (String tags : new String[] {" t/friends", " T/friends", " t/clients", " t/", " t/friends t/clients",
+            " t/#invalid"}) {
             assertParseFailure(parser, "1" + tags, Messages.MESSAGE_TAGS_NOT_SUPPORTED);
             assertParseFailure(parser, "1" + tags + NAME_DESC_AMY, Messages.MESSAGE_TAGS_NOT_SUPPORTED);
             assertParseFailure(parser, "1" + NAME_DESC_AMY + tags + PHONE_DESC_AMY,
