@@ -158,6 +158,8 @@ final class HelpContent {
                                     + " Any matching keyword returns a client.",
                             "Location searches check every property of a client."
                                     + " Clients without properties do not match.",
+                            "Location keywords can contain literal slashes, such as 1/2."
+                                    + " Alphabetic words followed by / are reserved as field prefixes.",
                             "Intention requires exactly one complete value: buyer, seller or both.",
                             "Buyer and seller searches include Buyer / Seller clients, after exact-role matches.",
                             "Both matches Buyer / Seller clients only. Not specified is not a search value.",
@@ -180,6 +182,7 @@ final class HelpContent {
                             FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "gmail",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PHONE + "9123",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_LOCATION + "clementi",
+                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_LOCATION + "1/2",
                             FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer",
                             FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "both",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS + "viewing",

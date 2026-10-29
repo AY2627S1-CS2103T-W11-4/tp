@@ -1,5 +1,7 @@
 package seedu.address.storage;
 
+import java.util.Locale;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -19,7 +21,8 @@ class JsonAdaptedProperty {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Property's %s field is missing!";
     public static final String MESSAGE_INVALID_INTENTION =
-            "Saved property intention must be Buying or Selling (legacy Buyer or Seller is also accepted).";
+            "Saved property intention must be Buying or Selling (case-insensitive; "
+                    + "legacy Buyer or Seller is also accepted).";
 
     private final String type;
     private final String intention;
@@ -71,7 +74,7 @@ class JsonAdaptedProperty {
 
     /**
      * Converts saved fields into a validated property, without inferring any values from the client.
-     * Accepts canonical Buying/Selling values and legacy Buyer/Seller values exactly as saved.
+     * Accepts Buying/Selling and legacy Buyer/Seller values, ignoring case and surrounding whitespace.
      *
      * @throws IllegalValueException if a required field is missing or a supplied field is invalid.
      */
@@ -89,9 +92,9 @@ class JsonAdaptedProperty {
         if (intention == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "intention"));
         }
-        final PropertyIntention modelIntention = switch (intention) {
-            case "Buying", "Buyer" -> PropertyIntention.BUYING;
-            case "Selling", "Seller" -> PropertyIntention.SELLING;
+        final PropertyIntention modelIntention = switch (intention.strip().toLowerCase(Locale.ROOT)) {
+            case "buying", "buyer" -> PropertyIntention.BUYING;
+            case "selling", "seller" -> PropertyIntention.SELLING;
             default -> throw new IllegalValueException(MESSAGE_INVALID_INTENTION);
         };
 

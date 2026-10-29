@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -224,6 +225,64 @@ public class FindCommandParserTest {
                     new FindCommand(new LocationContainsKeywordsPredicate(List.of("clementi"))));
             assertParseSuccess(parser, " \n " + selector + "\t Clementi   \n woodlands \t ",
                     new FindCommand(new LocationContainsKeywordsPredicate(List.of("Clementi", "woodlands"))));
+        }
+    }
+
+    @Test
+    public void parse_locationKeywordsWithLiteralSlashes_returnsLocationFindCommand() {
+        for (String selector : List.of("l/", "L/")) {
+            for (String keyword : List.of("1/2", "12/34/56", "#01/02", "Blk1/2", "/2", "1/")) {
+                assertParseSuccess(parser, selector + keyword,
+                        new FindCommand(new LocationContainsKeywordsPredicate(List.of(keyword))));
+            }
+            assertParseSuccess(parser, " \n " + selector + "\t 1/2   \n Clementi 3/4 \t ",
+                    new FindCommand(new LocationContainsKeywordsPredicate(List.of("1/2", "Clementi", "3/4"))));
+        }
+    }
+
+    @Test
+    public void parse_locationKeywordsWithSlashesAndMixedSelectors_throwsParseException() {
+        for (String field : List.of("n/Alice", "e/gmail", "p/9123", "i/buyer", "l/Clementi",
+                "s/viewing", "t/HDB", "pr/500000-", "bd/3", "N/Alice", "L/", "PR/")) {
+            assertParseFailure(parser, "l/1/2 " + field, FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+            assertParseFailure(parser, "l/" + field + " 1/2", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        }
+        assertParseFailure(parser, "l/1/2 x/foo n/Alice", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        for (String field : List.of("x/foo", "X/", "location/Clementi", "Clementi/Woodlands")) {
+            assertParseFailure(parser, "l/1/2 " + field, FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+    }
+
+    @Test
+    public void parse_alphabeticSlashLocationKeywords_remainReservedAsFieldPrefixes() {
+        for (String selector : List.of("l/", "L/")) {
+            for (String keyword : List.of("N/A", "n/a")) {
+                assertParseFailure(parser, selector + keyword, FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+                assertParseFailure(parser, selector + "1/2 " + keyword, FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+            }
+            for (String keyword : List.of("Park/Connector", "park/connector", "PARK/CONNECTOR")) {
+                assertParseFailure(parser, selector + keyword, FindCommand.MESSAGE_INVALID_PROPERTY);
+                assertParseFailure(parser, selector + "1/2 " + keyword, FindCommand.MESSAGE_INVALID_PROPERTY);
+            }
+        }
+    }
+
+    @Test
+    public void parse_literalSlashesInOtherSearchFields_throwsParseException() {
+        for (String selector : List.of("n/", "e/", "p/", "i/", "s/", "t/", "pr/", "bd/")) {
+            assertParseFailure(parser, selector + "1/2", FindCommand.MESSAGE_INVALID_PROPERTY);
+        }
+    }
+
+    @Test
+    public void parse_unknownLocationSelectorWithUnicodeLineSeparator_throwsParseException() {
+        for (String separator : List.of("\u0085", "\u2028", "\u2029")) {
+            for (String field : List.of("x/", "UNKNOWN/", "location/")) {
+                String keyword = field + separator + "foo";
+                assertParseFailure(parser, "l/" + keyword, FindCommand.MESSAGE_INVALID_PROPERTY);
+                assertParseFailure(parser, "l/1/2 " + keyword, FindCommand.MESSAGE_INVALID_PROPERTY);
+                assertParseFailure(parser, "l/" + keyword + " n/Alice", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+            }
         }
     }
 
@@ -488,5 +547,20 @@ public class FindCommandParserTest {
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "bd/2 t/HDB", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
         assertParseFailure(parser, "bd/2 BD/3", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+    }
+
+    @Test
+    public void parse_missingArguments_errorShowsFormatAndExample() {
+        for (String args : List.of("", "   ")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_MISSING_ARGUMENTS);
+        }
+        for (String args : List.of("n/", "e/", "p/", "l/", "i/", "s/", "t/", "pr/", "bd/", "E/   ")) {
+            assertParseFailure(parser, args, FindCommand.MESSAGE_MISSING_KEYWORD);
+        }
+        for (String message : List.of(FindCommand.MESSAGE_MISSING_ARGUMENTS, FindCommand.MESSAGE_MISSING_KEYWORD)) {
+            assertTrue(message.contains("Format: find FIELD/KEYWORD [MORE_KEYWORDS]"), message);
+            assertTrue(message.contains("Example: find n/alex"), message);
+        }
+        assertTrue(FindCommand.MESSAGE_USAGE.contains("Name search: find n/KEYWORD [MORE_KEYWORDS]"));
     }
 }

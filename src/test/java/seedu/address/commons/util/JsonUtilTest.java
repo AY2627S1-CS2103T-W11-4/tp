@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +27,33 @@ public class JsonUtilTest {
 
     @TempDir
     public Path temporaryFolder;
+
+    @Test
+    public void fromJsonString_emptyContent_throwsEofException() {
+        for (String json : new String[]{"", " ", "\t\r\n", "\uFEFF", "\uFEFF \t\r\n"}) {
+            EOFException failure = assertThrows(EOFException.class, () ->
+                    JsonUtil.fromJsonString(json, JsonNode.class));
+
+            assertEquals("The data file is empty.", failure.getMessage());
+        }
+    }
+
+    @Test
+    public void fromJsonString_optionalLeadingBom_readsCompleteValueAndPreservesContent() throws IOException {
+        for (String prefix : new String[]{"", "\uFEFF", "\uFEFF \t\r\n"}) {
+            JsonNode value = JsonUtil.fromJsonString(prefix + "{\"text\":\"Keep\uFEFFthis\"} \n", JsonNode.class);
+
+            assertEquals("Keep\uFEFFthis", value.get("text").asText());
+        }
+    }
+
+    @Test
+    public void fromJsonString_invalidBomContent_throwsIoException() {
+        for (String json : new String[]{"\uFEFF", "\uFEFF \t\r\n", "\uFEFF\uFEFF{}", " \uFEFF{}", "{}\uFEFF",
+            "\uFEFF{", "\uFEFF{} {}", "\uFEFF{} garbage"}) {
+            assertThrows(IOException.class, () -> JsonUtil.fromJsonString(json, JsonNode.class));
+        }
+    }
 
     @Test
     public void fromJsonString_trailingContent_throwsIoException() {

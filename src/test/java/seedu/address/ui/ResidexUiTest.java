@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -53,6 +54,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -74,6 +76,7 @@ import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.DataFileLock;
@@ -628,9 +631,60 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void dataLoadingError_emptyFiles_showsPlainReasonAndPreservesFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : new String[]{"", " \t\r\n", "\uFEFF", "\uFEFF \t\r\n"}) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+            assertDataLoadingError((Exception) failure.getCause(), "The data file is empty.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void dataLoadingError_invalidJson_showsPlainReasonAndPreservesFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : new String[]{"[]", "{\"persons\":\"x\"}", "invalid JSON", "{\"persons\": ["}) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+            assertDataLoadingError((Exception) failure.getCause(),
+                    "The data file is not in the expected JSON format.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void dataLoadingError_missingReason_showsRecoveryFallback() throws Exception {
+        for (Exception cause : new Exception[]{null, new IOException(), new IOException(" \t")}) {
+            assertDataLoadingError(cause,
+                    "The data file could not be read. Check that it exists and is readable.");
+        }
+    }
+
+    @Test
     public void dataLoadingError_duplicateClients_showsValidationMessage() throws Exception {
-        assertDataLoadingError(new IllegalValueException("Persons list contains duplicate person(s)."),
+        assertSavedDataValidationError(Files.readString(Path.of("src", "test", "data",
+                "JsonSerializableAddressBookTest", "duplicatePersonAddressBook.json")),
                 "Persons list contains duplicate person(s).");
+    }
+
+    @Test
+    public void dataLoadingError_invalidProperty_showsSpecificValidationMessage() throws Exception {
+        String[] fields = {"\"price\":\"0\"", "\"status\":\"Cancelled\"", "\"bedrooms\":\"21\""};
+        String[] reasons = {PropertyPrice.MESSAGE_CONSTRAINTS, PropertyStatus.MESSAGE_CONSTRAINTS,
+            PropertyBedrooms.MESSAGE_CONSTRAINTS};
+        for (int i = 0; i < fields.length; i++) {
+            String json = """
+                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                      "properties": [{"type": "HDB", "intention": "Buying", "location": "Clementi", %s}]}]}
+                    """.formatted(fields[i]);
+
+            assertSavedDataValidationError(json, "Property 1 is invalid: " + reasons[i]);
+        }
     }
 
     // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
@@ -704,6 +758,19 @@ public class ResidexUiTest {
         });
     }
 
+    private void assertSavedDataValidationError(String json, String expectedReason) throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        Files.writeString(dataFile, json);
+        byte[] original = Files.readAllBytes(dataFile);
+        DataLoadingException failure = assertThrows(DataLoadingException.class,
+                new JsonAddressBookStorage(dataFile)::readAddressBook);
+        IllegalValueException cause = assertInstanceOf(IllegalValueException.class, failure.getCause());
+
+        assertEquals(expectedReason, cause.getMessage());
+        assertDataLoadingError(cause, expectedReason);
+        assertArrayEquals(original, Files.readAllBytes(dataFile));
+    }
+
     private void assertDataLoadingError(Exception cause, String expectedReason) throws Exception {
         runOnFxThread(() -> {
             Path dataFile = temporaryFolder.resolve("addressbook.json");
@@ -722,6 +789,10 @@ public class ResidexUiTest {
                     assertFalse(message.contains("Parser details."));
                     assertFalse(message.contains("NullPointerException"));
                     assertFalse(message.contains("JsonSerializableAddressBook"));
+                    assertFalse(message.contains("com.fasterxml.jackson"));
+                    assertFalse(message.contains("JsonMappingException"));
+                    assertFalse(message.contains("JsonParseException"));
+                    assertFalse(message.contains("[Source:"));
                     assertTrue(message.contains("has not been changed"));
                     assertTrue(message.contains("RESIDEX will close"));
                     assertTrue(message.contains("repair it or replace it with a valid backup"));
@@ -756,6 +827,25 @@ public class ResidexUiTest {
             assertEquals("Intention: Seller", label(seller, "intention").getText());
             assertNull(seller.lookup("#budget"));
             assertEquals("Call after 6 pm", label(seller, "remark").getText());
+        });
+    }
+
+    @Test
+    public void clientCards_sampleRemarks_showsExamplesAndHidesEmptyRemarks() throws Exception {
+        runOnFxThread(() -> {
+            Person[] samples = SampleDataUtil.getSamplePersons();
+            for (int i = 0; i < samples.length; i++) {
+                Region card = new PersonCard(samples[i], i + 1).getRoot();
+                styleCard(card);
+                Label remark = label(card, "remark");
+                boolean hasRemark = i == 0 || i == 2;
+
+                assertEquals(hasRemark, remark.isVisible());
+                assertEquals(hasRemark, remark.isManaged());
+                if (hasRemark) {
+                    assertEquals(samples[i].getRemark().value, remark.getText());
+                }
+            }
         });
     }
 
@@ -1266,6 +1356,107 @@ public class ResidexUiTest {
             command.setText("list");
             assertFalse(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
             window.getPrimaryStage().close();
+        });
+    }
+
+    @Test
+    public void clientCards_longEmails_wrapWithoutClippingWhenResized() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            String reportedEmail = "christopher.alexander.property.management@internationalrealestateconsulting.com";
+            String unbrokenEmail = "a".repeat(64) + "@" + "b".repeat(63) + ".com";
+            model.addPerson(new PersonBuilder().withName("Long Email Client").withEmail(reportedEmail)
+                    .withRemark("Call after 6 pm").withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build());
+            model.addPerson(new PersonBuilder().withName("Unbroken Email Client").withEmail(unbrokenEmail)
+                    .withRemark("Arrange a viewing").withProperties(CLEMENTI_HDB).build());
+            MainWindow window = createWindow(model);
+            try {
+                for (int width : new int[] {1100, 700, 1100}) {
+                    int height = width == 700 ? 600 : 900;
+                    Region root = layoutWindow(window, width, height);
+                    assertEquals(width, root.getScene().getWidth(), 1);
+                    assertEquals(height, root.getScene().getHeight(), 1);
+                    ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                    for (int index = 0; index < model.getFilteredPersonList().size(); index++) {
+                        list.scrollTo(index);
+                        root.applyCss();
+                        root.layout();
+                        final int displayedIndex = index;
+                        ListCell<?> cell = list.lookupAll(".list-cell").stream().map(ListCell.class::cast)
+                                .filter(candidate -> !candidate.isEmpty() && candidate.getIndex() == displayedIndex)
+                                .findFirst().orElseThrow();
+                        Region card = (Region) cell.getGraphic();
+                        Label email = label(card, "email");
+                        Text renderedEmail = (Text) email.lookup(".text");
+                        assertEquals(model.getFilteredPersonList().get(index).getEmail().value,
+                                renderedEmail.getText(), "The rendered email must include every character");
+                        if (width == 700) {
+                            assertTrue(email.getHeight() > email.getFont().getSize() * 2,
+                                    "Long emails must wrap onto multiple lines at the minimum width");
+                        }
+                        assertTrue(email.getHeight() >= email.prefHeight(email.getWidth()) - 1,
+                                "The email row must expand to fit its wrapped text");
+                        assertTrue(renderedEmail.getLayoutBounds().getWidth() <= email.getWidth() + 1,
+                                "The rendered text must fit within the email label");
+                        assertTrue(email.localToScene(email.getBoundsInLocal()).getMaxX()
+                                <= card.localToScene(card.getBoundsInLocal()).getMaxX());
+                        Label remark = label(card, "remark");
+                        assertTrue(email.localToScene(email.getBoundsInLocal()).getMaxY()
+                                <= remark.localToScene(remark.getBoundsInLocal()).getMinY(),
+                                "Wrapped emails must not overlap the remark below");
+                        assertTrue(cell.getHeight() >= card.getHeight() + 10,
+                                "The list cell must grow with the card and preserve the gap below it");
+                    }
+                    for (Node node : list.lookupAll(".scroll-bar")) {
+                        ScrollBar bar = (ScrollBar) node;
+                        if (bar.getOrientation() == Orientation.HORIZONTAL) {
+                            assertFalse(bar.isVisible(), "Reading a complete email must not need horizontal scrolling");
+                        }
+                    }
+                    saveSnapshot(root, "client-emails-" + width);
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void clientCards_emailEditsAndFiltering_resizeRowsForLongAndShortAddresses() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Person otherClient = new PersonBuilder().withName("Other Client").withEmail("other@example.com").build();
+            String shortEmail = "target@example.com";
+            String longEmail = "a".repeat(64) + "@" + "b".repeat(63) + ".com";
+            model.addPerson(otherClient);
+            model.addPerson(new PersonBuilder().withName("Target Client").withEmail(shortEmail).build());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 700, 600);
+                runCommand(root, "find n/Target");
+                double originalHeight = ((Region) root.lookup("#cardPane")).getHeight();
+                for (String emailValue : List.of(longEmail, shortEmail)) {
+                    runCommand(root, "edit 1 e/" + emailValue);
+                    runCommand(root, "find n/Target");
+                    Region card = (Region) root.lookup("#cardPane");
+                    Label email = label(card, "email");
+                    assertEquals(emailValue, ((Text) email.lookup(".text")).getText());
+                    assertTrue(email.getHeight() >= email.prefHeight(email.getWidth()) - 1);
+                    if (emailValue.equals(longEmail)) {
+                        assertTrue(card.getHeight() > originalHeight,
+                                "A long email must expand the card even without a remark or properties");
+                    } else {
+                        assertEquals(originalHeight, card.getHeight(), 1,
+                                "Returning to a short email must release the extra row height");
+                    }
+                    runCommand(root, "list");
+                    assertEquals(otherClient, model.getFilteredPersonList().get(0));
+                    assertEquals(emailValue, model.getFilteredPersonList().get(1).getEmail().value);
+                    runCommand(root, "find n/Target");
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
         });
     }
 

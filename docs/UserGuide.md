@@ -29,6 +29,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
    ![RESIDEX client list with contact details, derived roles and property summaries](images/Ui.png)
 
    This screenshot uses the bundled sample clients with example remarks and property statuses.
+   Fresh sample data includes remarks for Alex Yeoh and Charlotte Oliveiro. Existing saved remarks are unchanged.
    <!-- Codex assisted Brendan-Lim with the fresh-sample search documentation. -->
    With fresh sample data, `find s/viewing` returns Alex Yeoh; `find s/unspecified` returns Bernice Yu and Charlotte Oliveiro.
 
@@ -57,6 +58,7 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 * **Client cards:** Each card shows its displayed index, name, phone, email, derived intention,
   any remark and numbered property summaries. A property summary shows type, intention, location,
   optional price and transaction status. Clients without properties have intention **Not specified**.
+  Long email addresses wrap onto additional lines so the full address remains readable at narrow window widths.
 * **Prices:** Monetary amounts belong to property entries. There is no client budget amount on the right of a card;
   the badge on the right shows the derived intention.
 * **Full details:** `view INDEX` replaces the list with the selected client's details and a reminder to enter `list`.
@@ -217,6 +219,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`
 * Client edits preserve all property entries.
   Use `editp` to change a property.
 * After a successful `edit`, the list is reset to show all clients.
+* If the new details are identical to the current ones, RESIDEX replies "No change", leaves the current list and view as they are, and does not add an entry to the undo history or clear the redo history.
 * Client intention cannot be edited directly. Any `i/` field is rejected without changing the client.
 * The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
   Changing only the capitalisation or spacing of the selected client's own name is allowed.
@@ -283,7 +286,8 @@ An invalid saved status cannot be loaded; back up the data file before editing i
 
 **Existing property data:** Saved property intentions `Buyer` and `Seller` load automatically as `Buying` and `Selling`.
 New saves use `Buying` and `Selling` for properties; no manual conversion is needed.
-Saved property values must use these exact spellings, including capitalisation, or the legacy `Buyer`/`Seller` spellings.
+Saved property intentions accept `Buying`/`Selling` and legacy `Buyer`/`Seller`, ignoring case and surrounding whitespace,
+just like saved statuses. Loading does not rewrite the file; the next successful data-changing command saves canonical values.
 Legacy client-level intention is ignored; new saves omit it and derive the role from the properties.
 
 <box type="warning" seamless>
@@ -374,12 +378,20 @@ Property bedrooms | `bd/`
   Missing, unknown, repeated, or mixed prefixes are rejected. For example, use `find n/alice`.
   Long search field aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
+* Entering `find` without arguments, or providing a search field without a keyword (e.g. `find n/`), shows the command format and an example (`find n/alex`).
 * Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
+* Phone searches compare digits only: hyphens, brackets and a leading `+65` in a keyword are ignored, so `find p/9123-4567` and `find p/+6591234567` both match `91234567`. A keyword containing letters or other symbols matches nothing.
+* Spaces separate keywords, so `find p/9123 4567` lists clients whose phone contains `9123` **or** `4567`. To search for one full number, type it without spaces.
 * Multiple keywords use `OR` matching: a client is returned if any keyword matches the selected search field.
 * Location searches check all property entries attached to each client. A client appears once if any location matches;
   clients without property entries do not match. Enter keywords without quotation marks.
 * Spaces separate location keywords. A multiword location search matches any of its keywords independently;
   it does not search for the whole phrase or require an exact address match.
+* Location keywords can contain literal slashes: `find l/1/2` matches a location containing `1/2`.
+  Alphabetic words immediately followed by `/` are reserved as field prefixes, so keywords such as `n/Alice`
+  or `x/foo` are rejected. This also limits literal location text: `find l/N/A` and `find l/Park/Connector`
+  are rejected even when you intend them as location keywords.
+  Combining fields, such as `find l/1/2 n/Alice`, is also rejected.
 * Intention searches require exactly one complete value: `buyer`, `seller` or `both`, in any capitalization.
   `find i/unspecified` is not supported.
 * `find i/buyer` shows Buyer clients first, then Buyer / Seller clients.
@@ -416,6 +428,7 @@ Examples:
 * `find p/9123` finds phone numbers containing `9123`.
 * `find l/clementi` finds clients with locations such as `Clementi Ave 3` or `Woodlands Clementi`.
 * `find l/clementi woodlands` finds clients with any property location containing `clementi` or `woodlands`.
+* `find l/1/2` finds clients with locations such as `Tampines Street 1/2`.
 * `find l/Clementi Ave 3` searches for `Clementi`, `Ave`, or `3` independently. It matches locations such as
   `Clementi Ave 3`, `Woodlands Clementi`, `Bedok Ave 1`, and `Tampines Street 3`.
 * `find i/buyer` lists Buyer clients followed by Buyer / Seller clients.
@@ -459,6 +472,7 @@ Format: `remark INDEX r/[REMARK]`
 * The supplied remark replaces the existing remark. Enter `r/` without text to remove it.
 * Contact details, intention and properties are kept.
 * After a successful `remark`, the list is reset to show all clients.
+* If the new remark is identical to the current one, RESIDEX replies "No change", leaves the current list and view as they are, and does not add an entry to the undo history or clear the redo history.
 
 Examples:
 
@@ -513,6 +527,7 @@ maintenance. Its presence does not mean RESIDEX is running, and a crash does not
 
 RESIDEX data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 Close RESIDEX before editing or replacing this file.
+Save it as UTF-8. A single byte-order mark at the start, as added by some text editors, is accepted.
 
 <box type="warning" seamless>
 
@@ -525,6 +540,10 @@ Furthermore, certain edits can cause RESIDEX to behave in unexpected ways (e.g.,
 ### Recovering from a data loading error
 
 If RESIDEX cannot load an existing client data file, it shows an error and closes. Commands and automatic saving are unavailable, so the failed file cannot be overwritten by an empty client list.
+
+`The data file is empty.` means there is no JSON content, even if the file contains whitespace or only a byte-order mark.
+`The data file is not in the expected JSON format.` means the JSON is malformed or has the wrong structure.
+The dialog shows recovery instructions; detailed parser information is kept in the application log.
 
 <!-- Codex assisted Brendan-Lim with the missing-client-list recovery documentation. -->
 If the error says `Client list is missing from the data file.`, the required `persons` list is absent or null.
