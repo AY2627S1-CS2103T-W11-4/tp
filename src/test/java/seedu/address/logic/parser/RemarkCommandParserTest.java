@@ -27,9 +27,14 @@ public class RemarkCommandParserTest {
         RemarkCommand expectedCommand = new RemarkCommand(INDEX_FIRST_PERSON, new Remark(VALID_REMARK));
         assertParseSuccess(parser, userInput, expectedCommand);
 
-        userInput = String.valueOf(INDEX_FIRST_PERSON.getOneBased());
+        userInput = INDEX_FIRST_PERSON.getOneBased() + " " + PREFIX_REMARK;
         expectedCommand = new RemarkCommand(INDEX_FIRST_PERSON, new Remark(""));
         assertParseSuccess(parser, userInput, expectedCommand);
+    }
+
+    @Test
+    public void parse_missingRemarkPrefix_failure() {
+        assertParseFailure(parser, String.valueOf(INDEX_FIRST_PERSON.getOneBased()), MESSAGE_INVALID_FORMAT);
     }
 
     @Test
