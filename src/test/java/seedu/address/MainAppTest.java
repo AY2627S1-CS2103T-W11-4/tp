@@ -139,7 +139,7 @@ public class MainAppTest {
         MainApp app = createApp();
         app.init();
 
-        assertEquals("1 person(s) found!", app.logic.execute("find e/gmail").getFeedbackToUser());
+        assertEquals("1 client(s) found!", app.logic.execute("find e/gmail").getFeedbackToUser());
         assertEquals(List.of("Alex Yeoh"), app.model.getFilteredPersonList().stream()
                 .map(person -> person.getName().fullName).toList());
         assertEquals("alexyeoh@gmail.com", app.model.getFilteredPersonList().get(0).getEmail().value);

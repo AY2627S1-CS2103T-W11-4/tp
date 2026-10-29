@@ -47,7 +47,7 @@ public class HyphenatedNameIntegrationTest {
         assertEquals(List.of("Ng Wei-Ling", "O'Brien"), names);
         assertEquals(names, storage.readAddressBook().orElseThrow().getPersonList().stream()
                 .map(person -> person.getName().fullName).toList());
-        assertEquals("1 person(s) found!", logic.execute("find n/O'Brien").getFeedbackToUser());
+        assertEquals("1 client(s) found!", logic.execute("find n/O'Brien").getFeedbackToUser());
         assertEquals("O'Brien", model.getFilteredPersonList().get(0).getName().fullName);
     }
 

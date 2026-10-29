@@ -35,7 +35,7 @@ public class FindCommand extends Command {
     public static final String KEYWORD_PARAMETERS = "KEYWORD [MORE_KEYWORDS]";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Finds all persons matching the specified keywords (case-insensitive).\n"
+            + ": Finds all clients matching the specified keywords (case-insensitive).\n"
             + "Name search: " + COMMAND_WORD + " " + PREFIX_NAME + KEYWORD_PARAMETERS + "\n"
             + "Email search: " + COMMAND_WORD + " " + PREFIX_EMAIL + KEYWORD_PARAMETERS + "\n"
             + "Phone search: " + COMMAND_WORD + " " + PREFIX_PHONE + KEYWORD_PARAMETERS + "\n"
