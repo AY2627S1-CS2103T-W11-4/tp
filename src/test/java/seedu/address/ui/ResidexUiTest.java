@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -75,6 +76,7 @@ import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.DataFileLock;
@@ -629,9 +631,60 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void dataLoadingError_emptyFiles_showsPlainReasonAndPreservesFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : new String[]{"", " \t\r\n", "\uFEFF", "\uFEFF \t\r\n"}) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+            assertDataLoadingError((Exception) failure.getCause(), "The data file is empty.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void dataLoadingError_invalidJson_showsPlainReasonAndPreservesFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String json : new String[]{"[]", "{\"persons\":\"x\"}", "invalid JSON", "{\"persons\": ["}) {
+            Files.writeString(dataFile, json);
+            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+            assertDataLoadingError((Exception) failure.getCause(),
+                    "The data file is not in the expected JSON format.");
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void dataLoadingError_missingReason_showsRecoveryFallback() throws Exception {
+        for (Exception cause : new Exception[]{null, new IOException(), new IOException(" \t")}) {
+            assertDataLoadingError(cause,
+                    "The data file could not be read. Check that it exists and is readable.");
+        }
+    }
+
+    @Test
     public void dataLoadingError_duplicateClients_showsValidationMessage() throws Exception {
-        assertDataLoadingError(new IllegalValueException("Persons list contains duplicate person(s)."),
+        assertSavedDataValidationError(Files.readString(Path.of("src", "test", "data",
+                "JsonSerializableAddressBookTest", "duplicatePersonAddressBook.json")),
                 "Persons list contains duplicate person(s).");
+    }
+
+    @Test
+    public void dataLoadingError_invalidProperty_showsSpecificValidationMessage() throws Exception {
+        String[] fields = {"\"price\":\"0\"", "\"status\":\"Cancelled\"", "\"bedrooms\":\"21\""};
+        String[] reasons = {PropertyPrice.MESSAGE_CONSTRAINTS, PropertyStatus.MESSAGE_CONSTRAINTS,
+            PropertyBedrooms.MESSAGE_CONSTRAINTS};
+        for (int i = 0; i < fields.length; i++) {
+            String json = """
+                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                      "properties": [{"type": "HDB", "intention": "Buying", "location": "Clementi", %s}]}]}
+                    """.formatted(fields[i]);
+
+            assertSavedDataValidationError(json, "Property 1 is invalid: " + reasons[i]);
+        }
     }
 
     // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
@@ -705,6 +758,19 @@ public class ResidexUiTest {
         });
     }
 
+    private void assertSavedDataValidationError(String json, String expectedReason) throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        Files.writeString(dataFile, json);
+        byte[] original = Files.readAllBytes(dataFile);
+        DataLoadingException failure = assertThrows(DataLoadingException.class,
+                new JsonAddressBookStorage(dataFile)::readAddressBook);
+        IllegalValueException cause = assertInstanceOf(IllegalValueException.class, failure.getCause());
+
+        assertEquals(expectedReason, cause.getMessage());
+        assertDataLoadingError(cause, expectedReason);
+        assertArrayEquals(original, Files.readAllBytes(dataFile));
+    }
+
     private void assertDataLoadingError(Exception cause, String expectedReason) throws Exception {
         runOnFxThread(() -> {
             Path dataFile = temporaryFolder.resolve("addressbook.json");
@@ -723,6 +789,10 @@ public class ResidexUiTest {
                     assertFalse(message.contains("Parser details."));
                     assertFalse(message.contains("NullPointerException"));
                     assertFalse(message.contains("JsonSerializableAddressBook"));
+                    assertFalse(message.contains("com.fasterxml.jackson"));
+                    assertFalse(message.contains("JsonMappingException"));
+                    assertFalse(message.contains("JsonParseException"));
+                    assertFalse(message.contains("[Source:"));
                     assertTrue(message.contains("has not been changed"));
                     assertTrue(message.contains("RESIDEX will close"));
                     assertTrue(message.contains("repair it or replace it with a valid backup"));
@@ -757,6 +827,25 @@ public class ResidexUiTest {
             assertEquals("Intention: Seller", label(seller, "intention").getText());
             assertNull(seller.lookup("#budget"));
             assertEquals("Call after 6 pm", label(seller, "remark").getText());
+        });
+    }
+
+    @Test
+    public void clientCards_sampleRemarks_showsExamplesAndHidesEmptyRemarks() throws Exception {
+        runOnFxThread(() -> {
+            Person[] samples = SampleDataUtil.getSamplePersons();
+            for (int i = 0; i < samples.length; i++) {
+                Region card = new PersonCard(samples[i], i + 1).getRoot();
+                styleCard(card);
+                Label remark = label(card, "remark");
+                boolean hasRemark = i == 0 || i == 2;
+
+                assertEquals(hasRemark, remark.isVisible());
+                assertEquals(hasRemark, remark.isManaged());
+                if (hasRemark) {
+                    assertEquals(samples[i].getRemark().value, remark.getText());
+                }
+            }
         });
     }
 

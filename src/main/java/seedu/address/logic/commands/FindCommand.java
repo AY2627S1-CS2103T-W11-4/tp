@@ -28,12 +28,15 @@ public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
+    /** Keyword arguments shared by {@link #MESSAGE_USAGE} and {@link #MESSAGE_FORMAT_HINT}. */
+    public static final String KEYWORD_PARAMETERS = "KEYWORD [MORE_KEYWORDS]";
+
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Finds all clients matching the specified keywords (case-insensitive).\n"
-            + "Name search: " + COMMAND_WORD + " " + PREFIX_NAME + "KEYWORD [MORE_KEYWORDS]\n"
-            + "Email search: " + COMMAND_WORD + " " + PREFIX_EMAIL + "KEYWORD [MORE_KEYWORDS]\n"
-            + "Phone search: " + COMMAND_WORD + " " + PREFIX_PHONE + "KEYWORD [MORE_KEYWORDS]\n"
-            + "Location search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_LOCATION + "KEYWORD [MORE_KEYWORDS]\n"
+            + "Name search: " + COMMAND_WORD + " " + PREFIX_NAME + KEYWORD_PARAMETERS + "\n"
+            + "Email search: " + COMMAND_WORD + " " + PREFIX_EMAIL + KEYWORD_PARAMETERS + "\n"
+            + "Phone search: " + COMMAND_WORD + " " + PREFIX_PHONE + KEYWORD_PARAMETERS + "\n"
+            + "Location search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_LOCATION + KEYWORD_PARAMETERS + "\n"
             + "Intention search: " + COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller|both\n"
             + "Property status search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS
             + "unspecified|enquiring|viewing|negotiating|closing|completed\n"
@@ -51,7 +54,10 @@ public class FindCommand extends Command {
     public static final String MESSAGE_INVALID_BEDROOMS = PropertyBedrooms.MESSAGE_CONSTRAINTS;
     public static final String MESSAGE_INVALID_PRICE_RANGE = "Price range must look like 500000-800000, 500000- "
             + "or -800000, using whole-dollar amounts without commas, and the minimum must not exceed the maximum.";
-    public static final String MESSAGE_MISSING_ARGUMENTS = "Search field and search keyword are missing.";
+    public static final String MESSAGE_FORMAT_HINT = "Format: " + COMMAND_WORD + " FIELD/" + KEYWORD_PARAMETERS + "\n"
+            + "Example: " + COMMAND_WORD + " " + PREFIX_NAME + "alex";
+    public static final String MESSAGE_MISSING_ARGUMENTS =
+            "Search field and search keyword are missing.\n" + MESSAGE_FORMAT_HINT;
     public static final String MESSAGE_MISSING_PROPERTY =
             "Search field is missing. Use " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", " + PREFIX_INTENTION
@@ -63,7 +69,7 @@ public class FindCommand extends Command {
                     + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + ", " + PREFIX_PROPERTY_PRICE
                     + ", or " + PREFIX_PROPERTY_BEDROOMS + ".";
     public static final String MESSAGE_MULTIPLE_PROPERTIES = "Specify exactly one search field.";
-    public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.";
+    public static final String MESSAGE_MISSING_KEYWORD = "Search keyword is missing.\n" + MESSAGE_FORMAT_HINT;
 
     private final Predicate<Person> predicate;
 

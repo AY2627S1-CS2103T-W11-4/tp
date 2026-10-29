@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -51,6 +52,20 @@ public class JsonAddressBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readAddressBook_utf8Bom_loadsEmptyAndPopulatedBooksWithoutChangingFile() throws Exception {
+        Path file = testFolder.resolve("bom.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        for (ReadOnlyAddressBook expected : List.of(new AddressBook(), getTypicalAddressBook())) {
+            storage.saveAddressBook(expected);
+            Files.writeString(file, "\uFEFF" + Files.readString(file));
+            byte[] original = Files.readAllBytes(file);
+
+            assertEquals(expected, storage.readAddressBook().orElseThrow());
+            assertArrayEquals(original, Files.readAllBytes(file));
+        }
+    }
 
     // Codex assisted Brendan-Lim with the client-list validation and file-preservation regressions.
     @Test
@@ -121,6 +136,44 @@ public class JsonAddressBookStorageTest {
             assertEquals(property.getStatus().name(), savedProperty.get("status").asText());
         }
         assertEquals(loaded, storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_intentionVariants_preservesFileUntilChangeAndSavesCanonicalValues() throws Exception {
+        Path file = testFolder.resolve("intentionVariants.json");
+        List<JsonAdaptedProperty> properties = List.of(
+                new JsonAdaptedProperty("HDB", "buying", "A", "800000", "viewing", "3"),
+                new JsonAdaptedProperty("Landed", " SELLING ", "B", null, "completed", null),
+                new JsonAdaptedProperty("Condominium", " bUyEr ", "C", null),
+                new JsonAdaptedProperty("HDB", "sElLeR", "D", null));
+        JsonAdaptedPerson person = new JsonAdaptedPerson("Alice", "91234567", "alice@example.com", null,
+                "Original note", properties);
+        Files.writeString(file, "\uFEFF" + JsonUtil.toJsonString(new JsonSerializableAddressBook(List.of(person))));
+        byte[] original = Files.readAllBytes(file);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+        assertEquals(List.of(PropertyIntention.BUYING, PropertyIntention.SELLING,
+                PropertyIntention.BUYING, PropertyIntention.SELLING), loaded.getPersonList().get(0)
+                        .getProperties().stream().map(Property::getIntention).toList());
+        assertArrayEquals(original, Files.readAllBytes(file));
+        Model model = new ModelManager(loaded, new UserPrefs());
+        LogicManager logic = new LogicManager(model,
+                new StorageManager(storage, new JsonUserPrefsStorage(testFolder.resolve("preferences.json"))));
+
+        logic.execute("list");
+        logic.execute("find e/alice");
+        logic.execute("view 1");
+        assertArrayEquals(original, Files.readAllBytes(file));
+        logic.execute("remark 1 r/Updated note");
+
+        JsonNode savedProperties = JsonUtil.fromJsonString(Files.readString(file), JsonNode.class)
+                .get("persons").get(0).get("properties");
+        for (int i = 0; i < properties.size(); i++) {
+            assertEquals(i % 2 == 0 ? "Buying" : "Selling", savedProperties.get(i).get("intention").asText());
+        }
+        AddressBook expected = new AddressBook();
+        expected.addPerson(new PersonBuilder(loaded.getPersonList().get(0)).withRemark("Updated note").build());
+        assertEquals(expected, storage.readAddressBook().orElseThrow());
     }
 
     private Path addToTestDataPathIfNotNull(String prefsFileInTestDataFolder) {
@@ -330,8 +383,8 @@ public class JsonAddressBookStorageTest {
             new JsonAdaptedProperty("HDB", "Tenant", "Clementi", null),
             new JsonAdaptedProperty("HDB", "Both", "Clementi", null),
             new JsonAdaptedProperty("HDB", "", "Clementi", null),
-            new JsonAdaptedProperty("HDB", "buying", "Clementi", null),
-            new JsonAdaptedProperty("HDB", "Selling ", "Clementi", null),
+            new JsonAdaptedProperty("HDB", "buying extra", "Clementi", null),
+            new JsonAdaptedProperty("HDB", "Seller/Buyer", "Clementi", null),
             new JsonAdaptedProperty("HDB", "Buyer", null, null),
             new JsonAdaptedProperty("HDB", "Buyer", " ", null),
             new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0"),

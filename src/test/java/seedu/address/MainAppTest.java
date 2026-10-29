@@ -25,6 +25,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.property.PropertyIntention;
 import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.DataFileLock;
 import seedu.address.storage.JsonAddressBookStorage;
@@ -67,6 +68,33 @@ public class MainAppTest {
         assertEquals(savedData, Files.readString(dataPath()));
     }
 
+    @Test
+    public void init_utf8Bom_restoresClientsAndPreferencesWithoutChangingClientFile() throws Exception {
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(getTypicalAddressBook());
+        Files.writeString(dataPath(), "\uFEFF" + Files.readString(dataPath()));
+        byte[] originalData = Files.readAllBytes(dataPath());
+        UserPrefs prefs = createPrefs();
+        new JsonUserPrefsStorage(prefsPath()).saveUserPrefs(prefs);
+        Files.writeString(prefsPath(), "\uFEFF" + Files.readString(prefsPath()));
+        MainApp app = createApp();
+
+        app.init();
+
+        assertEquals(getTypicalAddressBook(), app.model.getAddressBook());
+        assertEquals(prefs, app.model.getUserPrefs());
+        assertNotNull(app.logic);
+        assertArrayEquals(originalData, Files.readAllBytes(dataPath()));
+    }
+
+    @Test
+    public void init_invalidBomData_preventsCommandsAndPreservesFile() throws Exception {
+        for (String json : new String[]{"\uFEFF", "\uFEFF \t\r\n", "\uFEFF\uFEFF{\"persons\":[]}",
+            " \uFEFF{\"persons\":[]}", "\uFEFF{", "\uFEFF{\"persons\":[]} {}",
+            "\uFEFF{\"persons\":[]} garbage"}) {
+            assertLoadFailurePreservesFile(json);
+        }
+    }
+
     // Codex assisted Brendan-Lim with the fresh-sample search and existing-file preservation assertions.
     @Test
     public void init_missingFiles_usesSampleClientsAndSavesDefaultPreferences() throws Exception {
@@ -77,6 +105,10 @@ public class MainAppTest {
         assertEquals(SampleDataUtil.getSampleAddressBook(), app.model.getAddressBook());
         assertEquals(new UserPrefs(), app.model.getUserPrefs());
         assertEquals(new UserPrefs(), new JsonUserPrefsStorage(prefsPath()).readUserPrefs().orElseThrow());
+        assertEquals("Prefers a home near an MRT station.",
+                app.model.getAddressBook().getPersonList().get(0).getRemark().value);
+        assertEquals("Buying a condominium and selling the current HDB flat.",
+                app.model.getAddressBook().getPersonList().get(2).getRemark().value);
         assertFalse(Files.exists(dataPath()));
 
         app.logic.execute("find s/viewing");
@@ -85,6 +117,21 @@ public class MainAppTest {
                 .map(person -> person.getName().fullName).toList());
         assertEquals(SampleDataUtil.getSampleAddressBook(), app.model.getAddressBook());
         assertFalse(Files.exists(dataPath()));
+    }
+
+    @Test
+    public void init_existingSampleClientWithEmptyRemark_preservesSavedData() throws Exception {
+        AddressBook saved = new AddressBook();
+        saved.addPerson(new PersonBuilder(SampleDataUtil.getSamplePersons()[0]).withRemark("").build());
+        new JsonAddressBookStorage(dataPath()).saveAddressBook(saved);
+        byte[] original = Files.readAllBytes(dataPath());
+        MainApp app = createApp();
+
+        app.init();
+
+        assertEquals(saved, app.model.getAddressBook());
+        assertEquals("", app.model.getAddressBook().getPersonList().get(0).getRemark().value);
+        assertArrayEquals(original, Files.readAllBytes(dataPath()));
     }
 
     @Test
@@ -218,6 +265,13 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_emptyOrWrongStructure_preventsCommandsAndPreservesFile() throws Exception {
+        for (String json : new String[]{"", " \t\r\n", "[]", "{\"persons\":\"x\"}", "{\"persons\": ["}) {
+            assertLoadFailurePreservesFile(json);
+        }
+    }
+
+    @Test
     public void init_trailingData_preventsCommandsAndPreservesEntireFile() throws Exception {
         for (String suffix : new String[]{
             "{\"persons\":[{\"name\":\"Trailing Client\",\"phone\":\"91110012\","
@@ -256,13 +310,35 @@ public class MainAppTest {
 
     @Test
     public void init_invalidPropertyIntention_preventsCommandsAndPreservesFile() throws Exception {
-        for (String intention : new String[]{"Both", "buying", "Selling "}) {
+        for (String intention : new String[]{"Both", "buy", "selling now"}) {
             assertLoadFailurePreservesFile("""
                     {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
                       "intention": "Buyer", "properties": [
                         {"type": "HDB", "intention": "%s", "location": "Clementi"}
                       ]}]}
                     """.formatted(intention));
+        }
+    }
+
+    @Test
+    public void init_propertyIntentionVariants_loadsWithoutRewritingFile() throws Exception {
+        String[] intentions = {"buying", " BUYER ", "SELLING", " SeLlEr "};
+        for (int i = 0; i < intentions.length; i++) {
+            String json = """
+                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                      "properties": [{"type": "HDB", "intention": "%s", "location": "Clementi"}]}]}
+                    """.formatted(intentions[i]);
+            Files.writeString(dataPath(), json);
+            MainApp app = createApp();
+
+            app.init();
+
+            assertNotNull(app.logic);
+            assertEquals(i < 2 ? PropertyIntention.BUYING : PropertyIntention.SELLING,
+                    app.model.getAddressBook().getPersonList().get(0).getProperties().get(0).getIntention());
+            app.logic.execute("list");
+            app.stop();
+            assertEquals(json, Files.readString(dataPath()));
         }
     }
 
