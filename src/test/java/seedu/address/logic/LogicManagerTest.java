@@ -1,5 +1,6 @@
 package seedu.address.logic;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,6 +18,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,7 @@ import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -185,6 +188,61 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_exitWithoutDataFile_doesNotAttemptSave() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        for (IOException exception : new IOException[]{DUMMY_IO_EXCEPTION, DUMMY_AD_EXCEPTION}) {
+            AtomicInteger saveAttempts = useFailingStorage(exception);
+
+            assertTrue(logic.execute("exit").isExit());
+
+            assertEquals(0, saveAttempts.get());
+            assertEquals(List.of(), model.getAddressBook().getPersonList());
+            assertFalse(model.canUndoAddressBook());
+            assertFalse(model.canRedoAddressBook());
+            assertFalse(Files.exists(dataFile));
+        }
+    }
+
+    @Test
+    public void execute_exitWithSavedClients_doesNotAttemptSaveOrChangeData() throws Exception {
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        byte[] savedFile = Files.readAllBytes(dataFile);
+        ReadOnlyAddressBook savedClients = new AddressBook(model.getAddressBook());
+        for (IOException exception : new IOException[]{DUMMY_IO_EXCEPTION, DUMMY_AD_EXCEPTION}) {
+            AtomicInteger saveAttempts = useFailingStorage(exception);
+
+            assertTrue(logic.execute("exit").isExit());
+
+            assertEquals(0, saveAttempts.get());
+            assertEquals(savedClients, model.getAddressBook());
+            assertTrue(model.canUndoAddressBook());
+            assertFalse(model.canRedoAddressBook());
+            assertArrayEquals(savedFile, Files.readAllBytes(dataFile));
+        }
+    }
+
+    @Test
+    public void execute_exitAfterFailedEdit_preservesSavedDataWithoutRetryingSave() throws Exception {
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        byte[] savedFile = Files.readAllBytes(dataFile);
+        ReadOnlyAddressBook savedClients = new AddressBook(model.getAddressBook());
+        for (IOException exception : new IOException[]{DUMMY_IO_EXCEPTION, DUMMY_AD_EXCEPTION}) {
+            AtomicInteger saveAttempts = useFailingStorage(exception);
+            assertThrows(CommandException.class, () -> logic.execute("edit 1 p/92345678"));
+
+            assertTrue(logic.execute("exit").isExit());
+
+            assertEquals(1, saveAttempts.get());
+            assertEquals(savedClients, model.getAddressBook());
+            assertTrue(model.canUndoAddressBook());
+            assertFalse(model.canRedoAddressBook());
+            assertArrayEquals(savedFile, Files.readAllBytes(dataFile));
+        }
     }
 
     @Test
@@ -437,18 +495,23 @@ public class LogicManagerTest {
 
     /**
      * Points {@code logic} at storage that throws {@code exception} when saving client data.
+     *
+     * @return the counter of attempted client-data saves.
      */
-    private void useFailingStorage(IOException exception) {
+    private AtomicInteger useFailingStorage(IOException exception) {
+        AtomicInteger saveAttempts = new AtomicInteger();
         JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(
                 temporaryFolder.resolve("failingAddressBook.json")) {
             @Override
             public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                saveAttempts.incrementAndGet();
                 throw exception;
             }
         };
         JsonUserPrefsStorage userPrefsStorage =
                 new JsonUserPrefsStorage(temporaryFolder.resolve("failingUserPrefs.json"));
         logic = new LogicManager(model, new StorageManager(addressBookStorage, userPrefsStorage));
+        return saveAttempts;
     }
 
     /**

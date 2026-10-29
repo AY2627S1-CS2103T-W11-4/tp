@@ -116,6 +116,13 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
+`LogicManager` saves client data only when it differs from the pre-command snapshot. A failed save rolls back
+the change. `exit` leaves client data unchanged, so its `CommandResult` retains the exit flag without attempting
+a client-data save, even after an earlier save failure. `MainWindow` handles that flag through its normal close path.
+During shutdown, `MainApp` logs a preferences-save failure and still releases the data-file lock.
+Logic regressions cover empty and populated data, plus exit after a failed edit, using both `IOException`
+and `AccessDeniedException` without relying on OS file permissions or native-window timing.
+
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
