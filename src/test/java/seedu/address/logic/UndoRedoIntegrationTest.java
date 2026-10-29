@@ -14,6 +14,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
+import seedu.address.model.ClientViewMode;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -139,5 +140,50 @@ public class UndoRedoIntegrationTest {
         run("undo");
 
         assertEquals(original.getPersonList().size(), model.getFilteredPersonList().size());
+    }
+
+    @Test
+    public void noOpRemarkAndEdit_reportNoChange_andUndoRevertsTheRealChange() throws Exception {
+        String firstName = model.getFilteredPersonList().get(0).getName().fullName;
+        run("remark 1 r/Call later");
+
+        assertTrue(run("remark 1 r/Call later").getFeedbackToUser().startsWith("No change"));
+        assertTrue(run("edit 1 n/" + firstName).getFeedbackToUser().startsWith("No change"));
+        run("undo");
+
+        assertEquals(original, model.getAddressBook());
+        assertFalse(model.canUndoAddressBook());
+    }
+
+    @Test
+    public void noOpRemarkAndEdit_keepCurrentFilterAndDetailView() throws Exception {
+        run("find n/benson");
+        String name = model.getFilteredPersonList().get(0).getName().fullName;
+
+        assertTrue(run("edit 1 n/" + name).getFeedbackToUser().startsWith("No change"));
+        assertEquals(1, model.getFilteredPersonList().size());
+        assertTrue(run("remark 1 r/").getFeedbackToUser().startsWith("No change"));
+        assertEquals(1, model.getFilteredPersonList().size());
+
+        run("view 1");
+        assertEquals(ClientViewMode.CLIENT_DETAILS, model.clientViewModeProperty().get());
+        assertTrue(run("edit 1 n/" + name).getFeedbackToUser().startsWith("No change"));
+        assertEquals(ClientViewMode.CLIENT_DETAILS, model.clientViewModeProperty().get());
+        assertEquals(1, model.getFilteredPersonList().size());
+    }
+
+    @Test
+    public void noOpRemarkAndEdit_afterUndo_keepRedoHistory() throws Exception {
+        String name = model.getFilteredPersonList().get(0).getName().fullName;
+        run("remark 1 r/Call later");
+        run("undo");
+        assertTrue(model.canRedoAddressBook());
+
+        assertTrue(run("remark 1 r/").getFeedbackToUser().startsWith("No change"));
+        assertTrue(run("edit 1 n/" + name).getFeedbackToUser().startsWith("No change"));
+        assertTrue(model.canRedoAddressBook());
+
+        run("redo");
+        assertEquals("Call later", model.getFilteredPersonList().get(0).getRemark().value);
     }
 }

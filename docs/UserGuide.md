@@ -218,6 +218,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`
 * Client edits preserve all property entries.
   Use `editp` to change a property.
 * After a successful `edit`, the list is reset to show all clients.
+* If the new details are identical to the current ones, RESIDEX replies "No change", leaves the current list and view as they are, and does not add an entry to the undo history or clear the redo history.
 * Client intention cannot be edited directly. Any `i/` field is rejected without changing the client.
 * The updated name and phone number must not match another client under the [duplicate-client rule](#adding-a-client-add).
   Changing only the capitalisation or spacing of the selected client's own name is allowed.
@@ -465,6 +466,7 @@ Format: `remark INDEX r/[REMARK]`
 * The supplied remark replaces the existing remark. Enter `r/` without text to remove it.
 * Contact details, intention and properties are kept.
 * After a successful `remark`, the list is reset to show all clients.
+* If the new remark is identical to the current one, RESIDEX replies "No change", leaves the current list and view as they are, and does not add an entry to the undo history or clear the redo history.
 
 Examples:
 

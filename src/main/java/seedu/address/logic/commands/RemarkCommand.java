@@ -33,6 +33,7 @@ public class RemarkCommand extends Command {
 
     public static final String MESSAGE_ADD_REMARK_SUCCESS = "Added remark to Person: %1$s";
     public static final String MESSAGE_DELETE_REMARK_SUCCESS = "Removed remark from Person: %1$s";
+    public static final String MESSAGE_UNCHANGED = "No change: the remark of %1$s is already set to that value.";
 
     private final Index index;
     private final Remark remark;
@@ -63,11 +64,13 @@ public class RemarkCommand extends Command {
                 remark,
                 personToEdit.getProperties());
 
+        if (editedPerson.equals(personToEdit)) {
+            return new CommandResult(String.format(MESSAGE_UNCHANGED, personToEdit.getName()));
+        }
+
         model.setPerson(personToEdit, editedPerson);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        if (!editedPerson.equals(personToEdit)) {
-            model.commitAddressBook();
-        }
+        model.commitAddressBook();
         return new CommandResult(generateSuccessMessage(editedPerson));
     }
 
