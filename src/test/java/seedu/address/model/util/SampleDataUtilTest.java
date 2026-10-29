@@ -60,6 +60,16 @@ public class SampleDataUtilTest {
     }
 
     @Test
+    public void sampleBedroomSearch_findsOnlyClientsWithFourBedroomProperties() throws Exception {
+        ModelManager model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
+
+        new AddressBookParser().parseCommand("find bd/4").execute(model);
+
+        assertEquals(List.of("Charlotte Oliveiro"),
+                model.getFilteredPersonList().stream().map(person -> person.getName().fullName).toList());
+    }
+
+    @Test
     public void getSamplePersons_clientIdentitiesAreUnique() {
         Person[] clients = SampleDataUtil.getSamplePersons();
         for (int i = 0; i < clients.length; i++) {
