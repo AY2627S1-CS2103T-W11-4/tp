@@ -412,9 +412,9 @@ Property bedrooms | `bd/`
 * Price searches require exactly one range of whole-dollar amounts, without commas: `500000-800000` (from and including
   $500,000 up to and including $800,000), `500000-` (at least $500,000) or `-800000` (at most $800,000).
   The minimum must not be above the maximum. A client matches if **any property** has a price within the range.
-  Properties without a price never match.
+  In a price range search, properties without a price never match (use `pr/unknown` to find them).
 * Bedrooms searches require exactly one whole number from 1 to 20, such as `find bd/3`. A client matches if **any property**
-  has exactly that number of bedrooms. Properties without a recorded number of bedrooms never match.
+  has exactly that number of bedrooms. In a bedrooms number search, properties without a recorded number of bedrooms never match (use `bd/unknown` to find them).
 * `pr/unknown` and `bd/unknown` (case-insensitive) list clients with at least one property whose price or number of bedrooms is not recorded.
 * Type, price and bedrooms results retain normal client order.
 * Status results retain normal client order. Client indexes refer to the currently displayed results.

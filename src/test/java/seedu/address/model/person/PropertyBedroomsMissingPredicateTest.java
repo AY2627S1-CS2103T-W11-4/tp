@@ -38,6 +38,16 @@ public class PropertyBedroomsMissingPredicateTest {
     }
 
     @Test
+    public void test_onlyBedroomsMissing_returnsTrue() {
+        assertTrue(predicate.test(new PersonBuilder().withProperties(priceOnly()).build()));
+    }
+
+    @Test
+    public void test_onlyPriceMissing_returnsFalse() {
+        assertFalse(predicate.test(new PersonBuilder().withProperties(bedroomsOnly()).build()));
+    }
+
+    @Test
     public void equalsHashCodeAndToString() {
         assertEquals(predicate, predicate);
         assertEquals(predicate, new PropertyBedroomsMissingPredicate());
@@ -45,6 +55,18 @@ public class PropertyBedroomsMissingPredicateTest {
         assertNotEquals(predicate, null);
         assertNotEquals(predicate, "unknown");
         assertEquals(PropertyBedroomsMissingPredicate.class.getCanonicalName() + "{}", predicate.toString());
+    }
+
+    /** Returns a property that has only the price, with the bedrooms missing. */
+    private static Property priceOnly() {
+        return new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi"),
+                new PropertyPrice("500000"), PropertyStatus.UNSPECIFIED, null);
+    }
+
+    /** Returns a property that has only the bedrooms, with the price missing. */
+    private static Property bedroomsOnly() {
+        return new Property(PropertyType.HDB, PropertyIntention.BUYING, new PropertyLocation("Clementi"),
+                null, PropertyStatus.UNSPECIFIED, new PropertyBedrooms("3"));
     }
 
     /** Returns a property that has both the price and the bedrooms if {@code complete}, otherwise neither. */
