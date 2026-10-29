@@ -47,6 +47,8 @@ final class HelpContent {
             "Duplicate errors show the existing client's name and phone, even outside search results.";
     private static final String PROPERTY_INDEX_NOTE =
             "CLIENT_INDEX selects a displayed client; PROPERTY_INDEX selects a numbered property under that client.";
+    private static final String ADD_PROPERTY_INDEX_NOTE =
+            "CLIENT_INDEX selects a displayed client. The new property is added at the end of that client's list.";
     private static final String PROPERTY_CASE_NOTE =
             "Command words, property prefixes, types, property intentions and statuses ignore case. "
                     + "Location text is preserved.";
@@ -87,7 +89,7 @@ final class HelpContent {
                             EditCommand.COMMAND_WORD + " 1 " + PREFIX_NAME + "John Tan")),
             new CommandHelp(AddPropertyCommand.COMMAND_WORD, "Add a property to a client.",
                     "addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]",
-                    List.of(PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE, PROPERTY_INTENTION_NOTE,
+                    List.of(ADD_PROPERTY_INDEX_NOTE, PROPERTY_CASE_NOTE, PROPERTY_INTENTION_NOTE,
                             "Type, property intention and location are required. "
                                     + "Price, bedrooms and status are optional.",
                             "Types: HDB (h), Condominium (c), Landed (l).",
