@@ -488,7 +488,7 @@ For deletion, call `original.withoutProperty(propertyIndex)`. Both methods retur
 All three methods preserve unrelated client fields and leave the original person unchanged.
 Apply the returned person through `model.setPerson`; calling a method alone does not update the model.
 
-`EditCommand` and `RemarkCommand` return a "No change" result without calling `Model#commitAddressBook()` when the edited client equals the original, so no-op commands add nothing to the undo history.
+`EditCommand` and `RemarkCommand` return a "No change" result without calling `Model#commitAddressBook()` when the edited client equals the original, so no-op commands add nothing to the undo history, keep the redo history, and leave the current filter and client view unchanged.
 
 Existing `EditCommand` and `RemarkCommand` carry the property list into the replacement person so that changing contact
 details or remarks preserves all properties. Future code that reconstructs a `Person` must also preserve the list.
