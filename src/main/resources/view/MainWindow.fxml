@@ -28,7 +28,8 @@
         </HBox>
         <VBox styleClass="app-content" spacing="12" minHeight="0" VBox.vgrow="ALWAYS">
           <StackPane fx:id="commandBoxPlaceholder" VBox.vgrow="NEVER" />
-          <StackPane fx:id="resultDisplayPlaceholder" minHeight="70" prefHeight="160" maxHeight="160"
+          <!-- Preserve the preferred feedback height while the client list takes the remaining space. -->
+          <StackPane fx:id="resultDisplayPlaceholder" minHeight="-Infinity"
                      VBox.vgrow="NEVER" />
           <StackPane fx:id="personListPanelPlaceholder" minHeight="0" VBox.vgrow="ALWAYS">
             <VBox.margin>

@@ -81,6 +81,14 @@ The detail card uses the client's name as its heading, labels each remaining fie
 `MainWindow` creates one `HelpWindow`, which constructs a `CommandHelpCard` for each supported command.
 The current screens are illustrated in the [User Guide](UserGuide.html#reading-the-interface).
 
+`ResultDisplay` measures feedback with the text area's styled font, available content width and padding to set
+its preferred height. It recalculates when feedback or wrapping changes, including window resizing.
+The measurement uses JavaFX's `LOGICAL_VERTICAL_CENTER` text bounds to match `TextAreaSkin` line metrics;
+the default `Text` bounds can underestimate the height with some fonts.
+`MainWindow` keeps a minimum feedback height of 70 pixels and caps it at half the content area's height,
+preserving room for the client list. Longer output remains scrollable in the read-only text area.
+Each new result resets the caret and scroll position to the start of the feedback.
+
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-W11-4/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-W11-4/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
@@ -1375,6 +1383,19 @@ testers are expected to do more *exploratory* testing.
 
    1. Use Tab to reach a Copy button, then activate it with Space.<br>
       Expected: The example can be copied without a mouse. If a button shows **Failed**, click it again to retry.
+
+### Reading long command feedback
+
+1. At the default window size, enter `add n/Eve p/91230005 e/eve@b`.<br>
+   Expected: No client is added. The feedback box grows to show the full email-format error without scrolling.
+2. Enter `find i/buyer seller`.<br>
+   Expected: The full usage message, including its last example line, is visible without scrolling.
+3. Narrow the window, then widen it again.<br>
+   Expected: Feedback wraps to the available width and the box adjusts its height.
+4. Resize the window to its minimum size and display a very long result, such as a client with a long remark.<br>
+   Expected: The client list remains usable below the feedback. Scroll inside the feedback box to reach its end.
+5. Enter another invalid command, then `list`.<br>
+   Expected: New feedback starts at the first line. The short list result shrinks the box again.
 
 ### Reading long email addresses on client cards
 

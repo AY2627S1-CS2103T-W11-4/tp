@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.io.TempDir;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Orientation;
@@ -67,12 +68,14 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddPropertyCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Email;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
@@ -1212,9 +1215,177 @@ public class ResidexUiTest {
                 assertTrue(feedback.contains("\n1. HDB | Buying | Clementi | Viewing"));
                 assertTrue(feedback.contains("\n2. Condominium | Selling | Tampines | Negotiating"));
                 assertTrue(feedback.contains("\n3. Landed | Buying | Bukit Timah | Completed"));
-                assertEquals(160, resultPane.getHeight(), 0.5);
+                assertFeedbackFits(root);
+                assertTrue(resultPane.getHeight() >= 70);
                 result.setScrollTop(0);
                 assertTrue(result.isWrapText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void resultDisplay_invalidEmail_growsAndRewrapsWhenResized() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                Region resultPane = (Region) root.lookup("#resultDisplayPlaceholder");
+
+                runCommand(root, "add n/Eve p/91230005 e/eve@b");
+                assertEquals(Email.MESSAGE_CONSTRAINTS, result.getText());
+                assertTrue(model.getAddressBook().getPersonList().isEmpty());
+                assertFeedbackFits(root);
+                double wideHeight = resultPane.getHeight();
+                assertTrue(wideHeight > 160, "The reported error must grow beyond the previous fixed height");
+                saveSnapshot(root, "feedback-email");
+
+                root.resize(700, 900);
+                assertFeedbackFits(root);
+                assertTrue(resultPane.getHeight() > wideHeight, "Narrower feedback must grow as more lines wrap");
+
+                root.resize(1100, 900);
+                assertFeedbackFits(root);
+                assertEquals(wideHeight, resultPane.getHeight(), 1);
+                runCommand(root, "list");
+                assertFeedbackFits(root);
+                assertEquals(70, resultPane.getHeight(), 1, "Short feedback must return space to the client list");
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void resultDisplay_findUsage_showsAllLinesWithoutScrolling() throws Exception {
+        runOnFxThread(() -> {
+            MainWindow window = createWindow(new ModelManager());
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                runCommand(root, "find i/buyer seller");
+                assertEquals(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE),
+                        result.getText());
+                assertFeedbackFits(root);
+                assertTrue(((Region) root.lookup("#resultDisplayPlaceholder")).getHeight() > 160);
+                saveSnapshot(root, "feedback-find");
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void resultDisplay_fontChanges_keepAllWrappedLinesVisible() throws Exception {
+        runOnFxThread(() -> {
+            MainWindow window = createWindow(new ModelManager());
+            try {
+                Region root = layoutWindow(window, 1100, 1800);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                runCommand(root, "find i/buyer seller");
+                for (String family : List.of("Arial", "monospace", "serif")) {
+                    for (int size : new int[]{12, 15, 18, 21, 24}) {
+                        result.setStyle("-fx-font-family: '" + family + "'; -fx-font-size: " + size + "px;");
+                        assertFeedbackFits(root);
+                    }
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void resultDisplay_windowResize_updatesOnNormalJavaFxPulses() throws Exception {
+        CompletableFuture<MainWindow> created = new CompletableFuture<>();
+        runOnFxThread(() -> {
+            MainWindow window = createWindow(new ModelManager());
+            window.getPrimaryStage().setOpacity(0);
+            window.show();
+            created.complete(window);
+        });
+        MainWindow window = created.get(15, TimeUnit.SECONDS);
+        double[] wideHeight = new double[1];
+        try {
+            runOnFxThread(() -> runCommand((Region) window.getPrimaryStage().getScene().getRoot(),
+                    "add n/Eve p/91230005 e/eve@b"));
+            awaitFxPulses();
+            runOnFxThread(() -> {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                assertVisibleFeedbackFits((TextArea) root.lookup("#resultDisplay"));
+                wideHeight[0] = ((Region) root.lookup("#resultDisplayPlaceholder")).getHeight();
+                window.getPrimaryStage().setWidth(700);
+            });
+            awaitFxPulses();
+            runOnFxThread(() -> {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                assertVisibleFeedbackFits((TextArea) root.lookup("#resultDisplay"));
+                assertTrue(((Region) root.lookup("#resultDisplayPlaceholder")).getHeight() > wideHeight[0]);
+                runCommand(root, "find i/buyer seller");
+                window.getPrimaryStage().setHeight(600);
+            });
+            awaitFxPulses();
+            runOnFxThread(() -> {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                assertTrue(verticalScrollBar((TextArea) root.lookup("#resultDisplay")).isVisible());
+                window.getPrimaryStage().setHeight(900);
+            });
+            awaitFxPulses();
+            runOnFxThread(() -> {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                assertVisibleFeedbackFits((TextArea) root.lookup("#resultDisplay"));
+                runCommand(root, "list");
+            });
+            awaitFxPulses();
+            runOnFxThread(() -> {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                assertVisibleFeedbackFits((TextArea) root.lookup("#resultDisplay"));
+                assertEquals(70, ((Region) root.lookup("#resultDisplayPlaceholder")).getHeight(), 1);
+            });
+        } finally {
+            runOnFxThread(() -> window.getPrimaryStage().close());
+        }
+    }
+
+    @Test
+    public void resultDisplay_veryLongFeedback_remainsScrollableAndResetsForNextResult() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            model.addPerson(new PersonBuilder().build());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 700, 600);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                Region resultPane = (Region) root.lookup("#resultDisplayPlaceholder");
+                runCommand(root, "remark 1 r/" + "Interested in a home near public transport. ".repeat(100));
+                layoutFeedback(root);
+                assertTrue(resultPane.getHeight() > 160);
+                assertTrue(((Region) root.lookup("#personListPanelPlaceholder")).getHeight() > 80,
+                        "Long feedback must leave room for the client list at the minimum window size");
+                assertTrue(verticalScrollBar(result).isVisible());
+                result.setScrollTop(Double.MAX_VALUE);
+                layoutFeedback(root);
+                assertTrue(result.getScrollTop() > 0, "All feedback must remain reachable by scrolling");
+
+                runCommand(root, "add n/Eve p/91230005 e/eve@b");
+                layoutFeedback(root);
+                assertEquals(Email.MESSAGE_CONSTRAINTS, result.getText());
+                assertEquals(0, result.getScrollTop(), 1);
+                assertEquals(0, result.getCaretPosition());
+
+                root.resize(1100, 900);
+                assertFeedbackFits(root);
+                runCommand(root, "list");
+                assertFeedbackFits(root);
+                assertEquals(70, resultPane.getHeight(), 1);
+
+                ResultDisplay display = new ResultDisplay();
+                display.setFeedbackToUser("");
+                assertEquals("", ((TextArea) display.getRoot().lookup("#resultDisplay")).getText());
+                assertThrows(NullPointerException.class, () -> display.setFeedbackToUser(null));
             } finally {
                 window.getPrimaryStage().close();
             }
@@ -1695,6 +1866,40 @@ public class ResidexUiTest {
         root.layout();
     }
 
+    private static void layoutFeedback(Region root) {
+        root.applyCss();
+        // Width changes rewrap the text, then the next layout applies its preferred height.
+        for (int i = 0; i < 3; i++) {
+            root.lookup("#resultDisplayPlaceholder").getParent().requestLayout();
+            root.requestLayout();
+            root.layout();
+        }
+    }
+
+    private static ScrollBar verticalScrollBar(TextArea result) {
+        return result.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                .filter(bar -> bar.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
+    }
+
+    private static void assertFeedbackFits(Region root) {
+        layoutFeedback(root);
+        assertVisibleFeedbackFits((TextArea) root.lookup("#resultDisplay"));
+    }
+
+    private static void assertVisibleFeedbackFits(TextArea result) {
+        assertFalse(result.isEditable());
+        assertTrue(result.isWrapText());
+        Text text = (Text) result.lookup(".text");
+        Region viewport = (Region) result.lookup(".viewport");
+        assertFalse(verticalScrollBar(result).isVisible(), () -> "The complete feedback must fit without scrolling: "
+                + result.getFont() + ", rendered font=" + text.getFont() + ", area height="
+                + result.getHeight() + ", preferred height="
+                + result.getPrefHeight() + ", text height=" + text.getLayoutBounds().getHeight()
+                + ", viewport height=" + viewport.getHeight());
+        assertTrue(text.getBoundsInLocal().getHeight() <= viewport.getHeight(),
+                "All wrapped lines must fit in the visible result area");
+    }
+
     private static Region layoutWindow(MainWindow window, double width, double height) {
         return layoutStage(window.getPrimaryStage(), width, height);
     }
@@ -1759,6 +1964,22 @@ public class ResidexUiTest {
             }
         }
         return contents;
+    }
+
+    private static void awaitFxPulses() throws Exception {
+        CompletableFuture<Void> completed = new CompletableFuture<>();
+        runOnFxThread(() -> new AnimationTimer() {
+            private int pulses;
+
+            @Override
+            public void handle(long now) {
+                if (++pulses == 3) {
+                    stop();
+                    completed.complete(null);
+                }
+            }
+        }.start());
+        completed.get(15, TimeUnit.SECONDS);
     }
 
     private static void runOnFxThread(FxAction action) throws Exception {

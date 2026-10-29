@@ -3,9 +3,11 @@ package seedu.address.ui;
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
@@ -22,6 +24,8 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class MainWindow extends UiPart<Stage> {
 
     private static final String FXML = "MainWindow.fxml";
+    private static final double MIN_RESULT_HEIGHT = 70;
+    private static final double MAX_RESULT_HEIGHT_RATIO = 0.5;
 
     private final Logger logger = LogsCenter.getLogger(getClass());
 
@@ -91,6 +95,10 @@ public class MainWindow extends UiPart<Stage> {
 
         resultDisplay = new ResultDisplay();
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());
+        Region content = (Region) resultDisplayPlaceholder.getParent();
+        resultDisplayPlaceholder.prefHeightProperty().bind(Bindings.max(MIN_RESULT_HEIGHT,
+                Bindings.min(resultDisplay.getRoot().prefHeightProperty(),
+                        content.heightProperty().multiply(MAX_RESULT_HEIGHT_RATIO))));
 
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);
         statusbarPlaceholder.getChildren().add(statusBarFooter.getRoot());
