@@ -190,4 +190,36 @@ public class JsonAdaptedPropertyTest {
             assertThrows(IllegalValueException.class, PropertyBedrooms.MESSAGE_CONSTRAINTS, property::toModelType);
         }
     }
+
+    @Test
+    public void toModelType_multipleInvalidFields_reportsFirstField() {
+        JsonAdaptedProperty[] properties = {
+            new JsonAdaptedProperty("flat", "Both", "", "0", "Cancelled", "21"),
+            new JsonAdaptedProperty("HDB", "Both", "", "0", "Cancelled", "21"),
+            new JsonAdaptedProperty("HDB", "Buyer", "", "0", "Cancelled", "21"),
+            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0", "Cancelled", "21"),
+            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "1", "Cancelled", "21"),
+            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "1", "Viewing", "21")
+        };
+        String[] messages = {PropertyType.MESSAGE_CONSTRAINTS, JsonAdaptedProperty.MESSAGE_INVALID_INTENTION,
+            PropertyLocation.MESSAGE_CONSTRAINTS, PropertyPrice.MESSAGE_CONSTRAINTS,
+            PropertyStatus.MESSAGE_CONSTRAINTS, PropertyBedrooms.MESSAGE_CONSTRAINTS};
+        for (int i = 0; i < properties.length; i++) {
+            assertThrows(IllegalValueException.class, messages[i], properties[i]::toModelType);
+        }
+    }
+
+    @Test
+    public void json_priceAndBedroomBoundaries_roundTrip() throws Exception {
+        for (String price : new String[]{"1", Long.toString(Long.MAX_VALUE)}) {
+            for (String bedrooms : new String[]{"1", "20"}) {
+                Property property = new JsonAdaptedProperty("HDB", "Buyer", "Clementi", price,
+                        "Viewing", bedrooms).toModelType();
+                assertEquals(Long.parseLong(price), property.getPrice().orElseThrow().amount);
+                assertEquals(Integer.parseInt(bedrooms), property.getBedrooms().orElseThrow().count);
+                String json = JsonUtil.toJsonString(new JsonAdaptedProperty(property));
+                assertEquals(property, JsonUtil.fromJsonString(json, JsonAdaptedProperty.class).toModelType());
+            }
+        }
+    }
 }

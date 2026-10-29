@@ -72,6 +72,23 @@ class JsonAdaptedPerson {
         properties = source.getProperties().stream().map(JsonAdaptedProperty::new).toList();
     }
 
+    private List<Property> parseProperties() throws IllegalValueException {
+        List<Property> modelProperties = new ArrayList<>();
+        for (int i = 0; i < properties.size(); i++) {
+            JsonAdaptedProperty property = properties.get(i);
+            if (property == null) {
+                throw new IllegalValueException(String.format(MESSAGE_NULL_PROPERTY_FORMAT, i + 1));
+            }
+            try {
+                modelProperties.add(property.toModelType());
+            } catch (IllegalValueException e) {
+                String message = String.format(MESSAGE_INVALID_PROPERTY_FORMAT, i + 1, e.getMessage());
+                throw new IllegalValueException(message, e);
+            }
+        }
+        return modelProperties;
+    }
+
     /**
      * Converts this Jackson-friendly adapted person object into the model's {@code Person} object.
      *
@@ -104,19 +121,7 @@ class JsonAdaptedPerson {
 
         final Remark modelRemark = new Remark(remark == null ? "" : remark);
 
-        List<Property> modelProperties = new ArrayList<>();
-        for (int i = 0; i < properties.size(); i++) {
-            JsonAdaptedProperty property = properties.get(i);
-            if (property == null) {
-                throw new IllegalValueException(String.format(MESSAGE_NULL_PROPERTY_FORMAT, i + 1));
-            }
-            try {
-                modelProperties.add(property.toModelType());
-            } catch (IllegalValueException e) {
-                String message = String.format(MESSAGE_INVALID_PROPERTY_FORMAT, i + 1, e.getMessage());
-                throw new IllegalValueException(message, e);
-            }
-        }
+        List<Property> modelProperties = parseProperties();
 
         return new Person(modelName, modelPhone, modelEmail, modelRemark, modelProperties);
     }
