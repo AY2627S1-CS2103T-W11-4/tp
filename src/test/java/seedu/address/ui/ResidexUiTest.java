@@ -847,6 +847,29 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void editCommand_punycodeDomain_updatesCardAndCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/International Client p/91110013 e/international@example.com");
+                runCommand(root, "edit 1 e/buyer@xn--bcher-kva.de");
+
+                assertFalse(result.getText().contains("Emails should be of the format"));
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("buyer@xn--bcher-kva.de", label(root, "email").getText());
+                assertEquals("buyer@xn--bcher-kva.de",
+                        model.getAddressBook().getPersonList().get(0).getEmail().value);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void remarkCommand_missingPrefix_keepsRemarkAndShowsUsage() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
