@@ -28,6 +28,9 @@ public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
+    /** Search value that selects properties whose price or number of bedrooms is not recorded. */
+    public static final String UNKNOWN_VALUE = "unknown";
+
     /** Keyword arguments shared by {@link #MESSAGE_USAGE} and {@link #MESSAGE_FORMAT_HINT}. */
     public static final String KEYWORD_PARAMETERS = "KEYWORD [MORE_KEYWORDS]";
 
@@ -43,8 +46,8 @@ public class FindCommand extends Command {
             + "Status search also accepts Not specified as an alias for unspecified.\n"
             + "Property type search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_TYPE + "HDB|Condominium|Landed\n"
             + "Property price search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE
-            + "MIN-MAX (either side optional)\n"
-            + "Property bedrooms search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "NUMBER\n"
+            + "MIN-MAX (either side optional) or unknown\n"
+            + "Property bedrooms search: " + COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "NUMBER or unknown\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_EMAIL + "gmail";
 
     public static final String MESSAGE_INVALID_INTENTION =

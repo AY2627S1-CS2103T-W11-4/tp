@@ -146,8 +146,8 @@ final class HelpContent {
                             + FindCommand.COMMAND_WORD + " " + PREFIX_INTENTION + "buyer|seller|both\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_STATUS + "STATUS\n"
                             + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_TYPE + "TYPE\n"
-                            + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "MIN-MAX\n"
-                            + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "NUMBER",
+                            + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "MIN-MAX|unknown\n"
+                            + FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "NUMBER|unknown",
                     List.of("Choose exactly one short prefix: " + PREFIX_NAME + ", " + PREFIX_EMAIL + ", "
                                     + PREFIX_PHONE + ", " + PREFIX_PROPERTY_LOCATION + ", " + PREFIX_INTENTION
                                     + ", " + PREFIX_PROPERTY_STATUS + ", " + PREFIX_PROPERTY_TYPE + ", "
@@ -171,10 +171,14 @@ final class HelpContent {
                                     + "Clients without properties do not match s/unspecified.",
                             "Type requires one value: HDB, Condominium or Landed (h, c and l also work).",
                             "Price needs a range such as 500000-800000, 500000- (at least) or -800000 (at most).",
-                            "Type and price match any property of a client. Properties without a price never match.",
+                            "Type and price match any property of a client. "
+                                    + "In a price range search, properties without a price never match.",
                             "Bedrooms needs one whole number from 1 to 20 and matches any property with exactly "
                                     + "that many.",
-                            "Properties without a recorded number of bedrooms never match.",
+                            "Use pr/unknown or bd/unknown to find clients with a property whose price or number "
+                                    + "of bedrooms is not recorded.",
+                            "In a bedrooms number search, properties without a recorded number of bedrooms "
+                                    + "never match.",
                             "Each search checks all clients and replaces the previous filter. Use list to reset it."),
                     List.of(FindCommand.COMMAND_WORD + " " + PREFIX_NAME + "alex david",
                             FindCommand.COMMAND_WORD + " " + PREFIX_EMAIL + "gmail",
@@ -188,7 +192,9 @@ final class HelpContent {
                             FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_TYPE + "HDB",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "500000-800000",
                             FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "-800000",
-                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "3")),
+                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "3",
+                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_PRICE + "unknown",
+                            FindCommand.COMMAND_WORD + " " + PREFIX_PROPERTY_BEDROOMS + "unknown")),
             new CommandHelp(ListCommand.COMMAND_WORD, "Show all clients.", ListCommand.COMMAND_WORD,
                     List.of("No parameters are needed. This resets the current search filter."),
                     List.of(ListCommand.COMMAND_WORD)),

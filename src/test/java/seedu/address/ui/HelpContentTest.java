@@ -38,7 +38,9 @@ import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.person.PropertyBedroomsMatchesPredicate;
+import seedu.address.model.person.PropertyBedroomsMissingPredicate;
 import seedu.address.model.person.PropertyPriceInRangePredicate;
+import seedu.address.model.person.PropertyPriceMissingPredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.PropertyTypeMatchesPredicate;
 import seedu.address.model.person.Remark;
@@ -164,7 +166,9 @@ public class HelpContentTest {
                 new FindCommand(new PropertyPriceInRangePredicate(new PropertyPrice("500000"),
                         new PropertyPrice("800000"))),
                 new FindCommand(new PropertyPriceInRangePredicate(null, new PropertyPrice("800000"))),
-                new FindCommand(new PropertyBedroomsMatchesPredicate(new PropertyBedrooms("3"))));
+                new FindCommand(new PropertyBedroomsMatchesPredicate(new PropertyBedrooms("3"))),
+                new FindCommand(new PropertyPriceMissingPredicate()),
+                new FindCommand(new PropertyBedroomsMissingPredicate()));
 
         assertEquals(expectedCommands.size(), examples.size());
         for (int i = 0; i < examples.size(); i++) {

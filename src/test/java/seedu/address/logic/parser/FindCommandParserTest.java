@@ -18,7 +18,9 @@ import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.person.PropertyBedroomsMatchesPredicate;
+import seedu.address.model.person.PropertyBedroomsMissingPredicate;
 import seedu.address.model.person.PropertyPriceInRangePredicate;
+import seedu.address.model.person.PropertyPriceMissingPredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.PropertyTypeMatchesPredicate;
 import seedu.address.model.property.PropertyBedrooms;
@@ -501,6 +503,28 @@ public class FindCommandParserTest {
         assertParseFailure(parser, "pr/1-2 3-4",
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "pr/1-2 s/viewing", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+    }
+
+    @Test
+    public void parse_unknownPriceOrBedrooms_returnsMissingValueFindCommand() {
+        for (String value : List.of("unknown", "UNKNOWN", "Unknown")) {
+            assertParseSuccess(parser, "pr/" + value, new FindCommand(new PropertyPriceMissingPredicate()));
+            assertParseSuccess(parser, "PR/ " + value + " ", new FindCommand(new PropertyPriceMissingPredicate()));
+            assertParseSuccess(parser, "bd/" + value, new FindCommand(new PropertyBedroomsMissingPredicate()));
+            assertParseSuccess(parser, "BD/ " + value + " ", new FindCommand(new PropertyBedroomsMissingPredicate()));
+        }
+    }
+
+    @Test
+    public void parse_unknownMixedWithOtherInput_throwsParseException() {
+        assertParseFailure(parser, "pr/unknown 500000",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "bd/unknown 3",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "pr/unknown n/alex", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
+        assertParseFailure(parser, "t/unknown", FindCommand.MESSAGE_INVALID_TYPE);
+        assertParseFailure(parser, "pr/unknow", FindCommand.MESSAGE_INVALID_PRICE_RANGE);
+        assertParseFailure(parser, "bd/unknow", FindCommand.MESSAGE_INVALID_BEDROOMS);
     }
 
     @Test

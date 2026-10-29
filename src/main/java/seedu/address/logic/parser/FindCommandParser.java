@@ -23,7 +23,9 @@ import seedu.address.model.person.LocationContainsKeywordsPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PhoneContainsKeywordsPredicate;
 import seedu.address.model.person.PropertyBedroomsMatchesPredicate;
+import seedu.address.model.person.PropertyBedroomsMissingPredicate;
 import seedu.address.model.person.PropertyPriceInRangePredicate;
+import seedu.address.model.person.PropertyPriceMissingPredicate;
 import seedu.address.model.person.PropertyStatusMatchesPredicate;
 import seedu.address.model.person.PropertyTypeMatchesPredicate;
 import seedu.address.model.property.PropertyPrice;
@@ -109,6 +111,9 @@ public class FindCommandParser implements Parser<FindCommand> {
             if (keywords.size() != 1) {
                 throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
             }
+            if (FindCommand.UNKNOWN_VALUE.equalsIgnoreCase(keywords.get(0))) {
+                return new FindCommand(new PropertyPriceMissingPredicate());
+            }
             return new FindCommand(parsePriceRange(keywords.get(0)));
         }
 
@@ -116,6 +121,9 @@ public class FindCommandParser implements Parser<FindCommand> {
             List<String> keywords = parseKeywords(keywordArgs);
             if (keywords.size() != 1) {
                 throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+            }
+            if (FindCommand.UNKNOWN_VALUE.equalsIgnoreCase(keywords.get(0))) {
+                return new FindCommand(new PropertyBedroomsMissingPredicate());
             }
             try {
                 return new FindCommand(new PropertyBedroomsMatchesPredicate(
