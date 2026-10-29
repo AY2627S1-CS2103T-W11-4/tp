@@ -56,9 +56,9 @@ public class SaveFailureRollbackIntegrationTest {
             assertEquals(1, model.getFilteredPersonList().size());
             assertEquals(saved, Files.readString(dataFile));
 
-            assertEquals("Listed all persons.", logic.execute("list").getFeedbackToUser());
+            assertEquals("Listed all clients.", logic.execute("list").getFeedbackToUser());
             assertEquals("Initial Client", model.getFilteredPersonList().get(0).getName().fullName);
-            assertEquals("0 person(s) found!", logic.execute("find n/SaveFail").getFeedbackToUser());
+            assertEquals("0 client(s) found!", logic.execute("find n/SaveFail").getFeedbackToUser());
             assertEquals(List.of(), model.getFilteredPersonList());
             assertEquals("Initial Client", model.getAddressBook().getPersonList().get(0).getName().fullName);
             assertEquals(saved, Files.readString(dataFile));

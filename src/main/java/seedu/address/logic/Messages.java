@@ -21,14 +21,14 @@ public class Messages {
             "Tags are no longer supported. Remove all t/ arguments and try again.";
     public static final String MESSAGE_UNEXPECTED_PARAMETER = "Unexpected parameter: %1$s";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
-    public static final String MESSAGE_INVALID_PERSON_DISPLAYED_INDEX = "The person index provided is invalid.";
+    public static final String MESSAGE_INVALID_PERSON_DISPLAYED_INDEX = "The client index provided is invalid.";
     public static final String MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER =
             "Client index must be a positive integer, starting from 1.";
     public static final String MESSAGE_PROPERTY_INDEX_POSITIVE_INTEGER =
             "Property index must be a positive integer, starting from 1.";
     public static final String MESSAGE_INVALID_PROPERTY_INDEX =
             "The property index provided is invalid for the selected client.";
-    public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d person(s) found!";
+    public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d client(s) found!";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
     public static final String MESSAGE_DUPLICATE_PERSON =

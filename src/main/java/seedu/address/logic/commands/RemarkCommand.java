@@ -31,8 +31,8 @@ public class RemarkCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_REMARK + "Likes to swim.";
 
-    public static final String MESSAGE_ADD_REMARK_SUCCESS = "Added remark to Person: %1$s";
-    public static final String MESSAGE_DELETE_REMARK_SUCCESS = "Removed remark from Person: %1$s";
+    public static final String MESSAGE_ADD_REMARK_SUCCESS = "Added remark to client: %1$s";
+    public static final String MESSAGE_DELETE_REMARK_SUCCESS = "Removed remark from client: %1$s";
 
     private final Index index;
     private final Remark remark;

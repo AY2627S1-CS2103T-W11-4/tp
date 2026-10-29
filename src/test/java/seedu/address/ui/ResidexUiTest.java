@@ -1003,7 +1003,7 @@ public class ResidexUiTest {
 
                 runCommand(root, "find e/gmail");
 
-                assertEquals("1 person(s) found!", result.getText());
+                assertEquals("1 client(s) found!", result.getText());
                 assertEquals("1 of 6 clients", label(root, "clientCount").getText());
                 assertEquals("Filtered clients", label(root, "clientListHeading").getText());
                 assertEquals("Alex Yeoh", label(root, "name").getText());
