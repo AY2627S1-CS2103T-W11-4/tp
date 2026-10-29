@@ -378,6 +378,7 @@ Property bedrooms | `bd/`
   Missing, unknown, repeated, or mixed prefixes are rejected. For example, use `find n/alice`.
   Long search field aliases are not supported.
 * At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
+* Entering `find` without arguments, or providing a search field without a keyword (e.g. `find n/`), shows the command format and an example (`find n/alex`).
 * Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
 * Phone searches compare digits only: hyphens, brackets and a leading `+65` in a keyword are ignored, so `find p/9123-4567` and `find p/+6591234567` both match `91234567`. A keyword containing letters or other symbols matches nothing.
 * Spaces separate keywords, so `find p/9123 4567` lists clients whose phone contains `9123` **or** `4567`. To search for one full number, type it without spaces.
