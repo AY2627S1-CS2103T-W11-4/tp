@@ -1344,6 +1344,17 @@ testers are expected to do more *exploratory* testing.
    1. Use Tab to reach a Copy button, then activate it with Space.<br>
       Expected: The example can be copied without a mouse. If a button shows **Failed**, click it again to retry.
 
+### Reading long email addresses on client cards
+
+1. Add a client with a long email, for example:<br>
+   `add n/Long Email Client p/88110090 e/christopher.alexander.property.management@internationalrealestateconsulting.com`
+2. Resize the window to its minimum size, then widen it again.<br>
+   Expected: The full email wraps when needed, without ellipses, horizontal scrolling or overlap with later fields.
+3. Run `find n/Long Email Client`, then `list`.<br>
+   Expected: The email remains fully readable in both filtered and complete lists.
+4. Repeat with an email containing a long run of letters without separators.<br>
+   Expected: The text wraps within the email row and the client card grows to fit it.
+
 ### Viewing complete client details
 
 Prerequisite: At least two clients exist. Choose one with a remark and multiple properties,
