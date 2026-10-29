@@ -173,12 +173,18 @@ invalid saved phone numbers follow the normal data-loading error path without re
 ### Protecting client data after a failed load
 
 `JsonUtil#fromJsonString()` reads a complete value using Jackson's parser and checks that no token follows it.
+It accepts one initial UTF-8 byte-order mark for both client data and preferences, without removing marks
+inside JSON strings or rewriting the file during reading. Repeated or misplaced marks remain invalid.
 Trailing whitespace is accepted; additional values and malformed trailing text cause a loading error.
 
 `MainApp#initModelManager()` propagates `DataLoadingException` when an existing client data file cannot
 be loaded. `MainApp#init()` then provides an error UI without creating a model or command logic.
 When the application starts, the error dialog shows the file's absolute path and recovery instructions,
 then the application exits. `stop()` skips saving preferences when no model was initialized.
+Empty JSON content raises `EOFException` with a plain loading reason that `UiManager` displays directly.
+The UI replaces Jackson processing details with a plain format message, while retaining permission guidance
+and specific application validation messages.
+The original exception remains available to `MainApp` for detailed logging; the dialog omits parser internals.
 
 This prevents command-triggered automatic saving from overwriting the failed file with an empty list.
 The user must repair or replace the file and restart. Moving the file aside explicitly selects the existing
@@ -332,6 +338,8 @@ Equality and hashing use the properties, so they also reflect everything that de
 Fresh sample data gives Alex buying properties, Bernice selling properties and Charlotte both directions,
 while David, Irfan and Roy have no properties. This demonstrates every derived role and intention-search ordering
 without changing how real saved clients are loaded.
+Alex and Charlotte also have example remarks matching the UG screenshots; the remaining sample remarks are empty.
+The screenshot helper uses these bundled remarks directly. Existing data is loaded as saved, including empty remarks.
 Bernice's and Charlotte's sample properties also record their number of bedrooms (3 or 4), so the User Guide's
 `find bd/3` example returns clients on a fresh install.
 All property-copy methods derive the new role automatically while leaving the original `Person` unchanged.
@@ -522,12 +530,13 @@ The adapter retains its four-argument convenience constructor for old callers an
 New saves always write a status for each property. Loading alone does not rewrite the file.
 
 Property intentions are saved canonically as `Buying` or `Selling`.
-The adapter also accepts exact legacy `Buyer` and `Seller` values, mapping them to `BUYING` and `SELLING`.
+The adapter also accepts legacy `Buyer` and `Seller` values, mapping them to `BUYING` and `SELLING`.
 This compatibility rule stays in `JsonAdaptedProperty` and does not broaden command syntax.
 Legacy client-level intention is ignored and omitted from new saves; the client role is derived from properties.
 Mixed old/new property values can be loaded in one file.
 Reading does not rewrite the file; saving writes all property intentions in the new canonical form.
-Unlike CLI input, saved intention values are case-sensitive and do not permit surrounding whitespace.
+Saved intention values ignore case using `Locale.ROOT` and strip surrounding whitespace, consistently with saved statuses.
+Read-only commands do not trigger canonicalisation; a successful data-changing command uses the normal save path.
 
 `JsonAdaptedPerson` treats a missing or null `properties` field as an empty list, so valid v1.3 files load without
 migration. Null property entries, missing required fields, and invalid values are rejected with `IllegalValueException`;
@@ -1497,15 +1506,17 @@ Run these steps in order; client indexes below refer to the filtered list.
       No client-level intention field needs to be added.
 
    1. After each legacy load, enter `list`, exit and inspect the saved file.<br>
-      Expected: The property's intention uses canonical Selling or Buying respectively.
+      Expected: The saved intention is unchanged because `list` does not save client data.
+      A subsequent successful data-changing command saves canonical Selling or Buying respectively.
       Relaunch and verify that the same property details and derived Seller role are retained.
-      Repeat these two steps with legacy property `"intention": "Buyer"`; expect Buying on display and save,
+      Repeat these two steps with legacy property `"intention": "Buyer"`; expect Buying on display and on the next save,
       and a derived Buyer role. Other client fields remain unchanged.
 
    1. Exit the app, back up the valid file, and change only the property's intention to `"Both"`.
       Relaunch and inspect the load error and file before entering any commands.<br>
       Expected: Loading fails through the normal data-loading error path and the read leaves the file unchanged.
-      Missing, blank or noncanonical property intentions such as `"buying"` must also fail.
+      Missing, blank or invalid property intentions such as `"buying extra"` must also fail.
+      Case variants such as `"buying"` and padded values such as `" SELLING "` load successfully without rewriting the file.
       Close the app without issuing commands and restore the valid backup before continuing.
 
 ### Searching property locations containing slashes
