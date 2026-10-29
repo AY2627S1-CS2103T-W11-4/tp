@@ -117,6 +117,13 @@ How the `Logic` component works:
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 1. `LogicManager` saves the data file only if the command changed the address book. Read-only commands such as `find`, `view`, `list` and `help` never touch the file, so they still work when it is read-only or the disk is full. If saving fails after a command that did change data, that change is rolled back and an error is shown.
 
+`LogicManager` saves client data only when it differs from the pre-command snapshot. A failed save rolls back
+the change. `exit` leaves client data unchanged, so its `CommandResult` retains the exit flag without attempting
+a client-data save, even after an earlier save failure. `MainWindow` handles that flag through its normal close path.
+During shutdown, `MainApp` logs a preferences-save failure and still releases the data-file lock.
+Logic regressions cover empty and populated data, plus exit after a failed edit, using both `IOException`
+and `AccessDeniedException` without relying on OS file permissions or native-window timing.
+
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>

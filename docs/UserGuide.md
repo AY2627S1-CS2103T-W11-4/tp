@@ -518,9 +518,15 @@ Exits the program.
 
 Format: `exit`
 
+`exit` does not attempt another save of unchanged client data, so a client-data write failure does not block it.
+Window settings are saved separately during shutdown; failure to save them is logged and does not prevent closing.
+
 ### Saving the data
 
-RESIDEX automatically saves data after every command. You do not need to save manually.
+RESIDEX automatically saves client data when a command changes it. You do not need to save manually.
+Commands that leave client data unchanged, including `list`, `find`, `view`, `help` and `exit`, do not rewrite the file.
+If saving a change fails, an error is shown and that change is rolled back in memory.
+You can still use `exit` to close RESIDEX.
 
 Only one RESIDEX instance can use the same client data file at a time. A second launch shows an error and closes
 without changing client data or preferences. Close the existing instance before launching again.
