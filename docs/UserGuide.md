@@ -56,8 +56,11 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 * **Client list:** The heading is **All clients**, **Filtered clients** or **Client details**.
   The count shows how many clients are displayed out of all stored clients.
 * **Client cards:** Each card shows its displayed index, name, phone, email, derived intention,
-  any remark and numbered property summaries. A property summary shows type, intention, location,
-  optional price and transaction status. Clients without properties have intention **Not specified**.
+  any remark and numbered properties. Each property shows labelled rows for **Type**, **Intention**, **Location**,
+  **Status**, **Price** and **Bedrooms**. An absent price or bedroom count reads **Not recorded**;
+  an unset transaction status reads **Status: Not specified**. Long property values wrap within their rows.
+  Type and Intention share a row, as do Price and Bedrooms, to reduce scrolling.
+  Clients without properties have intention **Not specified**.
   Long email addresses wrap onto additional lines so the full address remains readable at narrow window widths.
 * **Prices:** Monetary amounts belong to property entries. There is no client budget amount on the right of a card;
   the badge on the right shows the derived intention.

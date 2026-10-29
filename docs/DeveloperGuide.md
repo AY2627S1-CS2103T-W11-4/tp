@@ -559,10 +559,15 @@ live status-filter membership and exact transition-log content/suppression.
 
 #### Property display
 
-`PersonCard` renders one wrapped label per property, using its one-based list position and `Property#toDisplay()`.
-The property list is hidden when empty, and `PersonListPanel` measures each card at its available width so longer locations expand the row.
-Type, property intention, location, a known price and readable status are displayed together;
-an unknown price has no amount, while `UNSPECIFIED` displays as Not specified.
+`PersonCard` renders a numbered heading and labelled fields for each property's type, intention,
+location, status, price and bedrooms. Type and intention share a row, as do price and bedrooms, reducing
+each property to five rows before wrapping, including its heading. Each pair uses equal-width columns
+and wraps independently. Location and status keep separate rows.
+An absent price or bedroom count displays as Not recorded;
+`UNSPECIFIED` displays as Status: Not specified. Locations containing `|` stay within their Location row.
+Each field wraps and retains its preferred height. The property list is hidden when empty, and
+`PersonListPanel` measures each card at its available width so longer values expand the card.
+`Property#toDisplay()` retains the compact property format used in command feedback.
 `HelpContent` includes the three property commands and its examples are parsed by `HelpContentTest`.
 
 ### Viewing complete client details
@@ -1370,6 +1375,28 @@ testers are expected to do more *exploratory* testing.
    Expected: The email remains fully readable in both filtered and complete lists.
 4. Repeat with an email containing a long run of letters without separators.<br>
    Expected: The text wraps within the email row and the client card grows to fit it.
+
+### Reading labelled property fields on client cards
+
+1. Add a test client and isolate it with `find`:<br>
+   `add n/Property Label Test p/91009165 e/propertylabels@example.com`<br>
+   `find p/91009165`
+2. Run `addp 1 t/HDB i/Buying l/HDB | Clementi pr/800000 bd/3`, then
+   `addp 1 t/Condominium i/Selling l/Tampines s/Viewing`.<br>
+   Expected: The card shows **Property 1** and **Property 2** in order. Each property has labelled
+   Type, Intention, Location, Status, Price and Bedrooms rows. The first location reads `HDB | Clementi`
+   entirely within the Location row; its status reads `Status: Not specified`. The second property shows
+   `Price: Not recorded` and `Bedrooms: Not recorded`, with `Status: Viewing`.
+   Each property uses five rows before wrapping, including its heading: Type and Intention share one row,
+   and Price and Bedrooms share another, with Location and Status on separate rows.
+3. Run `editp 1 1 l/Clementi Avenue 3 near the community centre and MRT station`, then resize the window
+   to its minimum size and widen it again.<br>
+   Expected: Long rows wrap without ellipses or overlapping the next field or property. All fields remain
+   readable by scrolling vertically, without horizontal scrolling. Recheck the long-email steps above
+   on this client with multiple properties.
+4. Run `list`, then `find p/91009165` again.<br>
+   Expected: Both lists retain the labelled property fields. Run `delp 1 1`; the remaining property becomes
+   **Property 1** and keeps its own labels and values. Run `delete 1` to remove the test client.
 
 ### Viewing complete client details
 
