@@ -115,6 +115,7 @@ How the `Logic` component works:
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a client).<br>
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+1. `LogicManager` saves the data file only if the command changed the address book. Read-only commands such as `find`, `view`, `list` and `help` never touch the file, so they still work when it is read-only or the disk is full. If saving fails after a command that did change data, that change is rolled back and an error is shown.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
