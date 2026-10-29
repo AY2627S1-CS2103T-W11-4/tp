@@ -33,6 +33,13 @@ public class RemarkCommandParserTest {
     }
 
     @Test
+    public void parse_uppercaseRemarkPrefix_preservesRemarkText() {
+        String userInput = INDEX_FIRST_PERSON.getOneBased() + " R/Call Next Week";
+        RemarkCommand expectedCommand = new RemarkCommand(INDEX_FIRST_PERSON, new Remark("Call Next Week"));
+        assertParseSuccess(parser, userInput, expectedCommand);
+    }
+
+    @Test
     public void parse_missingRemarkPrefix_failure() {
         assertParseFailure(parser, String.valueOf(INDEX_FIRST_PERSON.getOneBased()), MESSAGE_INVALID_FORMAT);
     }

@@ -56,8 +56,11 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 * **Client list:** The heading is **All clients**, **Filtered clients** or **Client details**.
   The count shows how many clients are displayed out of all stored clients.
 * **Client cards:** Each card shows its displayed index, name, phone, email, derived intention,
-  any remark and numbered property summaries. A property summary shows type, intention, location,
-  optional price and transaction status. Clients without properties have intention **Not specified**.
+  any remark and numbered properties. Each property shows labelled rows for **Type**, **Intention**, **Location**,
+  **Status**, **Price** and **Bedrooms**. An absent price or bedroom count reads **Not recorded**;
+  an unset transaction status reads **Status: Not specified**. Long property values wrap within their rows.
+  Type and Intention share a row, as do Price and Bedrooms, to reduce scrolling.
+  Clients without properties have intention **Not specified**.
   Long email addresses wrap onto additional lines so the full address remains readable at narrow window widths.
 * **Prices:** Monetary amounts belong to property entries. There is no client budget amount on the right of a card;
   the badge on the right shows the derived intention.
@@ -85,6 +88,8 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `undo`, `redo` and `exit`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
+
+* Pressing Enter with an empty command box, or one that contains only spaces, does nothing.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -412,9 +417,10 @@ Property bedrooms | `bd/`
 * Price searches require exactly one range of whole-dollar amounts, without commas: `500000-800000` (from and including
   $500,000 up to and including $800,000), `500000-` (at least $500,000) or `-800000` (at most $800,000).
   The minimum must not be above the maximum. A client matches if **any property** has a price within the range.
-  Properties without a price never match.
+  In a price range search, properties without a price never match (use `pr/unknown` to find them).
 * Bedrooms searches require exactly one whole number from 1 to 20, such as `find bd/3`. A client matches if **any property**
-  has exactly that number of bedrooms. Properties without a recorded number of bedrooms never match.
+  has exactly that number of bedrooms. In a bedrooms number search, properties without a recorded number of bedrooms never match (use `bd/unknown` to find them).
+* `pr/unknown` and `bd/unknown` (case-insensitive) list clients with at least one property whose price or number of bedrooms is not recorded.
 * Type, price and bedrooms results retain normal client order.
 * Status results retain normal client order. Client indexes refer to the currently displayed results.
   Use `list` to show all clients again. Searches do not modify stored clients.
@@ -439,6 +445,8 @@ Examples:
 * `find pr/500000-800000` lists clients with a property priced from $500,000 to $800,000.
 * `find pr/-800000` lists clients with a property priced at $800,000 or less.
 * `find bd/3` lists clients with at least one 3-bedroom property.
+* `find pr/unknown` lists clients with a property that has no price recorded.
+* `find bd/unknown` lists clients with a property that has no number of bedrooms recorded.
 
 The following example shows `find n/Alex David` using the sample clients:
 
@@ -586,7 +594,7 @@ Action     | Format, Examples
 **Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000 bd/3`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `editp 1 2 l/Toa Payoh`, `editp 1 2 bd/4`
-**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`, `find t/HDB`, `find pr/500000-800000`, `find bd/3`
+**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`, `find t/HDB`, `find pr/500000-800000`, `find bd/3`, `find pr/unknown`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`

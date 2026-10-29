@@ -90,7 +90,7 @@ public final class Property {
     }
 
     /**
-     * Returns the property details for client cards and command feedback.
+     * Returns compact property details for command feedback.
      */
     public String toDisplay() {
         return type + " | " + intention + " | " + location
