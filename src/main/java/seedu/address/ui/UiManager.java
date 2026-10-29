@@ -1,6 +1,5 @@
 package seedu.address.ui;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
@@ -82,9 +81,6 @@ public class UiManager implements Ui {
     private static String getDataLoadingErrorReason(Throwable cause) {
         if (cause instanceof AccessDeniedException) {
             return "Access to the file was denied. Check its permissions.";
-        }
-        if (cause instanceof EOFException) {
-            return "The data file is empty.";
         }
         if (cause instanceof JsonProcessingException) {
             return "The data file is not in the expected JSON format.";

@@ -181,8 +181,9 @@ Trailing whitespace is accepted; additional values and malformed trailing text c
 be loaded. `MainApp#init()` then provides an error UI without creating a model or command logic.
 When the application starts, the error dialog shows the file's absolute path and recovery instructions,
 then the application exits. `stop()` skips saving preferences when no model was initialized.
-Empty JSON content raises `EOFException`. `UiManager` translates this and Jackson processing failures into
-plain loading reasons, while retaining permission guidance and application validation messages.
+Empty JSON content raises `EOFException` with a plain loading reason that `UiManager` displays directly.
+The UI replaces Jackson processing details with a plain format message, while retaining permission guidance
+and specific application validation messages.
 The original exception remains available to `MainApp` for detailed logging; the dialog omits parser internals.
 
 This prevents command-triggered automatic saving from overwriting the failed file with an empty list.

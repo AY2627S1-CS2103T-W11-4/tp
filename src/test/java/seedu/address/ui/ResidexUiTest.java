@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -72,6 +73,7 @@ import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
+import seedu.address.model.property.PropertyPrice;
 import seedu.address.model.property.PropertyStatus;
 import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.DataFileLock;
@@ -662,8 +664,24 @@ public class ResidexUiTest {
 
     @Test
     public void dataLoadingError_duplicateClients_showsValidationMessage() throws Exception {
-        assertDataLoadingError(new IllegalValueException("Persons list contains duplicate person(s)."),
+        assertSavedDataValidationError(Files.readString(Path.of("src", "test", "data",
+                "JsonSerializableAddressBookTest", "duplicatePersonAddressBook.json")),
                 "Persons list contains duplicate person(s).");
+    }
+
+    @Test
+    public void dataLoadingError_invalidProperty_showsSpecificValidationMessage() throws Exception {
+        String[] fields = {"\"price\":\"0\"", "\"status\":\"Cancelled\"", "\"bedrooms\":\"21\""};
+        String[] reasons = {PropertyPrice.MESSAGE_CONSTRAINTS, PropertyStatus.MESSAGE_CONSTRAINTS,
+            PropertyBedrooms.MESSAGE_CONSTRAINTS};
+        for (int i = 0; i < fields.length; i++) {
+            String json = """
+                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                      "properties": [{"type": "HDB", "intention": "Buying", "location": "Clementi", %s}]}]}
+                    """.formatted(fields[i]);
+
+            assertSavedDataValidationError(json, "Property 1 is invalid: " + reasons[i]);
+        }
     }
 
     // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
@@ -735,6 +753,19 @@ public class ResidexUiTest {
 
             checked.get(5, TimeUnit.SECONDS);
         });
+    }
+
+    private void assertSavedDataValidationError(String json, String expectedReason) throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        Files.writeString(dataFile, json);
+        byte[] original = Files.readAllBytes(dataFile);
+        DataLoadingException failure = assertThrows(DataLoadingException.class,
+                new JsonAddressBookStorage(dataFile)::readAddressBook);
+        IllegalValueException cause = assertInstanceOf(IllegalValueException.class, failure.getCause());
+
+        assertEquals(expectedReason, cause.getMessage());
+        assertDataLoadingError(cause, expectedReason);
+        assertArrayEquals(original, Files.readAllBytes(dataFile));
     }
 
     private void assertDataLoadingError(Exception cause, String expectedReason) throws Exception {

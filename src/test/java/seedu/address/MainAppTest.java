@@ -336,8 +336,9 @@ public class MainAppTest {
             assertNotNull(app.logic);
             assertEquals(i < 2 ? PropertyIntention.BUYING : PropertyIntention.SELLING,
                     app.model.getAddressBook().getPersonList().get(0).getProperties().get(0).getIntention());
-            assertEquals(json, Files.readString(dataPath()));
+            app.logic.execute("list");
             app.stop();
+            assertEquals(json, Files.readString(dataPath()));
         }
     }
 
