@@ -1,7 +1,11 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.testutil.Assert.assertThrows;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -9,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
@@ -28,12 +33,14 @@ public class ClientPrefixCaseIntegrationTest {
 
     private Model model;
     private Logic logic;
+    private Path dataFile;
 
     @BeforeEach
     public void setUp() {
         model = new ModelManager();
+        dataFile = temporaryFolder.resolve("addressbook.json");
         logic = new LogicManager(model, new StorageManager(
-                new JsonAddressBookStorage(temporaryFolder.resolve("addressbook.json")),
+                new JsonAddressBookStorage(dataFile),
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
     }
 
@@ -63,5 +70,15 @@ public class ClientPrefixCaseIntegrationTest {
         assertEquals("Call Next Week", edited.getRemark().value);
         assertEquals("91230010", edited.getPhone().value);
         assertEquals("Bishan", edited.getProperties().get(0).getLocation().value);
+    }
+
+    @Test
+    public void execute_mixedCaseDuplicatePrefix_rejectsWithoutAddingClientOrSaving() throws Exception {
+        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME), () ->
+                logic.execute("add N/Gus n/Amy P/91230010 E/gus@example.com"));
+
+        assertEquals(List.of(), model.getFilteredPersonList());
+        assertEquals(List.of(), model.getAddressBook().getPersonList());
+        assertFalse(Files.exists(dataFile));
     }
 }

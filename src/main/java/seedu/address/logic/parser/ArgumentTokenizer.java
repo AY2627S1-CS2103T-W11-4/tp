@@ -3,7 +3,6 @@ package seedu.address.logic.parser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -63,7 +62,7 @@ public class ArgumentTokenizer {
      * Returns the index of the first occurrence of {@code prefix} in
      * {@code argsString} starting from index {@code fromIndex}. An occurrence
      * is valid if there is a whitespace before {@code prefix}. Prefix letters
-     * are compared with {@code Locale.ROOT}, so {@code N/} matches {@code n/}.
+     * are compared without regard to case, so {@code N/} matches {@code n/}.
      * Returns -1 if no such occurrence can be found.
      *
      * E.g if {@code argsString} = "e/hip/900", {@code prefix} = "p/" and
@@ -80,13 +79,12 @@ public class ArgumentTokenizer {
 
     /**
      * Returns the first index of {@code needle} at or after {@code fromIndex}.
-     * Letters are compared with {@code Locale.ROOT}. A match has the same length as {@code needle}.
+     * Letters are compared without regard to case. A match has the same length as {@code needle}.
      */
     private static int indexOfIgnoreCase(String argsString, String needle, int fromIndex) {
-        String expected = needle.toLowerCase(Locale.ROOT);
         int limit = argsString.length() - needle.length();
         for (int i = Math.max(fromIndex, 0); i <= limit; i++) {
-            if (argsString.substring(i, i + needle.length()).toLowerCase(Locale.ROOT).equals(expected)) {
+            if (argsString.regionMatches(true, i, needle, 0, needle.length())) {
                 return i;
             }
         }
