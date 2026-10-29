@@ -24,6 +24,7 @@
       <Label text="Email" styleClass="field-caption" minWidth="56" prefWidth="56" />
       <Label fx:id="email" styleClass="client-detail" wrapText="true" minWidth="0" maxWidth="Infinity"
              HBox.hgrow="ALWAYS">
+        <!-- Preserve the height needed for wrapped text to avoid vertical clipping. -->
         <minHeight>
           <Region fx:constant="USE_PREF_SIZE" />
         </minHeight>

@@ -10,11 +10,15 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.RedoCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.ClientViewMode;
 import seedu.address.model.Model;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 import seedu.address.storage.Storage;
 
@@ -48,17 +52,45 @@ public class LogicManager implements Logic {
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
+        ReadOnlyAddressBook stateBeforeCommand = new AddressBook(model.getAddressBook());
         commandResult = command.execute(model);
 
-        try {
-            storage.saveAddressBook(model.getAddressBook());
-        } catch (AccessDeniedException e) {
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
-        } catch (IOException ioe) {
-            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
+        if (!stateBeforeCommand.equals(model.getAddressBook())) {
+            try {
+                storage.saveAddressBook(model.getAddressBook());
+            } catch (AccessDeniedException e) {
+                rollbackUnsavedChange(command, stateBeforeCommand);
+                throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
+            } catch (IOException ioe) {
+                rollbackUnsavedChange(command, stateBeforeCommand);
+                throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
+            }
         }
 
         return commandResult;
+    }
+
+    /**
+     * Restores client data when a command changed the model but the file was not saved.
+     * Undo and redo each move one history step, so a failed undo is reversed with redo
+     * and a failed redo is reversed with undo. Other failed commands undo the committed
+     * change and drop that redo entry so the unsaved state cannot return.
+     */
+    private void rollbackUnsavedChange(Command command, ReadOnlyAddressBook stateBeforeCommand) {
+        if (command instanceof UndoCommand && model.canRedoAddressBook()) {
+            model.redoAddressBook();
+            return;
+        }
+        if (command instanceof RedoCommand && model.canUndoAddressBook()) {
+            model.undoAddressBook();
+            return;
+        }
+        if (model.canUndoAddressBook()) {
+            model.undoAddressBook();
+            model.discardRedoHistory();
+            return;
+        }
+        model.setAddressBook(stateBeforeCommand);
     }
 
     @Override

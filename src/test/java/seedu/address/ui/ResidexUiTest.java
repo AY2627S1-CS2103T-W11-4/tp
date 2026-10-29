@@ -15,9 +15,12 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.AfterAll;
@@ -29,6 +32,7 @@ import org.junit.jupiter.api.io.TempDir;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Orientation;
+import javafx.scene.AccessibleAttribute;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -38,12 +42,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -52,22 +61,29 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.AddPropertyCommand;
+import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.property.Property;
 import seedu.address.model.property.PropertyBedrooms;
 import seedu.address.model.property.PropertyLocation;
 import seedu.address.model.property.PropertyStatus;
+import seedu.address.model.util.SampleDataUtil;
+import seedu.address.storage.DataFileLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
- * Exercises the real FXML, CSS and command wiring without opening a visible window.
+ * Exercises real FXML, CSS and command wiring without opening a visible Help window.
  * Linux requires a display (such as Xvfb); model and logic tests still run without one.
  */
 @EnabledIf("hasDisplay")
@@ -92,6 +108,152 @@ public class ResidexUiTest {
     @AfterAll
     public static void stopToolkit() {
         Platform.exit();
+    }
+
+    @Test
+    public void helpExamples_copyFailureAndRetryUpdateAccessibleFeedback() throws Exception {
+        runOnFxThread(() -> {
+            HelpContent.CommandHelp command = HelpContent.getCommands().get(0);
+            String expected = command.examples().get(0);
+            AtomicInteger attempts = new AtomicInteger();
+            CommandHelpCard card = new CommandHelpCard(command, content -> {
+                assertEquals(expected, content.getString());
+                return attempts.incrementAndGet() > 1;
+            });
+            VBox examples = (VBox) card.getRoot().lookup("#examples");
+            Button copy = (Button) ((HBox) examples.getChildren().get(0)).getChildren().get(1);
+            copy.fire();
+            assertEquals("Failed", copy.getText());
+            assertEquals("Failed. Copy example: " + expected,
+                    copy.queryAccessibleAttribute(AccessibleAttribute.TEXT));
+            copy.fire();
+            assertEquals("Copied", copy.getText());
+            assertEquals("Copied. Copy example: " + expected,
+                    copy.queryAccessibleAttribute(AccessibleAttribute.TEXT));
+            assertEquals(2, attempts.get());
+        });
+    }
+
+    @Test
+    public void helpFocus_preservesWindowAndScrollState() throws Exception {
+        runOnFxThread(() -> {
+            HelpWindow help = new HelpWindow();
+            Stage stage = help.getRoot();
+            try {
+                stage.setX(120);
+                stage.setY(80);
+                stage.setWidth(740);
+                stage.setHeight(680);
+                ScrollPane scroll = (ScrollPane) stage.getScene().lookup("#commandScrollPane");
+                scroll.setVvalue(0.6);
+                stage.setIconified(true);
+                help.focus();
+                assertFalse(stage.isIconified());
+                assertEquals(120, stage.getX());
+                assertEquals(80, stage.getY());
+                assertEquals(740, stage.getWidth());
+                assertEquals(680, stage.getHeight());
+                assertEquals(0.6, scroll.getVvalue());
+                assertFalse(help.isShowing(), "Focusing a hidden stage must not create another window");
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void helpExamples_copyExactTextAndKeepGuideUrlAction() throws Exception {
+        runOnFxThread(() -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            Map<DataFormat, Object> original = clipboardContents();
+            HelpWindow help = new HelpWindow();
+            try {
+                Region root = (Region) help.getRoot().getScene().getRoot();
+                root.resize(740, 680);
+                root.applyCss();
+                root.layout();
+                VBox cards = (VBox) root.lookup("#commandCards");
+                assertEquals(HelpContent.getCommands().size(), cards.getChildren().size());
+                for (int i = 0; i < cards.getChildren().size(); i++) {
+                    VBox examples = (VBox) cards.getChildren().get(i).lookup("#examples");
+                    List<String> expected = HelpContent.getCommands().get(i).examples();
+                    assertEquals(expected.size(), examples.getChildren().size());
+                    for (int j = 0; j < expected.size(); j++) {
+                        HBox row = (HBox) examples.getChildren().get(j);
+                        Label text = (Label) row.getChildren().get(0);
+                        Button copy = (Button) row.getChildren().get(1);
+                        assertEquals(expected.get(j), text.getText());
+                        assertTrue(text.isWrapText());
+                        assertTrue(copy.isFocusTraversable());
+                        assertEquals("Copy example: " + expected.get(j), copy.getAccessibleText());
+                        copy.fire();
+                        assertEquals(expected.get(j), clipboard.getString());
+                        assertEquals("Copied", copy.getText());
+                        assertEquals("Copied. Copy example: " + expected.get(j),
+                                copy.queryAccessibleAttribute(AccessibleAttribute.TEXT));
+                        copy.fire();
+                        assertEquals(expected.get(j), clipboard.getString());
+                    }
+                }
+                Button copyGuide = (Button) root.lookup("#copyButton");
+                copyGuide.fire();
+                assertEquals(HelpWindow.USERGUIDE_URL, clipboard.getString());
+                assertFalse(help.isShowing(), "Copying must not open another window or run an example");
+            } finally {
+                clipboard.setContent(original);
+                help.getRoot().close();
+            }
+        });
+    }
+
+    @Test
+    public void helpLayout_matchesMainThemeAndWrapsExamplesAtMinimumSize() throws Exception {
+        runOnFxThread(() -> {
+            HelpWindow help = new HelpWindow();
+            try {
+                for (int width : new int[] {740, 520}) {
+                    Region root = layoutStage(help.getRoot(), width, width == 520 ? 420 : 680);
+                    assertEquals(Color.web("#f1f3f5"), root.getBackground().getFills().get(0).getFill());
+                    VBox cards = (VBox) root.lookup("#commandCards");
+                    boolean hasWrappedExample = false;
+                    for (Node node : cards.getChildren()) {
+                        VBox card = (VBox) node;
+                        assertEquals(Color.WHITE, card.getBackground().getFills().get(0).getFill());
+                        assertEquals(Color.web("#27313d"), label(card, "description").getTextFill());
+                        VBox examples = (VBox) card.lookup("#examples");
+                        for (Node example : examples.getChildren()) {
+                            HBox row = (HBox) example;
+                            Label text = (Label) row.getChildren().get(0);
+                            Button copy = (Button) row.getChildren().get(1);
+                            assertTrue(text.getWidth() > 0);
+                            assertTrue(text.getHeight() >= text.prefHeight(text.getWidth()));
+                            assertTrue(text.localToScene(text.getBoundsInLocal()).getMaxX()
+                                    <= copy.localToScene(copy.getBoundsInLocal()).getMinX());
+                            assertTrue(copy.localToScene(copy.getBoundsInLocal()).getMaxX()
+                                    <= row.localToScene(row.getBoundsInLocal()).getMaxX());
+                            assertEquals(Color.WHITE, copy.getTextFill());
+                            assertEquals(Color.web("#344d6b"), copy.getBackground().getFills().get(0).getFill());
+                            hasWrappedExample |= text.getHeight() > 30;
+                        }
+                    }
+                    if (width == 520) {
+                        assertTrue(hasWrappedExample, "Long examples must wrap at the minimum width");
+                    }
+                    ScrollPane scroll = (ScrollPane) root.lookup("#commandScrollPane");
+                    assertTrue(scroll.getHeight() > 0);
+                    Button copyGuide = (Button) root.lookup("#copyButton");
+                    assertTrue(copyGuide.localToScene(copyGuide.getBoundsInLocal()).getMaxY() <= root.getHeight());
+                    for (Node bar : scroll.lookupAll(".scroll-bar")) {
+                        if (((ScrollBar) bar).getOrientation() == Orientation.HORIZONTAL) {
+                            assertFalse(bar.isVisible());
+                        }
+                    }
+                    saveSnapshot(root, "help-" + width);
+                }
+            } finally {
+                help.getRoot().close();
+            }
+        });
     }
 
     @Test
@@ -472,6 +634,7 @@ public class ResidexUiTest {
     }
 
     // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
+
     @Test
     public void dataLoadingError_missingOrNullClientList_showsStorageValidationReason() throws Exception {
         Path dataFile = temporaryFolder.resolve("addressbook.json");
@@ -489,6 +652,56 @@ public class ResidexUiTest {
     public void dataLoadingError_accessDenied_showsPermissionMessage() throws Exception {
         assertDataLoadingError(new AccessDeniedException("addressbook.json"),
                 "Access to the file was denied. Check its permissions.");
+    }
+
+    @Test
+    public void dataFileLockError_inUse_explainsHowToReopen() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressbook.json");
+        try (DataFileLock owner = DataFileLock.acquire(dataFile)) {
+            assertNotNull(owner);
+            IOException error = assertThrows(DataFileLock.InUseException.class, () -> DataFileLock.acquire(dataFile));
+            assertDataFileLockError(dataFile, error, "This client data is already open in RESIDEX",
+                    "Close the other RESIDEX instance, then launch again.");
+        }
+    }
+
+    @Test
+    public void dataFileLockError_ioFailure_explainsAccessProblem() throws Exception {
+        assertDataFileLockError(temporaryFolder.resolve("addressbook.json"), new IOException("Test lock failure"),
+                "RESIDEX could not secure access to your client data",
+                "Check folder permissions or move RESIDEX to a writable local folder, then try again."
+                        + "\nReason: Test lock failure");
+    }
+
+    private void assertDataFileLockError(Path dataFile, IOException error, String expectedHeader,
+            String expectedRecovery) throws Exception {
+        runOnFxThread(() -> {
+            CompletableFuture<Void> checked = new CompletableFuture<>();
+            Platform.runLater(() -> {
+                List<Window> windows = List.copyOf(Window.getWindows());
+                try {
+                    DialogPane dialog = windows.stream().map(Window::getScene)
+                            .map(scene -> scene.lookup("#" + UiManager.ALERT_DIALOG_PANE_FIELD_ID))
+                            .filter(DialogPane.class::isInstance).map(DialogPane.class::cast)
+                            .findFirst().orElseThrow();
+                    assertEquals(expectedHeader, dialog.getHeaderText());
+                    String message = dialog.getContentText();
+                    assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
+                    assertTrue(message.contains(expectedRecovery));
+                    assertTrue(message.contains("This instance has not changed your client data or preferences."));
+                    assertTrue(message.contains("It will now close."));
+                    checked.complete(null);
+                } catch (Throwable e) {
+                    checked.completeExceptionally(e);
+                } finally {
+                    windows.forEach(Window::hide);
+                }
+            });
+
+            UiManager.showDataFileLockError(dataFile, error);
+
+            checked.get(5, TimeUnit.SECONDS);
+        });
     }
 
     private void assertDataLoadingError(Exception cause, String expectedReason) throws Exception {
@@ -634,6 +847,278 @@ public class ResidexUiTest {
     }
 
     @Test
+    public void addpCommand_missingArguments_keepsClientAndShowsUsage() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Zero Index p/88110080 e/zero@example.com");
+                runCommand(root, "addp");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
+                        AddPropertyCommand.MESSAGE_USAGE), result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("Zero Index", label(root, "name").getText());
+                assertTrue(model.getAddressBook().getPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addpCommand_zeroClientIndex_keepsClientAndNamesPositiveIntegerRule() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Zero Index p/88110080 e/zero@example.com");
+                runCommand(root, "addp 0 t/h i/Buying l/singapore");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals("Client index must be a positive integer, starting from 1.", result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("Zero Index", label(root, "name").getText());
+                assertTrue(model.getAddressBook().getPersonList().get(0).getProperties().isEmpty());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void editCommand_missingField_keepsClientAndNamesPrefixes() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Edit Client p/88110081 e/edit@example.com");
+                runCommand(root, "edit 1");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(EditCommand.MESSAGE_NOT_EDITED, result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("Edit Client", label(root, "name").getText());
+                assertEquals("88110081", label(root, "phone").getText());
+                assertEquals("edit@example.com", model.getAddressBook().getPersonList().get(0).getEmail().value);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void editCommand_consecutiveUnderscoreEmail_updatesCardAndCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Property Client p/88110092 e/prop@example.com");
+                runCommand(root, "edit 1 e/first__last@example.com");
+
+                assertFalse(result.getText().contains("Emails should be of the format"));
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("first__last@example.com", label(root, "email").getText());
+                assertEquals("first__last@example.com",
+                        model.getAddressBook().getPersonList().get(0).getEmail().value);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void findCommand_gmailOnSampleData_listsAlexAndKeepsFullCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "find e/gmail");
+
+                assertEquals("1 person(s) found!", result.getText());
+                assertEquals("1 of 6 clients", label(root, "clientCount").getText());
+                assertEquals("Filtered clients", label(root, "clientListHeading").getText());
+                assertEquals("Alex Yeoh", label(root, "name").getText());
+                assertEquals("alexyeoh@gmail.com", label(root, "email").getText());
+                assertEquals(6, model.getAddressBook().getPersonList().size());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void deleteCommand_leadingZeroIndex_keepsClientAndShowsInvalidFormat() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/First Client p/88110001 e/first@example.com");
+                runCommand(root, "delete 01");
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertEquals(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE),
+                        result.getText());
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("First Client", label(root, "name").getText());
+                assertEquals("First Client", model.getAddressBook().getPersonList().get(0).getName().fullName);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void deleteCommand_clientWithProperty_namesRemovedPropertyAndClearsList() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+
+                runCommand(root, "add n/Property Client p/88110092 e/prop@example.com");
+                runCommand(root, "addp 1 t/HDB i/Buying l/Clementi s/Viewing");
+                assertEquals("1 of 1 clients", label(root, "clientCount").getText());
+                assertEquals("1. HDB | Buying | Clementi | Viewing",
+                        propertyTexts((VBox) root.lookup("#properties")).get(0));
+
+                runCommand(root, "delete 1");
+
+                assertEquals("Deleted client: Property Client; Phone: 88110092; Email: prop@example.com; Remark: \n"
+                        + "1. HDB | Buying | Clementi | Viewing", result.getText());
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
+                assertEquals(List.of(), model.getFilteredPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void deleteCommand_clientWithThreeProperties_showsAllNumberedLinesInResult() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                Region resultPane = (Region) root.lookup("#resultDisplayPlaceholder");
+
+                runCommand(root, "add n/Property Client p/88110092 e/prop@example.com");
+                runCommand(root, "addp 1 t/HDB i/Buying l/Clementi s/Viewing");
+                runCommand(root, "addp 1 t/Condominium i/Selling l/Tampines s/Negotiating");
+                runCommand(root, "addp 1 t/Landed i/Buying l/Bukit Timah s/Completed");
+                runCommand(root, "delete 1");
+
+                String feedback = result.getText();
+                assertTrue(feedback.startsWith(
+                        "Deleted client: Property Client; Phone: 88110092; Email: prop@example.com; Remark: "));
+                assertTrue(feedback.contains("\n1. HDB | Buying | Clementi | Viewing"));
+                assertTrue(feedback.contains("\n2. Condominium | Selling | Tampines | Negotiating"));
+                assertTrue(feedback.contains("\n3. Landed | Buying | Bukit Timah | Completed"));
+                assertEquals(160, resultPane.getHeight(), 0.5);
+                result.setScrollTop(0);
+                assertTrue(result.isWrapText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_saveFailure_doesNotKeepUnsavedClientInList() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            Path dataFile = temporaryFolder.resolve("unsaved.json");
+            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(dataFile) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    throw new AccessDeniedException(dataFile.toString());
+                }
+            };
+            Logic logic = new LogicManager(model, new StorageManager(failingStorage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("unsaved-prefs.json"))));
+            MainWindow window = new MainWindow(new Stage(), logic, dataFile);
+            window.fillInnerParts();
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/SaveFail p/88119991 e/savefail@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                assertTrue(result.getText().contains("Could not save data"));
+                assertEquals("0 of 0 clients", label(root, "clientCount").getText());
+                assertEquals(List.of(), model.getAddressBook().getPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void addCommand_hyphenAndApostropheNames_showOnCardsAndInCount() throws Exception {
+        runOnFxThread(() -> {
+            Model model = new ModelManager();
+            MainWindow window = createWindow(model);
+            try {
+                Region root = layoutWindow(window, 1100, 900);
+                TextField command = (TextField) root.lookup("#commandTextField");
+                Button run = (Button) root.lookup("#runButton");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                command.setText("add n/Ng Wei-Ling p/91230001 e/w@example.com");
+                run.fire();
+                command.setText("add n/O'Brien p/91230002 e/o@example.com");
+                run.fire();
+                root.applyCss();
+                root.layout();
+
+                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), model.getAddressBook().getPersonList().stream()
+                        .map(person -> person.getName().fullName).toList());
+                assertEquals("2 of 2 clients", label(root, "clientCount").getText());
+                List<String> cardNames = root.lookupAll(".list-cell").stream()
+                        .map(ListCell.class::cast)
+                        .filter(cell -> !cell.isEmpty())
+                        .map(cell -> label((Region) cell.getGraphic(), "name").getText())
+                        .toList();
+                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), cardNames);
+                assertTrue(result.getText().contains("O'Brien"));
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void addCommand_thirtyDigitPhone_keepsEmptyListAndShowsPhoneConstraint() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
@@ -748,12 +1233,11 @@ public class ResidexUiTest {
                     .withRemark("Arrange a viewing").withProperties(CLEMENTI_HDB).build());
             MainWindow window = createWindow(model);
             try {
-                Region root = layoutWindow(window, 1100, 900);
                 for (int width : new int[] {1100, 700, 1100}) {
-                    // Resize the existing scene so cached cells must respond to width changes.
-                    root.resize(width, width == 700 ? 600 : 900);
-                    root.applyCss();
-                    root.layout();
+                    int height = width == 700 ? 600 : 900;
+                    Region root = layoutWindow(window, width, height);
+                    assertEquals(width, root.getScene().getWidth(), 1);
+                    assertEquals(height, root.getScene().getHeight(), 1);
                     ListView<?> list = (ListView<?>) root.lookup("#personListView");
                     for (int index = 0; index < model.getFilteredPersonList().size(); index++) {
                         list.scrollTo(index);
@@ -855,7 +1339,7 @@ public class ResidexUiTest {
                         .build());
             }
             MainWindow window = createWindow(model);
-            Region root = layoutWindow(window, 1100, 1430);
+            Region root = layoutWindow(window, 1100, 1520);
             assertEquals("RESIDEX", window.getPrimaryStage().getTitle());
             assertEquals("8 of 8 clients", label(root, "clientCount").getText());
             assertTrue(root.lookupAll(".menu-bar").isEmpty());
@@ -931,12 +1415,16 @@ public class ResidexUiTest {
     }
 
     private static Region layoutWindow(MainWindow window, double width, double height) {
-        Scene previousScene = window.getPrimaryStage().getScene();
+        return layoutStage(window.getPrimaryStage(), width, height);
+    }
+
+    private static Region layoutStage(Stage stage, double width, double height) {
+        Scene previousScene = stage.getScene();
         Region root = (Region) previousScene.getRoot();
         previousScene.setRoot(new Group());
         Scene scene = new Scene(root, width, height);
         scene.getStylesheets().addAll(previousScene.getStylesheets());
-        window.getPrimaryStage().setScene(scene);
+        stage.setScene(scene);
         root.resize(width, height);
         root.applyCss();
         root.layout();
@@ -972,6 +1460,18 @@ public class ResidexUiTest {
         ImageIO.write(bufferedImage, "png", output.toFile());
     }
 
+    private static Map<DataFormat, Object> clipboardContents() {
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        Map<DataFormat, Object> contents = new HashMap<>();
+        for (DataFormat format : clipboard.getContentTypes()) {
+            Object content = clipboard.getContent(format);
+            if (content != null) {
+                contents.put(format, content);
+            }
+        }
+        return contents;
+    }
+
     private static void runOnFxThread(FxAction action) throws Exception {
         CompletableFuture<Void> completed = new CompletableFuture<>();
         Platform.runLater(() -> {
@@ -989,4 +1489,5 @@ public class ResidexUiTest {
     private interface FxAction {
         void run() throws Exception;
     }
+
 }

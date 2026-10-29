@@ -91,15 +91,21 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 ### Viewing help: `help`
 
 Opens a separate, resizable window containing the command reference. Each command has a card showing its
-purpose, format, parameter rules and examples. The command reference is available without an internet connection.
+purpose, format, parameter rules and examples. It uses the same light styling as the main window.
+The command reference is available without an internet connection.
 
 Format: `help`
 
 ![RESIDEX help window showing command reference cards](images/helpMessage.png)
 
 * Scroll through the cards using the mouse wheel or scrollbar. Resize the window for more space.
-* Examples are for reference only. Enter commands in the main application's command box to run them.
-* You can also open help by pressing `F1`. Opening help again focuses the existing window.
+* Click **Copy** beside an example to copy that command, then paste it into the main command box and adjust its
+  values before pressing Enter. Copying does not execute the example.
+  The button shows **Copied** on success. If it shows **Failed**, click it again to retry.
+  Its accessible text also includes the result and identifies the example.
+  You can reach the buttons with Tab and activate them with Space.
+* You can also open help by pressing `F1`. Opening help again restores the existing window if it is minimised,
+  brings it to the front and focuses it. Its size and scroll position are kept.
 * Click **Copy URL** in the footer to copy the RESIDEX User Guide link for further information.
   Opening the online guide requires an internet connection.
 
@@ -109,6 +115,9 @@ Format: `help`
 Adds a client to RESIDEX.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL`
+
+Phone numbers must contain 3 to 15 digits only. The same rule applies when editing a client's phone number.
+An unexpected field such as `x/foo` is rejected with `Unexpected parameter: x/foo` in both `add` and `edit`.
 
 A client is a duplicate only when both their name and phone number match an existing client.
 Name matching ignores capitalisation, surrounding spaces and repeated spaces between words.
@@ -492,13 +501,21 @@ Format: `exit`
 
 RESIDEX automatically saves data after every command. You do not need to save manually.
 
+Only one RESIDEX instance can use the same client data file at a time. A second launch shows an error and closes
+without changing client data or preferences. Close the existing instance before launching again.
+
+RESIDEX creates `data/addressbook.json.lock` to coordinate access. Leave this file in place; it requires no
+maintenance. Its presence does not mean RESIDEX is running, and a crash does not leave the data locked.
+
 ### Editing the data file
 
 RESIDEX data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+Close RESIDEX before editing or replacing this file.
 
 <box type="warning" seamless>
 
 **Caution:**
+The file must contain exactly one JSON object. Whitespace after it is allowed; another JSON value or extra text is invalid.<br>
 If your changes make the data file invalid, RESIDEX shows an error with the file's location and closes without changing the client data file. Back up the file before editing it.<br>
 Furthermore, certain edits can cause RESIDEX to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
@@ -514,6 +531,10 @@ A valid empty file contains `{"persons": []}`. Restore your client records from 
 1. Locate the file using the path shown in the error dialog and make a backup copy.
 2. Repair the invalid data or replace the file with a valid backup, then restart RESIDEX.
 3. If you want to start fresh instead, move or rename the failed file before restarting. RESIDEX will start with sample clients, as it does when no data file exists. Keep the original file if you want to recover its contents later.
+
+Window settings are stored separately in `preferences.json`. If that file is invalid, or its GUI settings are null
+or contain invalid window dimensions, RESIDEX uses default window settings and attempts to save them back.
+Your client data is loaded normally if it is valid.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -531,10 +552,9 @@ A valid empty file contains `{"persons": []}`. Restore your client records from 
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **Names** may contain only letters, digits and spaces, so names with hyphens or apostrophes (for example `Ng Wei-Ling`) cannot be entered.
-3. **Phone numbers** must have at least 3 digits, but there is no upper limit on their length.
+3. **Phone numbers** must contain 3 to 15 digits. Spaces, hyphens and a leading `+` are not supported.
 4. **Property locations** cannot contain a word followed by a slash, such as `N/A`, because it is read as a field prefix. Write `NA` instead. Numbers such as `1/2` are fine.
 5. **Undo history** is kept only while RESIDEX is running. After you close it, earlier changes cannot be undone.
-6. **If you minimize the Help Window** and then run the `help` command (or use the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
