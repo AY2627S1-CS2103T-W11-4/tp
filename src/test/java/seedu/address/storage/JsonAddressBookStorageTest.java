@@ -141,14 +141,7 @@ public class JsonAddressBookStorageTest {
     @Test
     public void execute_intentionVariants_preservesFileUntilChangeAndSavesCanonicalValues() throws Exception {
         Path file = testFolder.resolve("intentionVariants.json");
-        List<JsonAdaptedProperty> properties = List.of(
-                new JsonAdaptedProperty("HDB", "buying", "A", "800000", "viewing", "3"),
-                new JsonAdaptedProperty("Landed", " SELLING ", "B", null, "completed", null),
-                new JsonAdaptedProperty("Condominium", " bUyEr ", "C", null),
-                new JsonAdaptedProperty("HDB", "sElLeR", "D", null));
-        JsonAdaptedPerson person = new JsonAdaptedPerson("Alice", "91234567", "alice@example.com", null,
-                "Original note", properties);
-        Files.writeString(file, "\uFEFF" + JsonUtil.toJsonString(new JsonSerializableAddressBook(List.of(person))));
+        writeIntentionVariants(file);
         byte[] original = Files.readAllBytes(file);
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
@@ -166,14 +159,29 @@ public class JsonAddressBookStorageTest {
         assertArrayEquals(original, Files.readAllBytes(file));
         logic.execute("remark 1 r/Updated note");
 
-        JsonNode savedProperties = JsonUtil.fromJsonString(Files.readString(file), JsonNode.class)
-                .get("persons").get(0).get("properties");
-        for (int i = 0; i < properties.size(); i++) {
-            assertEquals(i % 2 == 0 ? "Buying" : "Selling", savedProperties.get(i).get("intention").asText());
-        }
+        assertSavedIntentions(file, List.of("Buying", "Selling", "Buying", "Selling"));
         AddressBook expected = new AddressBook();
         expected.addPerson(new PersonBuilder(loaded.getPersonList().get(0)).withRemark("Updated note").build());
         assertEquals(expected, storage.readAddressBook().orElseThrow());
+    }
+
+    private void writeIntentionVariants(Path file) throws IOException {
+        List<JsonAdaptedProperty> properties = List.of(
+                new JsonAdaptedProperty("HDB", "buying", "A", "800000", "viewing", "3"),
+                new JsonAdaptedProperty("Landed", " SELLING ", "B", null, "completed", null),
+                new JsonAdaptedProperty("Condominium", " bUyEr ", "C", null),
+                new JsonAdaptedProperty("HDB", "sElLeR", "D", null));
+        JsonAdaptedPerson person = new JsonAdaptedPerson("Alice", "91234567", "alice@example.com", null,
+                "Original note", properties);
+        Files.writeString(file, "\uFEFF" + JsonUtil.toJsonString(new JsonSerializableAddressBook(List.of(person))));
+    }
+
+    private void assertSavedIntentions(Path file, List<String> expectedIntentions) throws IOException {
+        JsonNode savedProperties = JsonUtil.fromJsonString(Files.readString(file), JsonNode.class)
+                .get("persons").get(0).get("properties");
+        for (int i = 0; i < expectedIntentions.size(); i++) {
+            assertEquals(expectedIntentions.get(i), savedProperties.get(i).get("intention").asText());
+        }
     }
 
     private Path addToTestDataPathIfNotNull(String prefsFileInTestDataFolder) {

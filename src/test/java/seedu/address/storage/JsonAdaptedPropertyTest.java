@@ -56,17 +56,14 @@ public class JsonAdaptedPropertyTest {
 
     @Test
     public void toModelType_missingRequiredFields_throwsIllegalValueException() {
-        JsonAdaptedProperty[] invalidProperties = {
-            new JsonAdaptedProperty(null, "Buyer", "Clementi", null),
-            new JsonAdaptedProperty("HDB", null, "Clementi", null),
-            new JsonAdaptedProperty("HDB", "Buyer", null, null)
-        };
-        String[] missingFields = {"type", "intention", "location"};
-        for (int i = 0; i < invalidProperties.length; i++) {
-            JsonAdaptedProperty property = invalidProperties[i];
-            String expectedMessage = String.format(JsonAdaptedProperty.MISSING_FIELD_MESSAGE_FORMAT, missingFields[i]);
-            assertThrows(IllegalValueException.class, expectedMessage, property::toModelType);
-        }
+        assertMissingField(new JsonAdaptedProperty(null, "Buyer", "Clementi", null), "type");
+        assertMissingField(new JsonAdaptedProperty("HDB", null, "Clementi", null), "intention");
+        assertMissingField(new JsonAdaptedProperty("HDB", "Buyer", null, null), "location");
+    }
+
+    private void assertMissingField(JsonAdaptedProperty property, String field) {
+        String expectedMessage = String.format(JsonAdaptedProperty.MISSING_FIELD_MESSAGE_FORMAT, field);
+        assertInvalidProperty(property, expectedMessage);
     }
 
     @Test
@@ -193,20 +190,22 @@ public class JsonAdaptedPropertyTest {
 
     @Test
     public void toModelType_multipleInvalidFields_reportsFirstField() {
-        JsonAdaptedProperty[] properties = {
-            new JsonAdaptedProperty("flat", "Both", "", "0", "Cancelled", "21"),
-            new JsonAdaptedProperty("HDB", "Both", "", "0", "Cancelled", "21"),
-            new JsonAdaptedProperty("HDB", "Buyer", "", "0", "Cancelled", "21"),
-            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0", "Cancelled", "21"),
-            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "1", "Cancelled", "21"),
-            new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "1", "Viewing", "21")
-        };
-        String[] messages = {PropertyType.MESSAGE_CONSTRAINTS, JsonAdaptedProperty.MESSAGE_INVALID_INTENTION,
-            PropertyLocation.MESSAGE_CONSTRAINTS, PropertyPrice.MESSAGE_CONSTRAINTS,
-            PropertyStatus.MESSAGE_CONSTRAINTS, PropertyBedrooms.MESSAGE_CONSTRAINTS};
-        for (int i = 0; i < properties.length; i++) {
-            assertThrows(IllegalValueException.class, messages[i], properties[i]::toModelType);
-        }
+        assertInvalidProperty(new JsonAdaptedProperty("flat", "Both", "", "0", "Cancelled", "21"),
+                PropertyType.MESSAGE_CONSTRAINTS);
+        assertInvalidProperty(new JsonAdaptedProperty("HDB", "Both", "", "0", "Cancelled", "21"),
+                JsonAdaptedProperty.MESSAGE_INVALID_INTENTION);
+        assertInvalidProperty(new JsonAdaptedProperty("HDB", "Buyer", "", "0", "Cancelled", "21"),
+                PropertyLocation.MESSAGE_CONSTRAINTS);
+        assertInvalidProperty(new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "0", "Cancelled", "21"),
+                PropertyPrice.MESSAGE_CONSTRAINTS);
+        assertInvalidProperty(new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "1", "Cancelled", "21"),
+                PropertyStatus.MESSAGE_CONSTRAINTS);
+        assertInvalidProperty(new JsonAdaptedProperty("HDB", "Buyer", "Clementi", "1", "Viewing", "21"),
+                PropertyBedrooms.MESSAGE_CONSTRAINTS);
+    }
+
+    private void assertInvalidProperty(JsonAdaptedProperty property, String expectedMessage) {
+        assertThrows(IllegalValueException.class, expectedMessage, property::toModelType);
     }
 
     @Test
