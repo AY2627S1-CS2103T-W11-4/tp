@@ -1931,7 +1931,12 @@ Use a copy of the application in a separate folder for these tests, and keep a b
    1. Restore the valid backup and restart RESIDEX.
       Expected: The saved clients appear. Changes made with commands persist after restarting.
    2. Close RESIDEX, rename the data file to `addressbook.backup.json`, then restart.
-      Expected: Sample clients appear. Run `list`; a new data file is saved while the renamed file stays unchanged.
+      Expected: Sample clients appear, but `data/addressbook.json` has not been created.
+   3. Enter `list`.
+      Expected: All sample clients are displayed; `data/addressbook.json` is still absent.
+   4. Enter `add n/Recovery Test p/91009901 e/recoverytest@example.com`.
+      Expected: A new `data/addressbook.json` is saved with the sample clients and Recovery Test.
+      The renamed backup file stays unchanged throughout these steps.
 
 3. Valid empty data:
    1. Close RESIDEX and set the data file contents to `{"persons": []}`.
