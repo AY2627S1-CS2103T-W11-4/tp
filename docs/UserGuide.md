@@ -589,6 +589,7 @@ Your client data is loaded normally if it is valid.
 2. **Names** use only ASCII letters (`A-Z`, `a-z`), digits (`0-9`), spaces, hyphens (`-`)
    and straight apostrophes (`'`). After surrounding spaces are trimmed, the first character must be a letter or digit.
    Names such as `Ng Wei-Ling` and `O'Brien` are supported, but `Zoë Müller` and `李伟` are not.
+   Periods (`.`) are unsupported, so names such as `Dr. John` and `John Jr.` are rejected.
    Slashes (`/`) are not supported in names.
    For example, `add n/Tan s/o Lim p/91001111 e/tan@example.com` is rejected with
    `Unexpected parameter: s/o` because the parser treats `s/o` as a field prefix.
