@@ -9,6 +9,8 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 
+// Adapted from AB4's RedoCommand:
+// https://github.com/se-edu/addressbook-level4/blob/master/src/main/java/seedu/address/logic/commands/RedoCommand.java
 /**
  * Re-applies the change that was most recently undone.
  */
