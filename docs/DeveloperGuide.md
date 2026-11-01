@@ -1901,7 +1901,7 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
    1. Enter `delete 1`, `undo`, then `remark 1 r/new`, then `redo`.<br>
       Expected: `redo` reports "There is nothing to redo.", because the new change cleared the redo history.
 
-   1. Enter `delete 1`, `undo`, make the data file read-only, then enter `remark 1 r/new`.<br>
+   1. Enter `delete 1`, `undo`, make the data file read-only, then enter `remark 1 r/cannot be saved`.<br>
       Expected: An error says the data could not be saved. Make the file writable again and enter `redo`: the
       deleted client is removed again, because the failed command did not clear the redo history.
 

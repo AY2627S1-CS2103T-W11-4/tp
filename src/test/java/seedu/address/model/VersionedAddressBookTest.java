@@ -117,6 +117,26 @@ public class VersionedAddressBookTest {
     }
 
     @Test
+    public void revertLastCommit_afterRedoWithoutCommit_discardsRedoHistory() {
+        versionedAddressBook.addPerson(ALICE);
+        versionedAddressBook.commit();
+        versionedAddressBook.undo();
+        versionedAddressBook.redo();
+
+        versionedAddressBook.revertLastCommit();
+
+        assertEquals(List.of(), versionedAddressBook.getPersonList());
+        assertFalse(versionedAddressBook.canUndo());
+        assertFalse(versionedAddressBook.canRedo());
+    }
+
+    @Test
+    public void revertLastCommit_neverCommitted_throwsNoUndoableStateException() {
+        assertThrows(NoUndoableStateException.class, versionedAddressBook::revertLastCommit);
+        assertEquals(List.of(), versionedAddressBook.getPersonList());
+    }
+
+    @Test
     public void revertLastCommit_afterHistoryLimitReached_restoresDroppedOldestState() {
         for (int i = 0; i < VersionedAddressBook.MAX_UNDOABLE_CHANGES; i++) {
             versionedAddressBook.commit();
