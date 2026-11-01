@@ -86,8 +86,8 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `undo`, `redo` and `exit`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`.
+* Commands that take no parameters, such as `help`, `list`, `undo`, `redo` and `exit`, show an error if anything is typed after the command word.<br>
+  For example, `undo 3` is rejected instead of being treated as `undo`.
 
 * Pressing Enter with an empty command box, or one that contains only spaces, does nothing.
 
