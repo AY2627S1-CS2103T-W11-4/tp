@@ -113,8 +113,8 @@ public class ModelManager implements Model {
     }
 
     @Override
-    public void discardRedoHistory() {
-        addressBook.discardRedoHistory();
+    public void revertLastCommit() {
+        addressBook.revertLastCommit();
     }
 
     @Override
