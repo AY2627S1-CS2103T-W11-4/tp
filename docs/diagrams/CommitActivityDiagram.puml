@@ -11,7 +11,7 @@ start
 if () then ([command commits AddressBook])
     :Purge redundant states;
     :Save AddressBook to
-    addressBookStateList;
+    states;
 else ([else])
 endif
 stop

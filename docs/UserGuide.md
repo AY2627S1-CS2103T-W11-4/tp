@@ -583,7 +583,13 @@ Your client data is loaded normally if it is valid.
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **Names** may contain only letters, digits and spaces, so names with hyphens or apostrophes (for example `Ng Wei-Ling`) cannot be entered.
+2. **Names** use only ASCII letters (`A-Z`, `a-z`), digits (`0-9`), spaces, hyphens (`-`)
+   and straight apostrophes (`'`). After surrounding spaces are trimmed, the first character must be a letter or digit.
+   Names such as `Ng Wei-Ling` and `O'Brien` are supported, but `Zoë Müller` and `李伟` are not.
+   Slashes (`/`) are not supported in names.
+   For example, `add n/Tan s/o Lim p/91001111 e/tan@example.com` is rejected with
+   `Unexpected parameter: s/o` because the parser treats `s/o` as a field prefix.
+   These name restrictions apply to both `add` and `edit`.
 3. **Phone numbers** must contain 3 to 15 digits. Spaces, hyphens and a leading `+` are not supported.
 4. **Property locations** cannot contain a word followed by a slash, such as `N/A`, because it is read as a field prefix. Write `NA` instead. Numbers such as `1/2` are fine.
 5. **Undo history** is kept only while RESIDEX is running. After you close it, earlier changes cannot be undone.
