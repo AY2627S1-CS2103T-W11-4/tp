@@ -20,6 +20,8 @@
 * Notable uses of AI:
   * Claude Code was used for preliminary PR reviews and for bug hunts across the codebase.
   * @sntan1214 used Claude Code to write initial drafts of required code, tests and documentation wording, including the undo/redo feature, the find predicates and the property commands. The author reviewed the drafts, manually tested the features and the issues raised, and, where needed, revised them, and remains responsible for the final code.
+  * Cursor was used for preliminary PR reviews and for bug hunts across the codebase.
+  * @Sea1vester used Cursor to write initial drafts of required code, tests and documentation wording, including email validation, client command parsers, save-failure rollback and User Guide / Developer Guide updates. The author reviewed the drafts, manually tested the features and the issues raised, and, where needed, revised them, and remains responsible for the final code.
 
 --------------------------------------------------------------------------------------------------------------------
 
