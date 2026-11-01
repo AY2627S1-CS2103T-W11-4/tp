@@ -86,6 +86,20 @@ public class EmailTest {
     }
 
     @Test
+    public void isValidEmail_consecutivePermittedSymbols_returnsTrue() {
+        assertTrue(Email.isValidEmail("john+_doe@example.com"));
+        assertTrue(Email.isValidEmail("john-_doe@example.com"));
+        assertTrue(Email.isValidEmail("john+-doe@example.com"));
+        assertTrue(Email.isValidEmail("john_.doe@example.com"));
+        assertTrue(Email.isValidEmail("john++doe@example.com"));
+        assertTrue(Email.isValidEmail("a.+.b@example.com"));
+        assertFalse(Email.isValidEmail("peter..jack@example.com"));
+        assertFalse(Email.isValidEmail("john+@example.com"));
+        assertFalse(Email.isValidEmail("+john@example.com"));
+        assertFalse(Email.isValidEmail("john +.doe@example.com"));
+    }
+
+    @Test
     public void equals() {
         Email email = new Email("valid@email");
 
