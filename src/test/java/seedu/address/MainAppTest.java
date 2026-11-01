@@ -322,24 +322,28 @@ public class MainAppTest {
 
     @Test
     public void init_propertyIntentionVariants_loadsWithoutRewritingFile() throws Exception {
-        String[] intentions = {"buying", " BUYER ", "SELLING", " SeLlEr "};
-        for (int i = 0; i < intentions.length; i++) {
-            String json = """
-                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
-                      "properties": [{"type": "HDB", "intention": "%s", "location": "Clementi"}]}]}
-                    """.formatted(intentions[i]);
-            Files.writeString(dataPath(), json);
-            MainApp app = createApp();
+        assertIntentionLoadsWithoutRewriting("buying", PropertyIntention.BUYING);
+        assertIntentionLoadsWithoutRewriting(" BUYER ", PropertyIntention.BUYING);
+        assertIntentionLoadsWithoutRewriting("SELLING", PropertyIntention.SELLING);
+        assertIntentionLoadsWithoutRewriting(" SeLlEr ", PropertyIntention.SELLING);
+    }
 
-            app.init();
+    private void assertIntentionLoadsWithoutRewriting(String intention, PropertyIntention expected) throws Exception {
+        String json = """
+                {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                  "properties": [{"type": "HDB", "intention": "%s", "location": "Clementi"}]}]}
+                """.formatted(intention);
+        Files.writeString(dataPath(), json);
+        MainApp app = createApp();
 
-            assertNotNull(app.logic);
-            assertEquals(i < 2 ? PropertyIntention.BUYING : PropertyIntention.SELLING,
-                    app.model.getAddressBook().getPersonList().get(0).getProperties().get(0).getIntention());
-            app.logic.execute("list");
-            app.stop();
-            assertEquals(json, Files.readString(dataPath()));
-        }
+        app.init();
+
+        assertNotNull(app.logic);
+        assertEquals(expected,
+                app.model.getAddressBook().getPersonList().get(0).getProperties().get(0).getIntention());
+        app.logic.execute("list");
+        app.stop();
+        assertEquals(json, Files.readString(dataPath()));
     }
 
     @Test

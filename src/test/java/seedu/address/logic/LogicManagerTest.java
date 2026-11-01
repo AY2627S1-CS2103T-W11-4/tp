@@ -218,10 +218,7 @@ public class LogicManagerTest {
             assertTrue(logic.execute("exit").isExit());
 
             assertEquals(0, saveAttempts.get());
-            assertEquals(savedClients, model.getAddressBook());
-            assertTrue(model.canUndoAddressBook());
-            assertFalse(model.canRedoAddressBook());
-            assertArrayEquals(savedFile, Files.readAllBytes(dataFile));
+            assertSavedStateUnchanged(savedClients, savedFile, dataFile);
         }
     }
 
@@ -238,11 +235,16 @@ public class LogicManagerTest {
             assertTrue(logic.execute("exit").isExit());
 
             assertEquals(1, saveAttempts.get());
-            assertEquals(savedClients, model.getAddressBook());
-            assertTrue(model.canUndoAddressBook());
-            assertFalse(model.canRedoAddressBook());
-            assertArrayEquals(savedFile, Files.readAllBytes(dataFile));
+            assertSavedStateUnchanged(savedClients, savedFile, dataFile);
         }
+    }
+
+    private void assertSavedStateUnchanged(ReadOnlyAddressBook savedClients, byte[] savedFile, Path dataFile)
+            throws IOException {
+        assertEquals(savedClients, model.getAddressBook());
+        assertTrue(model.canUndoAddressBook());
+        assertFalse(model.canRedoAddressBook());
+        assertArrayEquals(savedFile, Files.readAllBytes(dataFile));
     }
 
     @Test

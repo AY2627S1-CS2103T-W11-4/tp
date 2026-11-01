@@ -93,6 +93,13 @@ import seedu.address.testutil.PersonBuilder;
  */
 @EnabledIf("hasDisplay")
 public class ResidexUiTest {
+    private static final int DEFAULT_HELP_WIDTH = 740;
+    private static final int DEFAULT_HELP_HEIGHT = 680;
+    private static final int MIN_HELP_WIDTH = 520;
+    private static final int MIN_HELP_HEIGHT = 420;
+    private static final int WRAPPED_EXAMPLE_HEIGHT_THRESHOLD = 30;
+    private static final int DIALOG_TIMEOUT_SECONDS = 5;
+
     @TempDir
     public Path temporaryFolder;
 
@@ -147,8 +154,8 @@ public class ResidexUiTest {
             try {
                 stage.setX(120);
                 stage.setY(80);
-                stage.setWidth(740);
-                stage.setHeight(680);
+                stage.setWidth(DEFAULT_HELP_WIDTH);
+                stage.setHeight(DEFAULT_HELP_HEIGHT);
                 ScrollPane scroll = (ScrollPane) stage.getScene().lookup("#commandScrollPane");
                 scroll.setVvalue(0.6);
                 stage.setIconified(true);
@@ -156,8 +163,8 @@ public class ResidexUiTest {
                 assertFalse(stage.isIconified());
                 assertEquals(120, stage.getX());
                 assertEquals(80, stage.getY());
-                assertEquals(740, stage.getWidth());
-                assertEquals(680, stage.getHeight());
+                assertEquals(DEFAULT_HELP_WIDTH, stage.getWidth());
+                assertEquals(DEFAULT_HELP_HEIGHT, stage.getHeight());
                 assertEquals(0.6, scroll.getVvalue());
                 assertFalse(help.isShowing(), "Focusing a hidden stage must not create another window");
             } finally {
@@ -174,31 +181,13 @@ public class ResidexUiTest {
             HelpWindow help = new HelpWindow();
             try {
                 Region root = (Region) help.getRoot().getScene().getRoot();
-                root.resize(740, 680);
+                root.resize(DEFAULT_HELP_WIDTH, DEFAULT_HELP_HEIGHT);
                 root.applyCss();
                 root.layout();
                 VBox cards = (VBox) root.lookup("#commandCards");
                 assertEquals(HelpContent.getCommands().size(), cards.getChildren().size());
                 for (int i = 0; i < cards.getChildren().size(); i++) {
-                    VBox examples = (VBox) cards.getChildren().get(i).lookup("#examples");
-                    List<String> expected = HelpContent.getCommands().get(i).examples();
-                    assertEquals(expected.size(), examples.getChildren().size());
-                    for (int j = 0; j < expected.size(); j++) {
-                        HBox row = (HBox) examples.getChildren().get(j);
-                        Label text = (Label) row.getChildren().get(0);
-                        Button copy = (Button) row.getChildren().get(1);
-                        assertEquals(expected.get(j), text.getText());
-                        assertTrue(text.isWrapText());
-                        assertTrue(copy.isFocusTraversable());
-                        assertEquals("Copy example: " + expected.get(j), copy.getAccessibleText());
-                        copy.fire();
-                        assertEquals(expected.get(j), clipboard.getString());
-                        assertEquals("Copied", copy.getText());
-                        assertEquals("Copied. Copy example: " + expected.get(j),
-                                copy.queryAccessibleAttribute(AccessibleAttribute.TEXT));
-                        copy.fire();
-                        assertEquals(expected.get(j), clipboard.getString());
-                    }
+                    assertHelpCardExamples(cards.getChildren().get(i), i, clipboard);
                 }
                 Button copyGuide = (Button) root.lookup("#copyButton");
                 copyGuide.fire();
@@ -211,54 +200,98 @@ public class ResidexUiTest {
         });
     }
 
+    private static void assertHelpCardExamples(Node card, int commandIndex, Clipboard clipboard) {
+        VBox examples = (VBox) card.lookup("#examples");
+        List<String> expected = HelpContent.getCommands().get(commandIndex).examples();
+        assertEquals(expected.size(), examples.getChildren().size());
+        for (int i = 0; i < expected.size(); i++) {
+            assertHelpExampleCopies((HBox) examples.getChildren().get(i), expected.get(i), clipboard);
+        }
+    }
+
+    private static void assertHelpExampleCopies(HBox row, String expected, Clipboard clipboard) {
+        Label text = (Label) row.getChildren().get(0);
+        Button copy = (Button) row.getChildren().get(1);
+        assertEquals(expected, text.getText());
+        assertTrue(text.isWrapText());
+        assertTrue(copy.isFocusTraversable());
+        assertEquals("Copy example: " + expected, copy.getAccessibleText());
+        copy.fire();
+        assertEquals(expected, clipboard.getString());
+        assertEquals("Copied", copy.getText());
+        assertEquals("Copied. Copy example: " + expected,
+                copy.queryAccessibleAttribute(AccessibleAttribute.TEXT));
+        copy.fire();
+        assertEquals(expected, clipboard.getString());
+    }
+
     @Test
     public void helpLayout_matchesMainThemeAndWrapsExamplesAtMinimumSize() throws Exception {
         runOnFxThread(() -> {
             HelpWindow help = new HelpWindow();
             try {
-                for (int width : new int[] {740, 520}) {
-                    Region root = layoutStage(help.getRoot(), width, width == 520 ? 420 : 680);
-                    assertEquals(Color.web("#f1f3f5"), root.getBackground().getFills().get(0).getFill());
-                    VBox cards = (VBox) root.lookup("#commandCards");
-                    boolean hasWrappedExample = false;
-                    for (Node node : cards.getChildren()) {
-                        VBox card = (VBox) node;
-                        assertEquals(Color.WHITE, card.getBackground().getFills().get(0).getFill());
-                        assertEquals(Color.web("#27313d"), label(card, "description").getTextFill());
-                        VBox examples = (VBox) card.lookup("#examples");
-                        for (Node example : examples.getChildren()) {
-                            HBox row = (HBox) example;
-                            Label text = (Label) row.getChildren().get(0);
-                            Button copy = (Button) row.getChildren().get(1);
-                            assertTrue(text.getWidth() > 0);
-                            assertTrue(text.getHeight() >= text.prefHeight(text.getWidth()));
-                            assertTrue(text.localToScene(text.getBoundsInLocal()).getMaxX()
-                                    <= copy.localToScene(copy.getBoundsInLocal()).getMinX());
-                            assertTrue(copy.localToScene(copy.getBoundsInLocal()).getMaxX()
-                                    <= row.localToScene(row.getBoundsInLocal()).getMaxX());
-                            assertEquals(Color.WHITE, copy.getTextFill());
-                            assertEquals(Color.web("#344d6b"), copy.getBackground().getFills().get(0).getFill());
-                            hasWrappedExample |= text.getHeight() > 30;
-                        }
-                    }
-                    if (width == 520) {
+                for (int width : new int[] {DEFAULT_HELP_WIDTH, MIN_HELP_WIDTH}) {
+                    Region root = layoutStage(help.getRoot(), width,
+                            width == MIN_HELP_WIDTH ? MIN_HELP_HEIGHT : DEFAULT_HELP_HEIGHT);
+                    boolean hasWrappedExample = hasWrappedHelpExample(root);
+                    if (width == MIN_HELP_WIDTH) {
                         assertTrue(hasWrappedExample, "Long examples must wrap at the minimum width");
                     }
-                    ScrollPane scroll = (ScrollPane) root.lookup("#commandScrollPane");
-                    assertTrue(scroll.getHeight() > 0);
-                    Button copyGuide = (Button) root.lookup("#copyButton");
-                    assertTrue(copyGuide.localToScene(copyGuide.getBoundsInLocal()).getMaxY() <= root.getHeight());
-                    for (Node bar : scroll.lookupAll(".scroll-bar")) {
-                        if (((ScrollBar) bar).getOrientation() == Orientation.HORIZONTAL) {
-                            assertFalse(bar.isVisible());
-                        }
-                    }
+                    assertHelpFooterAndScrollbars(root);
                     saveSnapshot(root, "help-" + width);
                 }
             } finally {
                 help.getRoot().close();
             }
         });
+    }
+
+    /**
+     * Checks card layout and reports whether any example exceeds the wrapping threshold.
+     */
+    private static boolean hasWrappedHelpExample(Region root) {
+        assertEquals(Color.web("#f1f3f5"), root.getBackground().getFills().get(0).getFill());
+        VBox cards = (VBox) root.lookup("#commandCards");
+        boolean hasWrappedExample = false;
+        for (Node node : cards.getChildren()) {
+            VBox card = (VBox) node;
+            assertEquals(Color.WHITE, card.getBackground().getFills().get(0).getFill());
+            assertEquals(Color.web("#27313d"), label(card, "description").getTextFill());
+            VBox examples = (VBox) card.lookup("#examples");
+            for (Node example : examples.getChildren()) {
+                hasWrappedExample |= isHelpExampleWrapped((HBox) example);
+            }
+        }
+        return hasWrappedExample;
+    }
+
+    /**
+     * Checks one example row's layout and reports whether its height exceeds the wrapping threshold.
+     */
+    private static boolean isHelpExampleWrapped(HBox row) {
+        Label text = (Label) row.getChildren().get(0);
+        Button copy = (Button) row.getChildren().get(1);
+        assertTrue(text.getWidth() > 0);
+        assertTrue(text.getHeight() >= text.prefHeight(text.getWidth()));
+        assertTrue(text.localToScene(text.getBoundsInLocal()).getMaxX()
+                <= copy.localToScene(copy.getBoundsInLocal()).getMinX());
+        assertTrue(copy.localToScene(copy.getBoundsInLocal()).getMaxX()
+                <= row.localToScene(row.getBoundsInLocal()).getMaxX());
+        assertEquals(Color.WHITE, copy.getTextFill());
+        assertEquals(Color.web("#344d6b"), copy.getBackground().getFills().get(0).getFill());
+        return text.getHeight() > WRAPPED_EXAMPLE_HEIGHT_THRESHOLD;
+    }
+
+    private static void assertHelpFooterAndScrollbars(Region root) {
+        ScrollPane scroll = (ScrollPane) root.lookup("#commandScrollPane");
+        assertTrue(scroll.getHeight() > 0);
+        Button copyGuide = (Button) root.lookup("#copyButton");
+        assertTrue(copyGuide.localToScene(copyGuide.getBoundsInLocal()).getMaxY() <= root.getHeight());
+        for (Node bar : scroll.lookupAll(".scroll-bar")) {
+            if (((ScrollBar) bar).getOrientation() == Orientation.HORIZONTAL) {
+                assertFalse(bar.isVisible());
+            }
+        }
     }
 
     @Test
@@ -637,11 +670,7 @@ public class ResidexUiTest {
         Path dataFile = temporaryFolder.resolve("addressbook.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
         for (String json : new String[]{"", " \t\r\n", "\uFEFF", "\uFEFF \t\r\n"}) {
-            Files.writeString(dataFile, json);
-            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
-
-            assertDataLoadingError((Exception) failure.getCause(), "The data file is empty.");
-            assertEquals(json, Files.readString(dataFile));
+            assertFileLoadingError(storage, dataFile, json, "The data file is empty.");
         }
     }
 
@@ -650,13 +679,18 @@ public class ResidexUiTest {
         Path dataFile = temporaryFolder.resolve("addressbook.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
         for (String json : new String[]{"[]", "{\"persons\":\"x\"}", "invalid JSON", "{\"persons\": ["}) {
-            Files.writeString(dataFile, json);
-            DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
-
-            assertDataLoadingError((Exception) failure.getCause(),
+            assertFileLoadingError(storage, dataFile, json,
                     "The data file is not in the expected JSON format.");
-            assertEquals(json, Files.readString(dataFile));
         }
+    }
+
+    private void assertFileLoadingError(JsonAddressBookStorage storage, Path dataFile, String json,
+            String expectedReason) throws Exception {
+        Files.writeString(dataFile, json);
+        DataLoadingException failure = assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+        assertDataLoadingError((Exception) failure.getCause(), expectedReason);
+        assertEquals(json, Files.readString(dataFile));
     }
 
     @Test
@@ -676,17 +710,18 @@ public class ResidexUiTest {
 
     @Test
     public void dataLoadingError_invalidProperty_showsSpecificValidationMessage() throws Exception {
-        String[] fields = {"\"price\":\"0\"", "\"status\":\"Cancelled\"", "\"bedrooms\":\"21\""};
-        String[] reasons = {PropertyPrice.MESSAGE_CONSTRAINTS, PropertyStatus.MESSAGE_CONSTRAINTS,
-            PropertyBedrooms.MESSAGE_CONSTRAINTS};
-        for (int i = 0; i < fields.length; i++) {
-            String json = """
-                    {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
-                      "properties": [{"type": "HDB", "intention": "Buying", "location": "Clementi", %s}]}]}
-                    """.formatted(fields[i]);
+        assertInvalidPropertyField("\"price\":\"0\"", PropertyPrice.MESSAGE_CONSTRAINTS);
+        assertInvalidPropertyField("\"status\":\"Cancelled\"", PropertyStatus.MESSAGE_CONSTRAINTS);
+        assertInvalidPropertyField("\"bedrooms\":\"21\"", PropertyBedrooms.MESSAGE_CONSTRAINTS);
+    }
 
-            assertSavedDataValidationError(json, "Property 1 is invalid: " + reasons[i]);
-        }
+    private void assertInvalidPropertyField(String field, String expectedReason) throws Exception {
+        String json = """
+                {"persons": [{"name": "Alice", "phone": "91234567", "email": "alice@example.com",
+                  "properties": [{"type": "HDB", "intention": "Buying", "location": "Clementi", %s}]}]}
+                """.formatted(field);
+
+        assertSavedDataValidationError(json, "Property 1 is invalid: " + expectedReason);
     }
 
     // Codex assisted Brendan-Lim with the actual missing-client-list error-dialog regression.
@@ -736,10 +771,7 @@ public class ResidexUiTest {
             Platform.runLater(() -> {
                 List<Window> windows = List.copyOf(Window.getWindows());
                 try {
-                    DialogPane dialog = windows.stream().map(Window::getScene)
-                            .map(scene -> scene.lookup("#" + UiManager.ALERT_DIALOG_PANE_FIELD_ID))
-                            .filter(DialogPane.class::isInstance).map(DialogPane.class::cast)
-                            .findFirst().orElseThrow();
+                    DialogPane dialog = findErrorDialog(windows);
                     assertEquals(expectedHeader, dialog.getHeaderText());
                     String message = dialog.getContentText();
                     assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
@@ -756,7 +788,7 @@ public class ResidexUiTest {
 
             UiManager.showDataFileLockError(dataFile, error);
 
-            checked.get(5, TimeUnit.SECONDS);
+            checked.get(DIALOG_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         });
     }
 
@@ -780,10 +812,7 @@ public class ResidexUiTest {
             Platform.runLater(() -> {
                 List<Window> windows = List.copyOf(Window.getWindows());
                 try {
-                    DialogPane dialog = windows.stream().map(Window::getScene)
-                            .map(scene -> scene.lookup("#" + UiManager.ALERT_DIALOG_PANE_FIELD_ID))
-                            .filter(DialogPane.class::isInstance).map(DialogPane.class::cast)
-                            .findFirst().orElseThrow();
+                    DialogPane dialog = findErrorDialog(windows);
                     assertEquals("RESIDEX could not open your client data", dialog.getHeaderText());
                     String message = dialog.getContentText();
                     assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
@@ -809,8 +838,15 @@ public class ResidexUiTest {
 
             UiManager.showDataLoadingError(dataFile, new DataLoadingException(cause));
 
-            checked.get(5, TimeUnit.SECONDS);
+            checked.get(DIALOG_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         });
+    }
+
+    private static DialogPane findErrorDialog(List<Window> windows) {
+        return windows.stream().map(Window::getScene)
+                .map(scene -> scene.lookup("#" + UiManager.ALERT_DIALOG_PANE_FIELD_ID))
+                .filter(DialogPane.class::isInstance).map(DialogPane.class::cast)
+                .findFirst().orElseThrow();
     }
 
     @Test

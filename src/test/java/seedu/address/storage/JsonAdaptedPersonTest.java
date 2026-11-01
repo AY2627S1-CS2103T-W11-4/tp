@@ -233,15 +233,18 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_invalidContactAndProperty_reportsContactFirst() {
         List<JsonAdaptedProperty> invalidProperties = List.of(new JsonAdaptedProperty("flat", "Both", "", "0"));
-        JsonAdaptedPerson[] persons = {
-            new JsonAdaptedPerson(INVALID_NAME, INVALID_PHONE, INVALID_EMAIL, null, "", invalidProperties),
-            new JsonAdaptedPerson(VALID_NAME, INVALID_PHONE, INVALID_EMAIL, null, "", invalidProperties),
-            new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, INVALID_EMAIL, null, "", invalidProperties)
-        };
-        String[] messages = {Name.MESSAGE_CONSTRAINTS, Phone.MESSAGE_CONSTRAINTS, Email.MESSAGE_CONSTRAINTS};
-        for (int i = 0; i < persons.length; i++) {
-            assertThrows(IllegalValueException.class, messages[i], persons[i]::toModelType);
-        }
+        assertInvalidContact(
+                new JsonAdaptedPerson(INVALID_NAME, INVALID_PHONE, INVALID_EMAIL, null, "", invalidProperties),
+                Name.MESSAGE_CONSTRAINTS);
+        assertInvalidContact(
+                new JsonAdaptedPerson(VALID_NAME, INVALID_PHONE, INVALID_EMAIL, null, "", invalidProperties),
+                Phone.MESSAGE_CONSTRAINTS);
+        assertInvalidContact(new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, INVALID_EMAIL, null, "", invalidProperties),
+                Email.MESSAGE_CONSTRAINTS);
+    }
+
+    private void assertInvalidContact(JsonAdaptedPerson person, String expectedMessage) {
+        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
 
 }

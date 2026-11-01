@@ -23,6 +23,8 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.testutil.DataFileLockProcess;
 
 public class DataFileLockTest {
+    private static final int PROCESS_TIMEOUT_SECONDS = 30;
+
     @TempDir
     public Path temporaryFolder;
 
@@ -113,7 +115,7 @@ public class DataFileLockTest {
             Process competitor = startProcess(data);
             try {
                 assertEquals("IN_USE", readStatus(competitor));
-                assertTrue(competitor.waitFor(30, TimeUnit.SECONDS));
+                assertTrue(competitor.waitFor(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS));
                 assertEquals(0, competitor.exitValue());
             } finally {
                 stopProcess(competitor);
@@ -130,7 +132,7 @@ public class DataFileLockTest {
             assertThrows(DataFileLock.InUseException.class, () -> DataFileLock.acquire(data));
             owner.getOutputStream().write('\n');
             owner.getOutputStream().flush();
-            assertTrue(owner.waitFor(30, TimeUnit.SECONDS));
+            assertTrue(owner.waitFor(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS));
             assertEquals(0, owner.exitValue());
             try (DataFileLock lock = DataFileLock.acquire(data)) {
                 assertNotNull(lock);
@@ -172,11 +174,11 @@ public class DataFileLockTest {
             } catch (IOException e) {
                 throw new CompletionException(e);
             }
-        }).get(30, TimeUnit.SECONDS);
+        }).get(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     private void stopProcess(Process process) throws InterruptedException {
         process.destroyForcibly();
-        assertTrue(process.waitFor(30, TimeUnit.SECONDS));
+        assertTrue(process.waitFor(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS));
     }
 }
