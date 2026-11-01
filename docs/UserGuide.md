@@ -585,7 +585,7 @@ Your client data is loaded normally if it is valid.
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **Names** may contain only letters, digits and spaces, so names with hyphens or apostrophes (for example `Ng Wei-Ling`) cannot be entered.
 3. **Phone numbers** must contain 3 to 15 digits. Spaces, hyphens and a leading `+` are not supported.
-4. **Property locations** cannot contain a word followed by a slash, such as `N/A`, because it is read as a field prefix. Write `NA` instead. Numbers such as `1/2` are fine.
+4. **Finding locations** cannot use a word followed by a slash, such as `find l/N/A`, because it is read as a field prefix. Entering that location with `addp` or `editp` is allowed. Numbers such as `1/2` are fine.
 5. **Undo history** is kept only while RESIDEX is running. After you close it, earlier changes cannot be undone.
 
 --------------------------------------------------------------------------------------------------------------------
