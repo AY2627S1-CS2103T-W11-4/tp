@@ -118,7 +118,7 @@ How the `Logic` component works:
 1. `LogicManager` saves the data file only if the command changed the address book. Read-only commands such as `find`, `view`, `list` and `help` never touch the file, so they still work when it is read-only or the disk is full. If saving fails after a command that did change data, that change is rolled back and an error is shown.
 
 `LogicManager` saves client data only when it differs from the pre-command snapshot. A failed save rolls back
-the change. `exit` leaves client data unchanged, so its `CommandResult` retains the exit flag without attempting
+the change and restores the undo and redo history to what it was before the command. `exit` leaves client data unchanged, so its `CommandResult` retains the exit flag without attempting
 a client-data save, even after an earlier save failure. `MainWindow` handles that flag through its normal close path.
 During shutdown, `MainApp` logs a preferences-save failure and still releases the data-file lock.
 Logic regressions cover empty and populated data, plus exit after a failed edit, using both `IOException`
@@ -462,7 +462,7 @@ identity as determined by `isSamePerson()`.
 
 #### Commands and parsing
 
-`AddressBookParser` normalises command words with `Locale.ROOT`, making command words case-insensitive.
+`AddressBookParser` normalises command words with `Locale.ROOT`, making command words case-insensitive. It rejects any text typed after `help`, `list`, `undo`, `redo` and `exit` with a `ParseException`, so that `undo 3` is not mistaken for `undo`.
 Blank input is rejected with `Messages.MESSAGE_EMPTY_COMMAND`, and `CommandBox` ignores blank input without running a command, so whitespace-only input never produces the `help` usage message.
 `AddPropertyCommandParser`, `DeletePropertyCommandParser` and `EditPropertyCommandParser` parse the three property commands.
 `PropertyParserUtil` recognises `t/`, `i/`, `l/`, `pr/`, `bd/` and `s/` case-insensitively without changing field values.
@@ -627,8 +627,9 @@ The undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `Ad
 * `VersionedAddressBook#commit()` -- Saves the current client data state in its history.
 * `VersionedAddressBook#undo()` -- Restores the previous client data state from its history.
 * `VersionedAddressBook#redo()` -- Restores a previously undone client data state from its history.
+* `VersionedAddressBook#revertLastCommit()` -- Cancels the latest commit and restores the history exactly as it was before that commit, including any states that could still be redone.
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
+These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively. `Model#revertLastCommit()` exposes `revertLastCommit()`; `LogicManager` calls it when a data-changing command cannot be saved, so a failed command does not clear the redo history.
 
 Each data-changing command (`add`, `edit`, `delete`, `remark`, `addp`, `editp` and `delp`) calls `Model#commitAddressBook()` after it succeeds. A command that fails, or an `editp` that leaves the property unchanged, does not commit. `edit` and `remark` also skip the commit when the edited client equals the original, so an edit that changes nothing does not clear what can be redone. The history keeps the `VersionedAddressBook#MAX_UNDOABLE_CHANGES` (100) most recent changes, which is 101 saved states including the current one, dropping the oldest first. The `undo` and `redo` commands also reset the displayed list to show all clients.
 
@@ -1899,6 +1900,13 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
 
    1. Enter `delete 1`, `undo`, then `remark 1 r/new`, then `redo`.<br>
       Expected: `redo` reports "There is nothing to redo.", because the new change cleared the redo history.
+
+   1. Enter `delete 1`, `undo`, make the data file read-only, then enter `remark 1 r/new`.<br>
+      Expected: An error says the data could not be saved. Make the file writable again and enter `redo`: the
+      deleted client is removed again, because the failed command did not clear the redo history.
+
+   1. Enter `undo 3`, `redo 3`, `list 1`, `help 1` and `exit now`.<br>
+      Expected: Each command is rejected with "The '...' command does not take any input", and nothing changes.
 
 1. Saving and restarting
 

@@ -73,8 +73,8 @@ public class LogicManager implements Logic {
     /**
      * Restores client data when a command changed the model but the file was not saved.
      * Undo and redo each move one history step, so a failed undo is reversed with redo
-     * and a failed redo is reversed with undo. Other failed commands undo the committed
-     * change and drop that redo entry so the unsaved state cannot return.
+     * and a failed redo is reversed with undo. Other failed commands cancel the committed
+     * change and keep the redo history that existed before it.
      */
     private void rollbackUnsavedChange(Command command, ReadOnlyAddressBook stateBeforeCommand) {
         if (command instanceof UndoCommand && model.canRedoAddressBook()) {
@@ -86,8 +86,7 @@ public class LogicManager implements Logic {
             return;
         }
         if (model.canUndoAddressBook()) {
-            model.undoAddressBook();
-            model.discardRedoHistory();
+            model.revertLastCommit();
             return;
         }
         model.setAddressBook(stateBeforeCommand);

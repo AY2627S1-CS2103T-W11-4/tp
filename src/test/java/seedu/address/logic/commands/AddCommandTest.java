@@ -148,7 +148,7 @@ public class AddCommandTest {
         }
 
         @Override
-        public void discardRedoHistory() {
+        public void revertLastCommit() {
             throw new AssertionError("This method should not be called.");
         }
 

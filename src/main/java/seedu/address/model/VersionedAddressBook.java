@@ -14,6 +14,8 @@ public class VersionedAddressBook extends AddressBook {
 
     private final List<ReadOnlyAddressBook> states = new ArrayList<>();
     private int currentStatePointer;
+    private List<ReadOnlyAddressBook> statesBeforeLastCommit;
+    private int pointerBeforeLastCommit;
 
     /**
      * Creates a versioned address book whose first state is a copy of {@code initialState}.
@@ -28,6 +30,8 @@ public class VersionedAddressBook extends AddressBook {
      * Saves the current data as a new state. Any states that could still be redone are discarded.
      */
     public void commit() {
+        statesBeforeLastCommit = new ArrayList<>(states);
+        pointerBeforeLastCommit = currentStatePointer;
         states.subList(currentStatePointer + 1, states.size()).clear();
         states.add(new AddressBook(this));
         currentStatePointer++;
@@ -47,6 +51,7 @@ public class VersionedAddressBook extends AddressBook {
         if (!canUndo()) {
             throw new NoUndoableStateException();
         }
+        statesBeforeLastCommit = null;
         currentStatePointer--;
         assert isPointerValid() : "The current state pointer must identify a saved state";
         resetData(states.get(currentStatePointer));
@@ -61,6 +66,7 @@ public class VersionedAddressBook extends AddressBook {
         if (!canRedo()) {
             throw new NoRedoableStateException();
         }
+        statesBeforeLastCommit = null;
         currentStatePointer++;
         assert isPointerValid() : "The current state pointer must identify a saved state";
         resetData(states.get(currentStatePointer));
@@ -81,10 +87,22 @@ public class VersionedAddressBook extends AddressBook {
     }
 
     /**
-     * Discards any states after the current pointer so they cannot be redone.
+     * Cancels the latest commit and brings back the history as it was before that commit,
+     * including any states that could still be redone. If there is no such commit,
+     * restores the previous state and discards the states after it instead.
      */
-    public void discardRedoHistory() {
-        states.subList(currentStatePointer + 1, states.size()).clear();
+    public void revertLastCommit() {
+        if (statesBeforeLastCommit == null) {
+            undo();
+            states.subList(currentStatePointer + 1, states.size()).clear();
+            return;
+        }
+        states.clear();
+        states.addAll(statesBeforeLastCommit);
+        currentStatePointer = pointerBeforeLastCommit;
+        statesBeforeLastCommit = null;
+        assert isPointerValid() : "The current state pointer must identify a saved state";
+        resetData(states.get(currentStatePointer));
     }
 
     private boolean isPointerValid() {

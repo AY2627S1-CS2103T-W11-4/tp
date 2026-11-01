@@ -319,6 +319,26 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_storageThrowsOnAddAfterUndo_keepsExistingRedoHistory() throws Exception {
+        logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+        logic.execute("add n/Ben Ong p/92345678 e/ben@example.com");
+        logic.execute("undo");
+        useFailingStorage(DUMMY_IO_EXCEPTION);
+
+        assertThrows(CommandException.class, String.format(
+                LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()), () ->
+                logic.execute("add n/SaveFail p/88119991 e/savefail@example.com"));
+
+        assertEquals(1, model.getAddressBook().getPersonList().size());
+        assertTrue(model.canRedoAddressBook());
+
+        useWorkingStorage();
+        logic.execute("redo");
+        assertEquals(2, model.getAddressBook().getPersonList().size());
+        assertEquals("Ben Ong", model.getAddressBook().getPersonList().get(1).getName().fullName);
+    }
+
+    @Test
     public void execute_storageThrowsOnAddWhenUndoUnavailable_restoresSnapshot() {
         model = new ModelManager() {
             @Override
