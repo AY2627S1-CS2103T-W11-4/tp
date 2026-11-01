@@ -533,7 +533,7 @@ Apply the returned person through `model.setPerson`; calling a method alone does
 
 Existing `EditCommand` and `RemarkCommand` carry the property list into the replacement person so that changing contact
 details or remarks preserves all properties. Future code that reconstructs a `Person` must also preserve the list.
-The five-argument `Person` constructor creates a client with no properties; the six-argument constructor
+The four-argument `Person` constructor creates a client with no properties; the five-argument constructor
 accepts the property list as its final argument.
 
 #### Storage and compatibility
@@ -543,7 +543,7 @@ Each saved client has a `properties` array. `JsonAdaptedProperty` stores `type`,
 Property order and duplicate entries survive saving and loading. A missing `price` also loads as unknown.
 Missing or null legacy status loads as `UNSPECIFIED`; otherwise the status must be a recognised token.
 `bedrooms` is saved as a whole-number string, or `null` when unknown; a missing `bedrooms` field also loads as unknown, so older files still open. An invalid saved value is rejected like any other invalid property field.
-The adapter retains its four-argument convenience constructor for old callers and uses a five-field JSON creator.
+The adapter retains its four- and five-argument convenience constructors for old callers and uses a six-field JSON creator.
 New saves always write a status for each property. Loading alone does not rewrite the file.
 
 Property intentions are saved canonically as `Buying` or `Selling`.

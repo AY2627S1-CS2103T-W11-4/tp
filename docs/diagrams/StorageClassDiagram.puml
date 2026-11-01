@@ -32,6 +32,6 @@ StorageManager -down-> "1" JsonAddressBookStorage
 JsonAddressBookStorage ..> JsonSerializableAddressBook
 JsonSerializableAddressBook --> "*" JsonAdaptedPerson
 JsonAdaptedPerson --> "*" JsonAdaptedProperty
-note right of JsonAdaptedProperty: saves type, intention, location,\nprice and status of one property
+note right of JsonAdaptedProperty: saves type, intention, location,\nprice, status and bedrooms of one property
 
 @enduml

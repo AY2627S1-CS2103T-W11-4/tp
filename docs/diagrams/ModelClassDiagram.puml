@@ -33,6 +33,7 @@ Class PropertyIntention <<enumeration>> {
 Class PropertyType <<enumeration>>
 Class PropertyLocation
 Class PropertyPrice
+Class PropertyBedrooms
 Class PropertyStatus <<enumeration>> {
   UNSPECIFIED
   ENQUIRING
@@ -73,6 +74,7 @@ Property --> PropertyType
 Property --> "1" PropertyIntention
 Property *--> PropertyLocation
 Property *--> "0..1" PropertyPrice
+Property *--> "0..1" PropertyBedrooms
 Property --> "1" PropertyStatus
 
 Person -[hidden]up--> I
