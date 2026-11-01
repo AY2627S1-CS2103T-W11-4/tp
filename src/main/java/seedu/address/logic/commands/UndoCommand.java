@@ -9,6 +9,8 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 
+// Adapted from AB4's UndoCommand:
+// https://github.com/se-edu/addressbook-level4/blob/master/src/main/java/seedu/address/logic/commands/UndoCommand.java
 /**
  * Reverts the client data to the state before the most recent data-changing command.
  */

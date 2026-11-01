@@ -13,9 +13,13 @@
 
 ## **Acknowledgements**
 
-* RESIDEX is adapted from the [AddressBook-Level3 (AB3)](https://github.com/se-edu/addressbook-level3) project by the [SE-EDU initiative](https://se-education.org/). The overall architecture, the `Logic`/`Model`/`Storage`/`UI` split, the command parser structure and the undo/redo design follow AB3.
+* RESIDEX is adapted from the [AddressBook-Level3 (AB3)](https://github.com/se-edu/addressbook-level3) project by the [SE-EDU initiative](https://se-education.org/). The overall architecture, the `Logic`/`Model`/`Storage`/`UI` split and the command parser structure follow AB3.
+* The undo/redo feature is based on [AddressBook-Level4 (AB4)](https://github.com/se-edu/addressbook-level4): `UndoCommand` and `RedoCommand` are adapted from AB4, and `VersionedAddressBook` is inspired by AB4's version. Each is credited in its code comments.
 * Third-party libraries: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for JSON storage, and [JUnit 5](https://github.com/junit-team/junit5) for testing.
 * Documentation tools: [MarkBind](https://markbind.org/) builds this guide and the [User Guide](UserGuide.md), and [PlantUML](https://plantuml.com/) draws the diagrams.
+* Notable uses of AI:
+  * Claude Code was used for preliminary PR reviews and for bug hunts across the codebase.
+  * @sntan1214 used Claude Code to write initial drafts of required code, tests and documentation wording, including the undo/redo feature, the find predicates and the property commands. The author reviewed the drafts, manually tested the features and the issues raised, and, where needed, revised them, and remains responsible for the final code.
 
 --------------------------------------------------------------------------------------------------------------------
 

@@ -3,6 +3,8 @@ package seedu.address.model;
 import java.util.ArrayList;
 import java.util.List;
 
+// Inspired by AB4's VersionedAddressBook:
+// https://github.com/se-edu/addressbook-level4/blob/master/src/main/java/seedu/address/model/VersionedAddressBook.java
 /**
  * An {@code AddressBook} that keeps a history of its states so that changes can be undone and redone.
  * Only the client data is versioned. The history keeps the {@value #MAX_UNDOABLE_CHANGES} most recent changes,
