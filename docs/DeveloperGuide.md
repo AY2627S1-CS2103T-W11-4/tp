@@ -1354,7 +1354,7 @@ testers are expected to do more *exploratory* testing.
 1. Reading the reference
 
    1. Scroll through the cards.<br>
-      Expected: Cards for `add`, `edit`, `addp`, `delp`, `editp`, `find`, `list`, `view`, `delete`, `remark`, `help` and `exit` show their formats, details and examples.
+      Expected: Cards for `add`, `edit`, `addp`, `delp`, `editp`, `find`, `list`, `view`, `delete`, `remark`, `undo`, `redo`, `help` and `exit` show their formats, details and examples.
       Client `add` and `edit` have no budget option; property commands retain `pr/PRICE` and transaction status.
       The heading and User Guide footer remain visible while the cards scroll.
 
@@ -1836,7 +1836,7 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
    1. Enter `find bd/4`.<br>
       Expected: Bedroom Test is not listed, because no property has exactly 4 bedrooms.
 
-   1. Enter `editp 1 1 bd/`, then `find bd/3`.<br>
+   1. Enter `find p/91008101` to display Bedroom Test at index 1, then `editp 1 1 bd/` and `find bd/3`.<br>
       Expected: Bedroom Test is not listed, because the only 3-bedroom property no longer has bedrooms recorded.
 
    1. Try `find bd/`, `find bd/0`, `find bd/21`, `find bd/abc`, `find bd/2 3` and `find bd/2 t/HDB`.<br>
