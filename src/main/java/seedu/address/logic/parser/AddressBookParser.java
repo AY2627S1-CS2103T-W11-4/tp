@@ -36,6 +36,8 @@ public class AddressBookParser {
      * Used for initial separation of command word and args.
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
+    private static final String MESSAGE_UNEXPECTED_ARGUMENTS =
+            "The '%1$s' command does not take any input. Type just '%1$s' and try again.";
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     /**
@@ -71,13 +73,13 @@ public class AddressBookParser {
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
-            case ListCommand.COMMAND_WORD -> new ListCommand();
+            case ListCommand.COMMAND_WORD -> parseWithoutArguments(commandWord, arguments, new ListCommand());
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
-            case UndoCommand.COMMAND_WORD -> new UndoCommand();
-            case RedoCommand.COMMAND_WORD -> new RedoCommand();
-            case ExitCommand.COMMAND_WORD -> new ExitCommand();
-            case HelpCommand.COMMAND_WORD -> new HelpCommand();
+            case UndoCommand.COMMAND_WORD -> parseWithoutArguments(commandWord, arguments, new UndoCommand());
+            case RedoCommand.COMMAND_WORD -> parseWithoutArguments(commandWord, arguments, new RedoCommand());
+            case ExitCommand.COMMAND_WORD -> parseWithoutArguments(commandWord, arguments, new ExitCommand());
+            case HelpCommand.COMMAND_WORD -> parseWithoutArguments(commandWord, arguments, new HelpCommand());
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
@@ -85,4 +87,16 @@ public class AddressBookParser {
         };
     }
 
+    /**
+     * Returns {@code command} if {@code arguments} is blank.
+     *
+     * @throws ParseException if anything was typed after the command word.
+     */
+    private Command parseWithoutArguments(String commandWord, String arguments, Command command)
+            throws ParseException {
+        if (!arguments.isBlank()) {
+            throw new ParseException(String.format(MESSAGE_UNEXPECTED_ARGUMENTS, commandWord));
+        }
+        return command;
+    }
 }
