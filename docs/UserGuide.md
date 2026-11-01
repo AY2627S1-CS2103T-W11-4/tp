@@ -271,7 +271,8 @@ Status is independent of the derived client role.
 Status belongs to each property, so a client's properties can be at different stages.
 Use these single-word values with `s/`; capitalization does not matter.
 <!-- Codex assisted Brendan-Lim with the status-search alias documentation. -->
-For status searches, `find s/Not specified` is also accepted as an alias for `find s/unspecified`.
+For `addp` and `editp`, use `s/unspecified`; `s/Not specified` is invalid. Only `find s/` searches accept
+`Not specified` as an alias for `unspecified`. Omitting `s/` in `addp` defaults to Not specified.
 
 | Value | Display | Meaning |
 | --- | --- | --- |
