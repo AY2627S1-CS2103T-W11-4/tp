@@ -300,8 +300,9 @@ Legacy client-level intention is ignored; new saves omit it and derive the role 
 
 <box type="warning" seamless>
 
-**Returning to an older version:** Compatibility is one-way. Automatic saves, including those triggered by
-`list` or `help`, convert legacy property intentions to `Buying` and `Selling`.
+**Returning to an older version:** Compatibility is one-way. The next successful data-changing command saves
+legacy property intentions as canonical `Buying` and `Selling`. Startup, read-only commands
+(`list`, `find`, `view`, `help` and `exit`) and unsuccessful commands do not rewrite the client data file.
 Older releases may reject the migrated file. Before upgrading, back up
 `[JAR file location]/data/addressbook.json` and retain that pre-upgrade backup if you may need to return to an older release.
 
