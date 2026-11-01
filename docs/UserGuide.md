@@ -368,7 +368,10 @@ Examples:
 
 Finds clients using exactly one selected search field.
 
-Format: `find FIELD/KEYWORD [MORE_KEYWORDS]`
+Format: `find FIELD/VALUE`
+
+For `n/`, `e/`, `p/` and `l/`, use `find FIELD/KEYWORD [MORE_KEYWORDS]` for one or more OR keywords.
+For `i/`, `s/`, `t/`, `pr/` and `bd/`, supply one logical search value; `Not specified` is one valid status value.
 
 Search field | Prefix
 --- | ---
@@ -386,12 +389,12 @@ Property bedrooms | `bd/`
 * Specify exactly one short prefix immediately after `find`, with `/` immediately after the letter.
   Missing, unknown, repeated, or mixed prefixes are rejected. For example, use `find n/alice`.
   Long search field aliases are not supported.
-* At least one keyword is required. Extra whitespace is ignored, and keyword order does not matter.
+* A search value is required. Extra whitespace is ignored; for `n/`, `e/`, `p/` and `l/`, keyword order does not matter.
 * Entering `find` without arguments, or providing a search field without a keyword (e.g. `find n/`), shows the command format and an example (`find n/alex`).
 * Name, email, phone, and location searches use substring matching; `find n/ali` matches `Alice`.
 * Phone searches compare digits only: hyphens, brackets and a leading `+65` in a keyword are ignored, so `find p/9123-4567` and `find p/+6591234567` both match `91234567`. A keyword containing letters or other symbols matches nothing.
 * Spaces separate keywords, so `find p/9123 4567` lists clients whose phone contains `9123` **or** `4567`. To search for one full number, type it without spaces.
-* Multiple keywords use `OR` matching: a client is returned if any keyword matches the selected search field.
+* For `n/`, `e/`, `p/` and `l/`, multiple keywords use `OR` matching: a client is returned if any keyword matches the selected search field.
 * Location searches check all property entries attached to each client. A client appears once if any location matches;
   clients without property entries do not match. Enter keywords without quotation marks.
 * Spaces separate location keywords. A multiword location search matches any of its keywords independently;
@@ -611,7 +614,7 @@ Action     | Format, Examples
 **Add property** | `addp CLIENT_INDEX t/TYPE i/INTENTION l/LOCATION [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `addp 1 t/HDB i/Buying l/Clementi pr/800000 bd/3`
 **Delete property** | `delp CLIENT_INDEX PROPERTY_INDEX`<br> e.g., `delp 1 2`
 **Edit property** | `editp CLIENT_INDEX PROPERTY_INDEX [t/TYPE] [i/INTENTION] [l/LOCATION] [pr/PRICE] [bd/BEDROOMS] [s/STATUS]`<br> e.g., `editp 1 2 l/Toa Payoh`, `editp 1 2 bd/4`
-**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]`<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`, `find t/HDB`, `find pr/500000-800000`, `find bd/3`, `find pr/unknown`
+**Find**   | `find FIELD/KEYWORD [MORE_KEYWORDS]` for `n/`, `e/`, `p/`, `l/` (OR matching).<br>`find FIELD/VALUE` for `i/`, `s/`, `t/`, `pr/`, `bd/` (one logical value, e.g., `find s/Not specified`).<br> e.g., `find n/James Jake`, `find e/gmail`, `find p/9123`, `find l/clementi`, `find i/seller`, `find s/viewing`, `find t/HDB`, `find pr/500000-800000`, `find bd/3`, `find pr/unknown`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Remark** | `remark INDEX r/[REMARK]`<br> e.g., `remark 1 r/Call next week`
