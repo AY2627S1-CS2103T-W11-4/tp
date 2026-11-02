@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -7,7 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
 import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +32,26 @@ public class IntentionMatchesPredicateTest {
         assertFalse(predicate.equals(new NameContainsKeywordsPredicate(List.of("Buyer"))));
         assertFalse(predicate.equals(1));
         assertFalse(predicate.equals(null));
+    }
+
+    @Test
+    public void hashCode_equalPredicates_supportHashSetLookup() {
+        for (ClientIntention intention : ClientIntention.values()) {
+            IntentionMatchesPredicate first = new IntentionMatchesPredicate(intention);
+            IntentionMatchesPredicate equal = new IntentionMatchesPredicate(intention);
+            Set<IntentionMatchesPredicate> predicates = new HashSet<>(List.of(first));
+
+            assertAll(() -> {
+                assertEquals(first, equal);
+            }, () -> {
+                assertEquals(first.hashCode(), equal.hashCode());
+            }, () -> {
+                assertTrue(predicates.contains(equal));
+            });
+        }
+        Set<IntentionMatchesPredicate> buyers = new HashSet<>(List.of(
+                new IntentionMatchesPredicate(ClientIntention.BUYER)));
+        assertFalse(buyers.contains(new IntentionMatchesPredicate(ClientIntention.SELLER)));
     }
 
     @Test

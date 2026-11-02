@@ -48,6 +48,11 @@ public class IntentionMatchesPredicate implements Predicate<Person> {
     }
 
     @Override
+    public int hashCode() {
+        return intention.hashCode();
+    }
+
+    @Override
     public String toString() {
         return new ToStringBuilder(this).add("intention", intention).toString();
     }
