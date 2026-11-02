@@ -83,7 +83,7 @@ public class PersonTest {
         assertTrue(editedBob.isSamePerson(BOB));
         assertFalse(BOB.equals(editedBob));
 
-        // normalised names match, different phones -> returns false
+        // normalized names match, different phones -> returns false
         editedBob = new PersonBuilder(editedBob).withPhone(ALICE.getPhone().value).build();
         assertFalse(BOB.isSamePerson(editedBob));
 
