@@ -29,7 +29,7 @@ public class RemarkCommand extends Command {
             + "Parameters: INDEX (must be a positive integer) "
             + PREFIX_REMARK + "[REMARK]\n"
             + "Example: " + COMMAND_WORD + " 1 "
-            + PREFIX_REMARK + "Likes to swim.";
+            + PREFIX_REMARK + "Call next week";
 
     public static final String MESSAGE_ADD_REMARK_SUCCESS = "Added remark to client: %1$s";
     public static final String MESSAGE_DELETE_REMARK_SUCCESS = "Removed remark from client: %1$s";
