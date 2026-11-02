@@ -20,6 +20,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
+import seedu.address.model.ClientViewMode;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -166,6 +167,41 @@ public class IntentionSearchIntegrationTest {
         assertEquals(List.of(BOTH_ALPHA, mixed, BOTH_BETA), logic.getFilteredPersonList());
         expectedSource.set(4, seller);
         assertSourceAndStorage(expectedSource);
+    }
+
+    @Test
+    public void execute_roleChangeUndoRedoAndReload_preservesRankedIndexesAndStoredOrder() throws Exception {
+        logic.execute("find i/buyer");
+        logic.execute("editp 1 1 i/Selling");
+        Person changed = BUYER_ALPHA.withUpdatedProperty(Index.fromOneBased(1), new Property(
+                CLEMENTI_HDB.getType(), PropertyIntention.SELLING, CLEMENTI_HDB.getLocation(),
+                CLEMENTI_HDB.getPrice().orElse(null)));
+        List<Person> changedSource = new ArrayList<>(SOURCE_ORDER);
+        changedSource.set(2, changed);
+        assertEquals(List.of(BUYER_BETA, BOTH_ALPHA, BOTH_BETA), logic.getFilteredPersonList());
+        assertSourceAndStorage(changedSource);
+
+        logic.execute("undo");
+        assertEquals(ClientViewMode.ALL_CLIENTS, model.clientViewModeProperty().get());
+        assertEquals(SOURCE_ORDER, logic.getFilteredPersonList());
+        assertSourceAndStorage(SOURCE_ORDER);
+        logic.execute("find i/buyer");
+        assertEquals(BUYER_ORDER, logic.getFilteredPersonList());
+
+        logic.execute("redo");
+        assertEquals(changedSource, logic.getFilteredPersonList());
+        assertSourceAndStorage(changedSource);
+        logic.execute("find i/seller");
+        assertEquals(List.of(SELLER_ALPHA, changed, SELLER_BETA, BOTH_ALPHA, BOTH_BETA),
+                logic.getFilteredPersonList());
+
+        Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        Logic restarted = new LogicManager(reloaded, new StorageManager(storage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        restarted.execute("find i/buyer");
+        assertEquals(List.of(BUYER_BETA, BOTH_ALPHA, BOTH_BETA), restarted.getFilteredPersonList());
+        assertEquals(changedSource, reloaded.getAddressBook().getPersonList());
+        assertThrows(CommandException.class, "There is nothing to undo.", () -> restarted.execute("undo"));
     }
 
     @Test

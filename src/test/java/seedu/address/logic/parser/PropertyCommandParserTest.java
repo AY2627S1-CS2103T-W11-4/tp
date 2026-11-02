@@ -65,6 +65,29 @@ public class PropertyCommandParserTest {
     }
 
     @Test
+    public void parse_locationSlashInsideFirstToken_preservesLiteralForAddAndEdit() throws Exception {
+        for (String location : List.of("N/A", "Park/Connector", "Tampines Street 1/2")) {
+            Property expected = new Property(PropertyType.HDB, PropertyIntention.BUYING,
+                    new PropertyLocation(location));
+            assertEquals(new AddPropertyCommand(Index.fromOneBased(1), expected),
+                    parser.parseCommand("addp 1 t/HDB i/Buying l/" + location));
+            EditPropertyDescriptor descriptor = new EditPropertyDescriptor();
+            descriptor.setLocation(new PropertyLocation(location));
+            assertEquals(new EditPropertyCommand(Index.fromOneBased(1), Index.fromOneBased(2), descriptor),
+                    parser.parseCommand("editp 1 2 l/" + location));
+        }
+    }
+
+    @Test
+    public void parse_alphabeticSlashAfterLocationWhitespace_reportsUnknownField() {
+        String expectedMessage = "Unknown property field: MRT/. Use t/, i/, l/, pr/, s/ or bd/.";
+        for (String command : List.of("addp 1 t/HDB i/Buying l/Block MRT/Exit",
+                "editp 1 2 l/Block MRT/Exit")) {
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(command));
+        }
+    }
+
+    @Test
     public void parse_addWithoutPrice_acceptsEveryTypeAlias() throws Exception {
         for (String alias : List.of("h", "HDB", "c", "Condominium", "l", "Landed")) {
             Property expected = new Property(PropertyType.parse(alias), PropertyIntention.BUYING,
