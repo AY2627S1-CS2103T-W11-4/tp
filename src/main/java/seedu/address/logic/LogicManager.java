@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -53,7 +54,10 @@ public class LogicManager implements Logic {
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
         ReadOnlyAddressBook stateBeforeCommand = new AddressBook(model.getAddressBook());
-        Person viewedPersonBeforeCommand = model.clientViewModeProperty().get() == ClientViewMode.CLIENT_DETAILS
+        ClientViewMode viewModeBeforeCommand = model.clientViewModeProperty().get();
+        Predicate<Person> filterBeforeCommand = viewModeBeforeCommand == ClientViewMode.FILTERED_CLIENTS
+                ? model.getPersonFilter() : null;
+        Person viewedPersonBeforeCommand = viewModeBeforeCommand == ClientViewMode.CLIENT_DETAILS
                 ? model.getFilteredPersonList().getFirst() : null;
         commandResult = command.execute(model);
 
@@ -62,15 +66,11 @@ public class LogicManager implements Logic {
                 storage.saveAddressBook(model.getAddressBook());
             } catch (AccessDeniedException e) {
                 rollbackUnsavedChange(command, stateBeforeCommand);
-                if (viewedPersonBeforeCommand != null) {
-                    model.showPersonDetails(viewedPersonBeforeCommand);
-                }
+                restoreDisplay(viewModeBeforeCommand, filterBeforeCommand, viewedPersonBeforeCommand);
                 throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
             } catch (IOException ioe) {
                 rollbackUnsavedChange(command, stateBeforeCommand);
-                if (viewedPersonBeforeCommand != null) {
-                    model.showPersonDetails(viewedPersonBeforeCommand);
-                }
+                restoreDisplay(viewModeBeforeCommand, filterBeforeCommand, viewedPersonBeforeCommand);
                 throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
             }
         }
@@ -98,6 +98,16 @@ public class LogicManager implements Logic {
             return;
         }
         model.setAddressBook(stateBeforeCommand);
+    }
+
+    /** Restores the displayed clients after an unsaved change is rolled back. */
+    private void restoreDisplay(ClientViewMode mode, Predicate<Person> filter, Person viewedPerson) {
+        if (mode == ClientViewMode.CLIENT_DETAILS) {
+            model.showPersonDetails(viewedPerson);
+        } else {
+            model.updateFilteredPersonList(mode == ClientViewMode.FILTERED_CLIENTS
+                    ? filter : Model.PREDICATE_SHOW_ALL_PERSONS);
+        }
     }
 
     @Override

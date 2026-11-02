@@ -173,6 +173,11 @@ public class AddCommandTest {
         }
 
         @Override
+        public Predicate<Person> getPersonFilter() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public ReadOnlyObjectProperty<ClientViewMode> clientViewModeProperty() {
             throw new AssertionError("This method should not be called.");
         }

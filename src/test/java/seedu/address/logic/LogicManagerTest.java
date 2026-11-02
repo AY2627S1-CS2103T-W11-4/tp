@@ -12,6 +12,8 @@ import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.AMY;
+import static seedu.address.testutil.TypicalProperties.CLEMENTI_HDB;
+import static seedu.address.testutil.TypicalProperties.TAMPINES_CONDO;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -426,6 +428,75 @@ public class LogicManagerTest {
 
         assertEquals(1, model.getAddressBook().getPersonList().size());
         assertEquals("Alice Tan", model.getAddressBook().getPersonList().get(0).getName().fullName);
+    }
+
+    @Test
+    public void execute_saveFailureAfterFind_preservesSearchForRetry() throws Exception {
+        for (IOException exception : List.of(DUMMY_IO_EXCEPTION, DUMMY_AD_EXCEPTION)) {
+            model = new ModelManager();
+            useWorkingStorage();
+            logic.execute("add n/Bob Tan p/92345678 e/bob@example.com");
+            logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+            logic.execute("find n/Alice");
+            ReadOnlyAddressBook original = new AddressBook(model.getAddressBook());
+            Path savedFile = temporaryFolder.resolve("addressBook.json");
+            String savedData = Files.readString(savedFile);
+            AtomicInteger saveAttempts = useFailingStorage(exception);
+
+            assertThrows(CommandException.class, () -> logic.execute("edit 1 n/Alice Updated"));
+
+            assertEquals(1, saveAttempts.get());
+            assertEquals(original, model.getAddressBook());
+            assertEquals(savedData, Files.readString(savedFile));
+            assertEquals(ClientViewMode.FILTERED_CLIENTS, model.clientViewModeProperty().get());
+            assertEquals("Alice Tan", model.getFilteredPersonList().getFirst().getName().fullName);
+            assertEquals(1, model.getFilteredPersonList().size());
+
+            useWorkingStorage();
+            logic.execute("edit 1 n/Alice Updated");
+            assertEquals("Bob Tan", model.getAddressBook().getPersonList().get(0).getName().fullName);
+            assertEquals("Alice Updated", model.getAddressBook().getPersonList().get(1).getName().fullName);
+        }
+    }
+
+    @Test
+    public void execute_saveFailureAfterRankedFind_preservesDisplayedOrder() throws Exception {
+        Person mixed = new PersonBuilder().withName("Mixed Client")
+                .withProperties(CLEMENTI_HDB, TAMPINES_CONDO).build();
+        Person buyer = new PersonBuilder().withName("Buyer Client").withProperties(CLEMENTI_HDB).build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(mixed, buyer));
+        model = new ModelManager(addressBook, new UserPrefs());
+        useFailingStorage(DUMMY_IO_EXCEPTION);
+        logic.execute("find i/buyer");
+        assertEquals(List.of(buyer, mixed), model.getFilteredPersonList());
+
+        assertThrows(CommandException.class, () -> logic.execute("edit 1 n/Changed Client"));
+
+        assertEquals(addressBook, model.getAddressBook());
+        assertEquals(ClientViewMode.FILTERED_CLIENTS, model.clientViewModeProperty().get());
+        assertEquals(List.of(buyer, mixed), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_saveFailureAfterAllOrNoMatchFind_preservesFilteredHeading() throws Exception {
+        for (String query : List.of("Tan", "Nobody")) {
+            model = new ModelManager();
+            useWorkingStorage();
+            logic.execute("add n/Bob Tan p/92345678 e/bob@example.com");
+            logic.execute("add n/Alice Tan p/91234567 e/alice@example.com");
+            logic.execute("find n/" + query);
+            List<Person> displayed = List.copyOf(model.getFilteredPersonList());
+            ReadOnlyAddressBook original = new AddressBook(model.getAddressBook());
+            useFailingStorage(DUMMY_IO_EXCEPTION);
+
+            assertThrows(CommandException.class, () ->
+                    logic.execute("add n/Third Client p/91110003 e/third@example.com"));
+
+            assertEquals(original, model.getAddressBook());
+            assertEquals(ClientViewMode.FILTERED_CLIENTS, model.clientViewModeProperty().get());
+            assertEquals(displayed, model.getFilteredPersonList());
+        }
     }
 
     @Test
