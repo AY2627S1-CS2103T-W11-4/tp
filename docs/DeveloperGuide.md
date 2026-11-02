@@ -22,6 +22,10 @@
   * @sntan1214 used Claude Code to write initial drafts of required code, tests and documentation wording, including the undo/redo feature, the find predicates and the property commands. The author reviewed the drafts, manually tested the features and the issues raised, and, where needed, revised them, and remains responsible for the final code.
   * Cursor was used for preliminary PR reviews and for bug hunts across the codebase.
   * @Sea1vester used Cursor to write initial drafts of required code, tests and documentation wording, including email validation, client command parsers, save-failure rollback and User Guide / Developer Guide updates. The author reviewed the drafts, manually tested the features and the issues raised, and, where needed, revised them, and remains responsible for the final code.
+  * @Legalunicorn used OpenAI Codex for repository analysis, code review, and drafting and refining code, tests and
+    documentation, including storage fixes, Help window improvements and code-quality refactoring. Codex also helped
+    run automated checks and prepare commit messages and pull request descriptions. The author reviewed the changes
+    and remains responsible for the final contributions.
   * @rayyngg used OpenAI Codex for issue triage and code review, implementing bug fixes and related test changes,
     checking test and coverage results, and drafting or revising the User Guide, Developer Guide, commit messages and
     pull request descriptions. This included client-index error guidance, the remark usage example, command
