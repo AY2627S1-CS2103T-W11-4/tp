@@ -1354,7 +1354,7 @@ testers are expected to do more *exploratory* testing.
 1. Reading the reference
 
    1. Scroll through the cards.<br>
-      Expected: Cards for `add`, `edit`, `addp`, `delp`, `editp`, `find`, `list`, `view`, `delete`, `remark`, `help` and `exit` show their formats, details and examples.
+      Expected: Cards for `add`, `edit`, `addp`, `delp`, `editp`, `find`, `list`, `view`, `delete`, `remark`, `undo`, `redo`, `help` and `exit` show their formats, details and examples.
       Client `add` and `edit` have no budget option; property commands retain `pr/PRICE` and transaction status.
       The heading and User Guide footer remain visible while the cards scroll.
 
@@ -1660,9 +1660,14 @@ Run the steps in order; use the displayed indexes after each search.
       Expected: Role Empty remains Not specified; no property is invented from the old field.
       The same test with legacy Seller has the same result.
 
-   1. Enter `list`, exit and inspect the saved JSON.<br>
-      Expected: Client-level intention is absent. Property intentions remain present, and property and client
-      order is preserved. Relaunch to verify all roles are derived from the same saved properties.
+   1. Enter `list`, exit and compare the JSON with the file edited above.<br>
+      Expected: The file is byte-for-byte unchanged, including the legacy client-level intention field.
+      Loading and read-only commands do not save client data.
+
+   1. Relaunch, enter `find p/91008004`, then `edit 1 n/Role Empty Updated`, and exit.<br>
+      Expected: The successful name change saves canonical data. Client-level intention is absent;
+      property intentions remain present, and property and client order is preserved. Only the intended name changes.
+      Relaunch to verify all roles are derived from the same saved properties; Role Empty Updated remains Not specified.
 
 ### Recording and finding property transaction stages
 
@@ -1758,8 +1763,12 @@ Run these steps in order. Client indexes always refer to the current displayed l
    1. Exit and back up `data/addressbook.json`. Remove the `status` field from Stage Second's property 1,
       and set property 2's status to JSON `null`. Relaunch and inspect the file before entering any command.<br>
       Expected: Both properties load as Not specified, and loading alone leaves file contents unchanged.
-      Enter `find p/91007002`, exit and inspect the saved file: both statuses are now canonical `UNSPECIFIED`.
-      Relaunch to verify the same property order and unrelated client fields.
+      Enter `find p/91007002`, exit and compare the file with the edited JSON: it remains byte-for-byte unchanged,
+      with property 1's status absent and property 2's status null.
+
+   1. Relaunch, enter `find p/91007002`, then `edit 1 n/Stage Second Updated`, and exit.<br>
+      Expected: The successful name change saves both statuses as canonical `UNSPECIFIED`.
+      Relaunch to verify both properties still display Not specified, with the same property order and unrelated client fields.
 
    1. Exit, retain a valid backup and replace one property's status with `"unknown"`. Relaunch.<br>
       Expected: Loading reports an invalid status through the normal data-loading error path; the file is unchanged.
@@ -1827,7 +1836,7 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
    1. Enter `find bd/4`.<br>
       Expected: Bedroom Test is not listed, because no property has exactly 4 bedrooms.
 
-   1. Enter `editp 1 1 bd/`, then `find bd/3`.<br>
+   1. Enter `find p/91008101` to display Bedroom Test at index 1, then `editp 1 1 bd/` and `find bd/3`.<br>
       Expected: Bedroom Test is not listed, because the only 3-bedroom property no longer has bedrooms recorded.
 
    1. Try `find bd/`, `find bd/0`, `find bd/21`, `find bd/abc`, `find bd/2 3` and `find bd/2 t/HDB`.<br>
@@ -1850,8 +1859,9 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
 3. Add or edit a property using `pr/800000 s/Viewing` and restart the app.<br>
    Expected: The property price and status are retained. There is no separate client amount.
 4. Back up a valid file and add an obsolete `"budget": "900000"` field to a client, then restart.<br>
-   Expected: All clients, property prices, statuses and derived roles load. After the next successful command
-   saves the file, the obsolete client field is absent and property values are unchanged.
+   Expected: All clients, property prices, statuses and derived roles load. Loading and read-only commands leave
+   the file unchanged. After the next successful data-changing command saves the file, the obsolete client field
+   is absent and property values are unchanged unless explicitly edited.
 
 ### Deleting a client
 
