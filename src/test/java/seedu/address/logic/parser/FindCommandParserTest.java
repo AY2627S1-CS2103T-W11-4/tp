@@ -495,9 +495,12 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidPriceRanges_throwsParseException() {
-        for (String range : List.of("-", "500000", "800000-500000", "abc", "1,000-2,000", "0-500", "05-100",
+        for (String range : List.of("-", "500000", "800000-500000", "abc", "unknow", "1,000-2,000", "0-500", "05-100",
                 "100-200-300", "1.5-2", "500000--800000", "a-b")) {
-            assertParseFailure(parser, "pr/" + range, FindCommand.MESSAGE_INVALID_PRICE_RANGE);
+            assertParseFailure(parser, "pr/" + range,
+                    "Price range must look like 500000-800000, 500000- or -800000, using whole-dollar amounts "
+                            + "without commas, and the minimum must not exceed the maximum. "
+                            + "Use unknown to search for properties without a recorded price.");
         }
         assertParseFailure(parser, "pr/", FindCommand.MESSAGE_MISSING_KEYWORD);
         assertParseFailure(parser, "pr/1-2 3-4",
@@ -523,8 +526,6 @@ public class FindCommandParserTest {
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "pr/unknown n/alex", FindCommand.MESSAGE_MULTIPLE_PROPERTIES);
         assertParseFailure(parser, "t/unknown", FindCommand.MESSAGE_INVALID_TYPE);
-        assertParseFailure(parser, "pr/unknow", FindCommand.MESSAGE_INVALID_PRICE_RANGE);
-        assertParseFailure(parser, "bd/unknow", FindCommand.MESSAGE_INVALID_BEDROOMS);
     }
 
     @Test
@@ -539,8 +540,10 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidBedrooms_throwsParseException() {
-        for (String bedrooms : List.of("0", "21", "03", "-1", "2.5", "abc", "1,0", "+2")) {
-            assertParseFailure(parser, "bd/" + bedrooms, FindCommand.MESSAGE_INVALID_BEDROOMS);
+        for (String bedrooms : List.of("0", "21", "03", "-1", "2.5", "abc", "unknow", "1,0", "+2")) {
+            assertParseFailure(parser, "bd/" + bedrooms,
+                    "Bedrooms must be a whole number from 1 to 20, without leading zeros, a decimal point or a sign. "
+                            + "Use unknown to search for properties without recorded bedrooms.");
         }
         assertParseFailure(parser, "bd/", FindCommand.MESSAGE_MISSING_KEYWORD);
         assertParseFailure(parser, "bd/2 3",
