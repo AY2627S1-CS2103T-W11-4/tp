@@ -74,8 +74,10 @@ RESIDEX is a **desktop application for property agents managing buyers and selle
 
 **Notes about the command format:**<br>
 
-* Command words are case-insensitive; `ADDP` and `addp` run the same command.
-  Prefixes for property commands are also case-insensitive, while existing client commands retain their documented field rules.
+* Command words and field prefixes are case-insensitive for both client and property commands.<br>
+  For example, `ADD` and `add` run the same command, and `N/` and `n/` identify the same field.
+  Free-text field values retain their capitalisation; for example, `N/Alice Tan` stores the name `Alice Tan`.
+  Allowed field values and search matching rules are described under each command.
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
