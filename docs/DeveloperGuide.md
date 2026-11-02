@@ -137,7 +137,8 @@ How the `Logic` component works:
 1. `LogicManager` saves the data file only if the command changed the address book. Read-only commands such as `find`, `view`, `list` and `help` never touch the file, so they still work when it is read-only or the disk is full. If saving fails after a command that did change data, that change is rolled back and an error is shown.
 
 `LogicManager` saves client data only when it differs from the pre-command snapshot. A failed save rolls back
-the change and restores the undo and redo history to what it was before the command. `exit` leaves client data unchanged, so its `CommandResult` retains the exit flag without attempting
+the change and restores the previous client display, search order, and undo and redo history.
+`exit` leaves client data unchanged, so its `CommandResult` retains the exit flag without attempting
 a client-data save, even after an earlier save failure. `MainWindow` handles that flag through its normal close path.
 During shutdown, `MainApp` logs a preferences-save failure and still releases the data-file lock.
 Logic regressions cover empty and populated data, plus exit after a failed edit, using both `IOException`

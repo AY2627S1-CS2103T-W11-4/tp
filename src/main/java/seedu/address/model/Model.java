@@ -97,6 +97,9 @@ public interface Model {
     /** Returns the unmodifiable displayed person list used by the UI and displayed-index commands. */
     ObservableList<Person> getFilteredPersonList();
 
+    /** Returns the predicate currently filtering the displayed clients. */
+    Predicate<Person> getPersonFilter();
+
     /** Returns the observable display mode used by the client list UI. */
     ReadOnlyObjectProperty<ClientViewMode> clientViewModeProperty();
 

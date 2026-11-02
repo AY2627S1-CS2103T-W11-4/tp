@@ -31,6 +31,7 @@ public class ModelManager implements Model {
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
     private final ObservableList<Person> displayedPersons;
+    private Predicate<Person> personFilter = PREDICATE_SHOW_ALL_PERSONS;
     private final Map<Person, Integer> sourcePositions = new IdentityHashMap<>();
     private final ReadOnlyObjectWrapper<ClientViewMode> clientViewMode =
             new ReadOnlyObjectWrapper<>(ClientViewMode.ALL_CLIENTS);
@@ -159,6 +160,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public Predicate<Person> getPersonFilter() {
+        return personFilter;
+    }
+
+    @Override
     public ReadOnlyObjectProperty<ClientViewMode> clientViewModeProperty() {
         return clientViewMode.getReadOnlyProperty();
     }
@@ -183,6 +189,7 @@ public class ModelManager implements Model {
     /** Applies filtering and ranking without changing the chosen display mode. */
     private void setPersonFilter(Predicate<Person> predicate) {
         filteredPersons.setPredicate(predicate);
+        personFilter = predicate;
         // Replacements can disturb SortedList ties, so resolve equal ranks using the source positions.
         sortedPersons.setComparator(predicate instanceof IntentionMatchesPredicate intentionPredicate
                 ? intentionPredicate.getComparator().thenComparingInt(this::getSourcePosition) : null);
