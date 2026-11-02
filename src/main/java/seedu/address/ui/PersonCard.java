@@ -21,6 +21,9 @@ public class PersonCard extends UiPart<Region> {
     private static final String FXML = "PersonListCard.fxml";
     private static final String NOT_RECORDED = "Not recorded";
 
+    private static final double PROPERTY_ENTRY_SPACING = 4.0;
+    private static final double PROPERTY_FIELD_HORIZONTAL_GAP = 12.0;
+
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
      * As a consequence, UI elements' variable names cannot be set to such keywords
@@ -74,7 +77,7 @@ public class PersonCard extends UiPart<Region> {
     private VBox createPropertyEntry(Property property, int index) {
         Label heading = new Label("Property " + index);
         heading.getStyleClass().add("field-caption");
-        VBox entry = new VBox(4, heading,
+        VBox entry = new VBox(PROPERTY_ENTRY_SPACING, heading,
                 createPropertyRow(createPropertyField("Type", property.getType().toString()),
                         createPropertyField("Intention", property.getIntention().toString())),
                 createPropertyField("Location", property.getLocation().toString()),
@@ -93,7 +96,7 @@ public class PersonCard extends UiPart<Region> {
     private GridPane createPropertyRow(Label first, Label second) {
         GridPane row = new GridPane();
         row.setMinWidth(0);
-        row.setHgap(12);
+        row.setHgap(PROPERTY_FIELD_HORIZONTAL_GAP);
         for (int i = 0; i < 2; i++) {
             ColumnConstraints column = new ColumnConstraints();
             column.setPercentWidth(50);

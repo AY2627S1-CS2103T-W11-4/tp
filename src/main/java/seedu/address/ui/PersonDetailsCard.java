@@ -20,6 +20,11 @@ public class PersonDetailsCard extends UiPart<Region> {
     private static final String FXML = "PersonDetailsCard.fxml";
     private static final String NOT_RECORDED = "Not recorded";
 
+    private static final double PROPERTY_ENTRY_SPACING = 8.0;
+    private static final double FIELD_HORIZONTAL_GAP = 16.0;
+    private static final double FIELD_VERTICAL_GAP = 10.0;
+    private static final double CAPTION_COLUMN_WIDTH = 90.0;
+
     @FXML
     private Label name;
     @FXML
@@ -63,17 +68,17 @@ public class PersonDetailsCard extends UiPart<Region> {
                 "propertyPrice" + index);
         addField(fields, "Bedrooms", property.getBedrooms().map(value -> value.toString()).orElse(NOT_RECORDED),
                 "propertyBedrooms" + index);
-        VBox entry = new VBox(8, heading, fields);
+        VBox entry = new VBox(PROPERTY_ENTRY_SPACING, heading, fields);
         entry.getStyleClass().add("client-properties");
         return entry;
     }
 
     private GridPane createFields() {
         GridPane fields = new GridPane();
-        fields.setHgap(16);
-        fields.setVgap(10);
+        fields.setHgap(FIELD_HORIZONTAL_GAP);
+        fields.setVgap(FIELD_VERTICAL_GAP);
         fields.setMinWidth(0);
-        ColumnConstraints captionColumn = new ColumnConstraints(90);
+        ColumnConstraints captionColumn = new ColumnConstraints(CAPTION_COLUMN_WIDTH);
         ColumnConstraints valueColumn = new ColumnConstraints();
         valueColumn.setMinWidth(0);
         valueColumn.setHgrow(Priority.ALWAYS);
