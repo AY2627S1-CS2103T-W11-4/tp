@@ -1,10 +1,14 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +28,41 @@ public class PhoneContainsKeywordsPredicateTest {
         assertFalse(firstPredicate.equals(null));
         assertFalse(firstPredicate.equals(secondPredicate));
         assertFalse(firstPredicate.equals(new NameContainsKeywordsPredicate(firstKeywords)));
+    }
+
+    @Test
+    public void hashCode_equalPredicates_supportHashSetLookup() {
+        PhoneContainsKeywordsPredicate first = new PhoneContainsKeywordsPredicate(new ArrayList<>(List.of("9123")));
+        PhoneContainsKeywordsPredicate equal = new PhoneContainsKeywordsPredicate(new ArrayList<>(List.of("9123")));
+        Set<PhoneContainsKeywordsPredicate> predicates = new HashSet<>(List.of(first));
+
+        assertAll(() -> {
+            assertEquals(first, equal);
+        }, () -> {
+            assertEquals(first.hashCode(), equal.hashCode());
+        }, () -> {
+            assertTrue(predicates.contains(equal));
+        }, () -> {
+            assertFalse(predicates.contains(new PhoneContainsKeywordsPredicate(List.of("9876"))));
+        });
+    }
+
+    @Test
+    public void constructor_mutatedKeywords_preservesEqualityHashAndMatching() {
+        List<String> keywords = new ArrayList<>(List.of("9123"));
+        PhoneContainsKeywordsPredicate predicate = new PhoneContainsKeywordsPredicate(keywords);
+        PhoneContainsKeywordsPredicate equal = new PhoneContainsKeywordsPredicate(List.of("9123"));
+        Set<PhoneContainsKeywordsPredicate> predicates = new HashSet<>(List.of(predicate));
+        int originalHashCode = predicate.hashCode();
+
+        keywords.set(0, "9876");
+
+        assertEquals(equal, predicate);
+        assertEquals(originalHashCode, predicate.hashCode());
+        assertTrue(predicates.contains(equal));
+        assertTrue(predicates.contains(predicate));
+        assertTrue(predicate.test(new PersonBuilder().withPhone("91234567").build()));
+        assertFalse(predicate.test(new PersonBuilder().withPhone("98765432").build()));
     }
 
     @Test

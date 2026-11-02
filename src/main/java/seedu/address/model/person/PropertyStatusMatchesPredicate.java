@@ -13,6 +13,9 @@ import seedu.address.model.property.PropertyStatus;
 public class PropertyStatusMatchesPredicate implements Predicate<Person> {
     private final PropertyStatus status;
 
+    /**
+     * Creates a predicate matching clients with a property in the requested status.
+     */
     public PropertyStatusMatchesPredicate(PropertyStatus status) {
         this.status = requireNonNull(status);
     }

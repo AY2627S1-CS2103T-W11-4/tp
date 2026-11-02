@@ -78,6 +78,9 @@ public class FindCommand extends Command {
 
     private final Predicate<Person> predicate;
 
+    /**
+     * Creates a command that finds clients matching the supplied predicate.
+     */
     public FindCommand(Predicate<Person> predicate) {
         this.predicate = predicate;
     }

@@ -22,7 +22,7 @@ public class PhoneContainsKeywordsPredicate implements Predicate<Person> {
      * Creates a predicate that matches phones containing the digits of any of {@code keywords}.
      */
     public PhoneContainsKeywordsPredicate(List<String> keywords) {
-        this.keywords = keywords;
+        this.keywords = List.copyOf(keywords);
         this.digitKeywords = keywords.stream()
                 .map(PhoneContainsKeywordsPredicate::toDigits)
                 .filter(digits -> !digits.isEmpty())
@@ -58,6 +58,11 @@ public class PhoneContainsKeywordsPredicate implements Predicate<Person> {
         }
 
         return keywords.equals(otherPhoneContainsKeywordsPredicate.keywords);
+    }
+
+    @Override
+    public int hashCode() {
+        return keywords.hashCode();
     }
 
     @Override
