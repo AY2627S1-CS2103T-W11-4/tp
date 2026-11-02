@@ -1289,7 +1289,7 @@ They are documented for future reference, without committing to their implementa
 * **Follow-up** _(planned, not yet implemented)_: A planned next contact with a client. A follow-up may be upcoming or overdue.
 * **Intention**: Whether a client or property is on the buying or selling side.
 * **Internal note** _(planned, not yet implemented)_: A note attached to a client profile that is not displayed in the client list. It does not imply additional access control or encryption.
-* **Keyword**: A search term supplied after a `find` prefix. Whitespace separates keywords, and any matching keyword returns a client.
+* **Keyword**: A whitespace-separated search term for `find n/`, `e/`, `p/` or `l/`. These fields combine keywords with OR matching; other search fields accept one logical value, such as `s/Not specified`.
 * **Lead**: A potential client or transaction that the property agent is currently pursuing
 * **Mainstream OS**: Windows, Linux, Unix, or macOS.
 * **Minimum Viable Product (MVP)**: The initial version of RESIDEX containing the features selected to meet its core user needs.
@@ -1907,21 +1907,25 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
 
 1. Undoing property and client changes
 
+   1. Add a new test client with `add n/Undo Test Client p/91008901 e/undotest@example.com`,
+      then enter `find p/91008901`. Use a test folder without this client.<br>
+      Expected: The new client is displayed at index 1, with no properties or remark.
+
    1. Enter `addp 1 t/HDB i/Buying l/Clementi`, `editp 1 1 l/Bishan` and `remark 1 r/hello`.
       Then enter `undo` three times.<br>
-      Expected: Each `undo` reverses one command, newest first. After the third, the client's original
-      properties and remark are restored, including any properties they had before the `addp` command.
+      Expected: Each `undo` reverses one command, newest first. After the third, Undo Test Client has
+      no properties or remark. All clients are displayed after undo; other clients are unchanged.
 
    1. Enter `redo` three times.<br>
       Expected: The three changes are re-applied in order.
 
 1. Commands that are not undoable steps
 
-   1. Enter `list`, `find n/a`, `view 1` and `help`, then `undo`.<br>
+   1. Enter `list`, `find p/91008901`, `view 1` and `help`, then `undo`.<br>
       Expected: These commands do not create undo steps. `undo` reverses the last data-changing command, or reports
       "There is nothing to undo." if there was none since launch.
 
-   1. Enter `edit 1 n/<the first client's current name>`, then `undo`.<br>
+   1. Enter `find p/91008901`, then `edit 1 n/Undo Test Client`, then `undo`.<br>
       Expected: An edit that changes nothing does not create an undo step.
 
 1. Errors and the redo history

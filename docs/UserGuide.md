@@ -263,8 +263,9 @@ Status is independent of the derived client role.
   A supplied price must be positive, no greater than `9223372036854775807`, and contain no commas, decimals or leading zeros.
   Use `pr/` rather than `p/` for property prices.
 * `bd/BEDROOMS` is the property's number of bedrooms, a whole number from 1 to 20 without leading zeros.
-* Whitespace-separated words ending in `/` are treated as field prefixes in property commands.
-  Use only `t/`, `i/`, `l/`, `pr/`, `bd/` and `s/`; do not include prefix-like text such as `MRT/Exit` in a location.
+* Alphabetic words immediately followed by `/` are treated as field prefixes when preceded by whitespace in property commands.
+  Use only `t/`, `i/`, `l/`, `pr/`, `bd/` and `s/`; for example, `l/Block MRT/Exit` is rejected.
+  Slashes inside the first location token, such as `l/N/A` or `l/Park/Connector`, and numeric tokens such as `1/2` are accepted.
 
 #### Property transaction stages
 
