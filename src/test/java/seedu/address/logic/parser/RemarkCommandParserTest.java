@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.Messages.MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -46,9 +47,11 @@ public class RemarkCommandParserTest {
 
     @Test
     public void parse_missingCompulsoryField_failure() {
-        assertParseFailure(parser, RemarkCommand.COMMAND_WORD, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, RemarkCommand.COMMAND_WORD, MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER);
         assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, "a " + PREFIX_REMARK + VALID_REMARK, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "a " + PREFIX_REMARK + VALID_REMARK, MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER);
+        assertParseFailure(parser, "0 " + PREFIX_REMARK + VALID_REMARK, MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER);
+        assertParseFailure(parser, "01 " + PREFIX_REMARK + VALID_REMARK, MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER);
     }
 
     @Test

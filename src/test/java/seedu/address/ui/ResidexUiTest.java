@@ -65,7 +65,6 @@ import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddPropertyCommand;
-import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.ViewCommand;
@@ -1173,7 +1172,7 @@ public class ResidexUiTest {
     }
 
     @Test
-    public void deleteCommand_leadingZeroIndex_keepsClientAndShowsInvalidFormat() throws Exception {
+    public void deleteCommand_leadingZeroIndex_keepsClientAndShowsIndexRule() throws Exception {
         runOnFxThread(() -> {
             Model model = new ModelManager();
             MainWindow window = createWindow(model);
@@ -1186,8 +1185,7 @@ public class ResidexUiTest {
                 runCommand(root, "delete 01");
 
                 assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
-                assertEquals(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE),
-                        result.getText());
+                assertEquals(Messages.MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER, result.getText());
                 assertEquals("1 of 1 clients", label(root, "clientCount").getText());
                 assertEquals("First Client", label(root, "name").getText());
                 assertEquals("First Client", model.getAddressBook().getPersonList().get(0).getName().fullName);

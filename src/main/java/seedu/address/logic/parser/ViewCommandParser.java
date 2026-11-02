@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.Messages.MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
 import seedu.address.logic.commands.ViewCommand;
@@ -19,7 +20,9 @@ public class ViewCommandParser implements Parser<ViewCommand> {
         try {
             return new ViewCommand(ParserUtil.parseIndex(args));
         } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE), pe);
+            throw new ParseException(args.isBlank()
+                    ? String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE)
+                    : MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER, pe);
         }
     }
 }
