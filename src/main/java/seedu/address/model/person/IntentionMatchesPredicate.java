@@ -13,6 +13,9 @@ import seedu.address.commons.util.ToStringBuilder;
 public class IntentionMatchesPredicate implements Predicate<Person> {
     private final ClientIntention intention;
 
+    /**
+     * Creates a predicate matching the requested derived client role.
+     */
     public IntentionMatchesPredicate(ClientIntention intention) {
         this.intention = requireNonNull(intention);
     }

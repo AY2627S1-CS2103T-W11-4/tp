@@ -39,8 +39,6 @@ public final class Property {
 
     /**
      * Constructs a property with a recorded status. All fields except {@code price} are required.
-     *
-     * @param price The price, or null if unknown.
      */
     public Property(PropertyType type, PropertyIntention intention, PropertyLocation location, PropertyPrice price,
             PropertyStatus status) {
