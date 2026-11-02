@@ -1265,7 +1265,6 @@ They are documented for future reference, without committing to their implementa
 * **Associated property**: A property linked to a client's profile, such as a property the client is interested in or is selling.
 * **Buyer**: A client who wants to purchase a property.
 * **Buying**: A property intention describing a client's interest in purchasing that property.
-* **Buying status**: How close a client is to agreeing on a property.
 * **Client**: A person whose details a property agent stores in RESIDEX; their property-derived role can be Buyer, Seller, both or Not specified.
 * **Client intention**: The role derived from the client's property directions; no properties means Not specified, and both directions means Buyer / Seller.
 * **Client detail view**: The single-client display opened by `view INDEX`, showing every stored client and property field, including placeholders for missing optional values. The displayed client has index 1; `list` returns to all clients.
@@ -1290,7 +1289,7 @@ They are documented for future reference, without committing to their implementa
 * **Property entry**: A record in a client's ordered property list that stores information about an associated property.
 * **Property index**: The one-based position of a property entry within a selected client's property list. It is not a permanent identifier: deleting an earlier property shifts subsequent indexes down by one.
 * **Property intention**: The Buying or Selling action recorded for one property; these actions determine the client's derived role.
-* **Property listing**: A record containing information about a property available for sale or rent
+* **Property listing**: A record containing information about a property available for sale.
 * **Property location**: Nonblank descriptive text stored on a property entry, such as `Clementi Ave 3`. The `find l/` search checks these locations.
 * **Property price**: An optional, positive whole-dollar amount recorded for a property.
 * **Property type**: The HDB, Condominium or Landed category of a property entry.
@@ -1303,7 +1302,7 @@ They are documented for future reference, without committing to their implementa
 * **Seller**: A client who wants to sell a property.
 * **Selling**: A property intention describing a client's interest in selling that property.
 * **Substring matching**: Matching text that contains a keyword anywhere, ignoring case; for example, `clementi` matches both `Clementi Ave 3` and `Woodlands Clementi`.
-* **Transaction**: The process of completing a property sale or rental
+* **Transaction**: The process of completing a property sale.
 * **Undo**: Reversing the most recent data-changing command. Up to 100 changes can be undone while RESIDEX is running.
 * **Viewing**: A property stage covering a buying client's assessment visit or the agent's visit to assess a seller's property before representation and marketing. It does not record an appointment date.
 
