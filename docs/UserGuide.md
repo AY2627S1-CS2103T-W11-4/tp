@@ -513,7 +513,7 @@ Re-applies the change that `undo` reversed most recently.
 
 Format: `redo`
 
-* You can redo only right after an `undo`. Making a new change after an undo clears what can be redone.
+* You can redo an undone change until you make a new change. Read-only commands such as `list` do not clear what can be redone.
 * After a redo, the list is reset to show all clients.
 * If there is nothing to redo, an error message is shown and nothing changes.
 
@@ -580,7 +580,7 @@ Your client data is loaded normally if it is valid.
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous RESIDEX home folder.
+**A**: Install the app on the other computer and close it. Copy `data/addressbook.json` from your previous RESIDEX home folder to the new one, creating the `data` folder if needed.
 
 **Q**: I deleted or changed a client by mistake. Can I get it back?<br>
 **A**: Yes. Enter `undo` straight away to reverse the last change, and `redo` to apply it again. The last 100 changes can be undone, but not after you close RESIDEX.

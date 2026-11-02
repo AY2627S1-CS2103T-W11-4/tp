@@ -1598,7 +1598,8 @@ Prerequisite: Use test data without a client named Slash Test or a property loca
 
 ### Deriving and finding client intentions
 
-Prerequisite: Use a fresh data folder without clients named Role Mixed, Role Buyer, Role Seller or Role Empty.
+Prerequisite: Use a separate RESIDEX home folder for this scenario. Before launching, create
+`data/addressbook.json` there containing `{"persons": []}`.
 Run the steps in order; use the displayed indexes after each search.
 
 1. Preparing clients in source order
@@ -1680,7 +1681,8 @@ Run the steps in order; use the displayed indexes after each search.
 
 ### Recording and finding property transaction stages
 
-Prerequisite: Use a separate fresh data folder for this scenario, without Stage First, Stage Second or Stage Empty.
+Prerequisite: Use a separate RESIDEX home folder for this scenario. Before launching, create
+`data/addressbook.json` there containing `{"persons": []}`.
 Run these steps in order. Client indexes always refer to the current displayed list.
 
 1. Preparing independent property stages
@@ -1903,7 +1905,8 @@ unrelated or rejected edits. Normal INFO logging does not show these diagnostics
 
    1. Enter `addp 1 t/HDB i/Buying l/Clementi`, `editp 1 1 l/Bishan` and `remark 1 r/hello`.
       Then enter `undo` three times.<br>
-      Expected: Each `undo` reverses one command, newest first. After the third, the client has no property and no remark.
+      Expected: Each `undo` reverses one command, newest first. After the third, the client's original
+      properties and remark are restored, including any properties they had before the `addp` command.
 
    1. Enter `redo` three times.<br>
       Expected: The three changes are re-applied in order.
