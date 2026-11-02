@@ -53,6 +53,8 @@ public class LogicManager implements Logic {
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
         ReadOnlyAddressBook stateBeforeCommand = new AddressBook(model.getAddressBook());
+        Person viewedPersonBeforeCommand = model.clientViewModeProperty().get() == ClientViewMode.CLIENT_DETAILS
+                ? model.getFilteredPersonList().getFirst() : null;
         commandResult = command.execute(model);
 
         if (!stateBeforeCommand.equals(model.getAddressBook())) {
@@ -60,9 +62,15 @@ public class LogicManager implements Logic {
                 storage.saveAddressBook(model.getAddressBook());
             } catch (AccessDeniedException e) {
                 rollbackUnsavedChange(command, stateBeforeCommand);
+                if (viewedPersonBeforeCommand != null) {
+                    model.showPersonDetails(viewedPersonBeforeCommand);
+                }
                 throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
             } catch (IOException ioe) {
                 rollbackUnsavedChange(command, stateBeforeCommand);
+                if (viewedPersonBeforeCommand != null) {
+                    model.showPersonDetails(viewedPersonBeforeCommand);
+                }
                 throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
             }
         }

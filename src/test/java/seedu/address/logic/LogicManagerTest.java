@@ -32,6 +32,7 @@ import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
+import seedu.address.model.ClientViewMode;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -425,6 +426,45 @@ public class LogicManagerTest {
 
         assertEquals(1, model.getAddressBook().getPersonList().size());
         assertEquals("Alice Tan", model.getAddressBook().getPersonList().get(0).getName().fullName);
+    }
+
+    @Test
+    public void execute_saveFailureInDetails_restoresDataViewAndUndoRedoHistory() throws Exception {
+        for (IOException exception : List.of(DUMMY_IO_EXCEPTION, DUMMY_AD_EXCEPTION)) {
+            for (String command : List.of("add n/Third Client p/91110003 e/third@example.com",
+                    "edit 1 n/Changed Client", "delete 1", "remark 1 r/Changed remark",
+                    "addp 1 t/HDB i/Buying l/Bishan", "editp 1 1 l/Bishan", "delp 1 1", "undo", "redo")) {
+                model = new ModelManager();
+                useWorkingStorage();
+                logic.execute("add n/First Client p/91110001 e/first@example.com");
+                logic.execute("add n/Second Client p/91110002 e/second@example.com");
+                logic.execute("addp 2 t/HDB i/Buying l/Clementi");
+                logic.execute("remark 2 r/Original remark");
+                logic.execute("remark 2 r/Redo remark");
+                logic.execute("undo");
+                logic.execute("view 2");
+                ReadOnlyAddressBook original = new AddressBook(model.getAddressBook());
+                Person viewedClient = model.getFilteredPersonList().getFirst();
+                Path savedFile = temporaryFolder.resolve("addressBook.json");
+                String savedData = Files.readString(savedFile);
+                AtomicInteger saveAttempts = useFailingStorage(exception);
+
+                assertThrows(CommandException.class, () -> logic.execute(command));
+
+                assertEquals(1, saveAttempts.get(), command);
+                assertEquals(original, model.getAddressBook(), command);
+                assertEquals(savedData, Files.readString(savedFile), command);
+                assertEquals(ClientViewMode.CLIENT_DETAILS, model.clientViewModeProperty().get(), command);
+                assertEquals(List.of(viewedClient), model.getFilteredPersonList(), command);
+                assertTrue(model.canUndoAddressBook(), command);
+                assertTrue(model.canRedoAddressBook(), command);
+                useWorkingStorage();
+                logic.execute("redo");
+                assertEquals("Redo remark", model.getAddressBook().getPersonList().get(1).getRemark().value, command);
+                logic.execute("undo");
+                assertEquals(original, model.getAddressBook(), command);
+            }
+        }
     }
 
     @Test
