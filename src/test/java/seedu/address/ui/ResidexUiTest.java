@@ -182,8 +182,7 @@ public class ResidexUiTest {
             try {
                 Region root = (Region) help.getRoot().getScene().getRoot();
                 root.resize(DEFAULT_HELP_WIDTH, DEFAULT_HELP_HEIGHT);
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
                 VBox cards = (VBox) root.lookup("#commandCards");
                 assertEquals(HelpContent.getCommands().size(), cards.getChildren().size());
                 for (int i = 0; i < cards.getChildren().size(); i++) {
@@ -287,11 +286,7 @@ public class ResidexUiTest {
         assertTrue(scroll.getHeight() > 0);
         Button copyGuide = (Button) root.lookup("#copyButton");
         assertTrue(copyGuide.localToScene(copyGuide.getBoundsInLocal()).getMaxY() <= root.getHeight());
-        for (Node bar : scroll.lookupAll(".scroll-bar")) {
-            if (((ScrollBar) bar).getOrientation() == Orientation.HORIZONTAL) {
-                assertFalse(bar.isVisible());
-            }
-        }
+        assertFalse(hasVisibleHorizontalScrollBar(scroll));
     }
 
     @Test
@@ -328,37 +323,14 @@ public class ResidexUiTest {
                 run.fire();
                 command.setText("view 1");
                 command.fireEvent(new ActionEvent());
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
 
                 assertEquals(List.of(selected), model.getFilteredPersonList());
                 assertEquals("Client details", label(root, "clientListHeading").getText());
                 assertEquals(ViewCommand.MESSAGE_RETURN_TO_LIST, label(root, "returnToListHint").getText());
                 assertTrue(label(root, "returnToListHint").isVisible());
                 Region card = (Region) root.lookup("#personDetailsCard");
-                assertNotNull(card);
-                assertEquals("Bob Choo", label(card, "name").getText());
-                assertEquals("91234567", label(card, "phone").getText());
-                assertEquals("bob@example.com", label(card, "email").getText());
-                assertEquals("Buyer / Seller", label(card, "intention").getText());
-                assertNull(card.lookup("#budget"));
-                assertEquals(selected.getRemark().value, label(card, "remark").getText());
-                assertTrue(label(card, "remark").getHeight() > 30);
-                assertEquals(3, ((VBox) card.lookup("#properties")).getChildren().size());
-                assertEquals("HDB", label(card, "propertyType1").getText());
-                assertEquals("Buying", label(card, "propertyIntention1").getText());
-                assertEquals("Clementi Ave 3", label(card, "propertyLocation1").getText());
-                assertEquals("$800,000", label(card, "propertyPrice1").getText());
-                assertEquals("Viewing", label(card, "propertyStatus1").getText());
-                assertEquals("3", label(card, "propertyBedrooms1").getText());
-                assertEquals("Not specified", label(card, "propertyStatus2").getText());
-                assertEquals("Condominium", label(card, "propertyType2").getText());
-                assertEquals("Selling", label(card, "propertyIntention2").getText());
-                assertEquals("Tampines", label(card, "propertyLocation2").getText());
-                assertEquals("Not recorded", label(card, "propertyPrice2").getText());
-                assertEquals("Not recorded", label(card, "propertyBedrooms2").getText());
-                assertEquals("$800,000", label(card, "propertyPrice3").getText());
-                assertEquals("Not recorded", label(card, "propertyBedrooms3").getText());
+                assertSelectedClientDetails(card, selected);
                 saveSnapshot(root, "client-details");
 
                 command.setText("view 2");
@@ -368,8 +340,7 @@ public class ResidexUiTest {
 
                 command.setText("list");
                 run.fire();
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
                 assertEquals(List.of(first, selected), model.getFilteredPersonList());
                 assertEquals("All clients", label(root, "clientListHeading").getText());
                 assertFalse(label(root, "returnToListHint").isManaged());
@@ -399,41 +370,9 @@ public class ResidexUiTest {
                 for (int width : new int[] {1100, 700}) {
                     root = layoutWindow(window, width, width == 700 ? 600 : 900);
                     Region card = (Region) root.lookup("#personDetailsCard");
-                    assertNotNull(card);
-                    assertEquals(3, ((VBox) card.lookup("#properties")).getChildren().size());
-                    assertEquals(3L, card.lookupAll(".field-caption").stream().filter(Label.class::isInstance)
-                            .map(Label.class::cast).filter(label -> label.getText().equals("Bedrooms")).count());
-                    assertTrue(label(card, "propertyLocation1").getHeight() > 30,
-                            "Long locations must wrap without hiding the bedroom row");
-                    List<String> expected = List.of("1", "20", "Not recorded");
-                    for (int index = 1; index <= expected.size(); index++) {
-                        Label bedrooms = label(card, "propertyBedrooms" + index);
-                        Label price = label(card, "propertyPrice" + index);
-                        assertEquals(expected.get(index - 1), bedrooms.getText());
-                        assertTrue(bedrooms.isVisible());
-                        assertTrue(bedrooms.isManaged());
-                        assertTrue(bedrooms.isWrapText());
-                        assertTrue(bedrooms.getWidth() > 0);
-                        assertTrue(bedrooms.getHeight() >= bedrooms.prefHeight(bedrooms.getWidth()),
-                                "The bedroom value must fit without vertical clipping");
-                        assertTrue(bedrooms.localToScene(bedrooms.getBoundsInLocal()).getMinY()
-                                >= price.localToScene(price.getBoundsInLocal()).getMaxY());
-                        assertTrue(bedrooms.localToScene(bedrooms.getBoundsInLocal()).getMaxY()
-                                <= card.localToScene(card.getBoundsInLocal()).getMaxY());
-                    }
+                    assertBedroomDetailsFitCard(card);
                     saveSnapshot(root, "client-details-bedrooms-" + width);
-                    ListView<?> list = (ListView<?>) root.lookup("#personListView");
-                    ScrollBar vertical = list.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
-                            .filter(bar -> bar.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
-                    assertTrue(vertical.isVisible(), "Long detail cards must be scrollable");
-                    vertical.setValue(vertical.getMax());
-                    root.layout();
-                    Label lastBedrooms = label(card, "propertyBedrooms3");
-                    assertTrue(lastBedrooms.localToScene(lastBedrooms.getBoundsInLocal()).getMinY()
-                            >= list.localToScene(list.getBoundsInLocal()).getMinY());
-                    assertTrue(lastBedrooms.localToScene(lastBedrooms.getBoundsInLocal()).getMaxY()
-                            <= list.localToScene(list.getBoundsInLocal()).getMaxY(),
-                            "Scrolling to the bottom must reveal the final property's bedroom count");
+                    assertLastBedroomIsScrollable(root, card);
                     saveSnapshot(root, "client-details-bedrooms-scrolled-" + width);
                 }
             } finally {
@@ -460,8 +399,7 @@ public class ResidexUiTest {
                     command.fireEvent(new ActionEvent());
                     command.setText("view 1");
                     command.fireEvent(new ActionEvent());
-                    root.applyCss();
-                    root.layout();
+                    refreshLayout(root);
                     Region card = (Region) root.lookup("#personDetailsCard");
                     assertNotNull(card);
                     assertEquals(expected.get(index), label(card, "propertyBedrooms2").getText());
@@ -489,8 +427,7 @@ public class ResidexUiTest {
                 for (int index : new int[] {2, 1, 2}) {
                     command.setText("view " + index);
                     run.fire();
-                    root.applyCss();
-                    root.layout();
+                    refreshLayout(root);
                     ListCell<?> detailCell = root.lookupAll(".list-cell").stream()
                             .filter(ListCell.class::isInstance).map(ListCell.class::cast)
                             .filter(cell -> !cell.isEmpty()).findFirst().orElseThrow();
@@ -500,8 +437,7 @@ public class ResidexUiTest {
                     run.fire();
                     // Check the existing cell before a layout pulse can mask a stale detail graphic.
                     assertEquals("cardPane", detailCell.getGraphic().getId());
-                    root.applyCss();
-                    root.layout();
+                    refreshLayout(root);
                     assertTrue(root.lookupAll("#personDetailsCard").isEmpty());
                     for (Node node : root.lookupAll(".list-cell")) {
                         ListCell<?> cell = (ListCell<?>) node;
@@ -772,12 +708,7 @@ public class ResidexUiTest {
                 List<Window> windows = List.copyOf(Window.getWindows());
                 try {
                     DialogPane dialog = findErrorDialog(windows);
-                    assertEquals(expectedHeader, dialog.getHeaderText());
-                    String message = dialog.getContentText();
-                    assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
-                    assertTrue(message.contains(expectedRecovery));
-                    assertTrue(message.contains("This instance has not changed your client data or preferences."));
-                    assertTrue(message.contains("It will now close."));
+                    assertDataFileLockDialog(dialog, dataFile, expectedHeader, expectedRecovery);
                     checked.complete(null);
                 } catch (Throwable e) {
                     checked.completeExceptionally(e);
@@ -813,21 +744,7 @@ public class ResidexUiTest {
                 List<Window> windows = List.copyOf(Window.getWindows());
                 try {
                     DialogPane dialog = findErrorDialog(windows);
-                    assertEquals("RESIDEX could not open your client data", dialog.getHeaderText());
-                    String message = dialog.getContentText();
-                    assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
-                    assertTrue(message.contains("Reason: " + expectedReason));
-                    assertFalse(message.contains("Parser details."));
-                    assertFalse(message.contains("NullPointerException"));
-                    assertFalse(message.contains("JsonSerializableAddressBook"));
-                    assertFalse(message.contains("com.fasterxml.jackson"));
-                    assertFalse(message.contains("JsonMappingException"));
-                    assertFalse(message.contains("JsonParseException"));
-                    assertFalse(message.contains("[Source:"));
-                    assertTrue(message.contains("has not been changed"));
-                    assertTrue(message.contains("RESIDEX will close"));
-                    assertTrue(message.contains("repair it or replace it with a valid backup"));
-                    assertTrue(message.contains("move the file aside"));
+                    assertDataLoadingDialog(dialog, dataFile, expectedReason);
                     checked.complete(null);
                 } catch (Throwable e) {
                     checked.completeExceptionally(e);
@@ -909,26 +826,7 @@ public class ResidexUiTest {
                             "Status: Not specified", "Price: $800,000", "Bedrooms: Not recorded")),
                     propertyTexts(properties));
             for (Node node : properties.getChildren()) {
-                VBox entry = (VBox) node;
-                assertEquals(5, entry.getChildren().size(), "Related fields must share rows to reduce scrolling");
-                List<Label> fields = propertyLabels(entry);
-                for (Label value : fields.subList(1, fields.size())) {
-                    assertTrue(value.getStyleClass().contains("property-detail"));
-                    assertTrue(value.isWrapText());
-                    assertEquals(0, value.getMinWidth());
-                    assertEquals(Double.MAX_VALUE, value.getMaxWidth());
-                    assertEquals(Region.USE_PREF_SIZE, value.getMinHeight());
-                }
-                for (int first : new int[] {1, 5}) {
-                    Label left = fields.get(first);
-                    Label right = fields.get(first + 1);
-                    assertEquals(left.localToScene(left.getBoundsInLocal()).getMinY(),
-                            right.localToScene(right.getBoundsInLocal()).getMinY(), 1,
-                            "Paired property fields must share a row");
-                    assertTrue(left.localToScene(left.getBoundsInLocal()).getMaxX()
-                            <= right.localToScene(right.getBoundsInLocal()).getMinX(),
-                            "Paired property fields must not overlap");
-                }
+                assertPropertyEntryLayout((VBox) node);
             }
 
             Region otherClient = new PersonCard(new PersonBuilder().withProperties(CLEMENTI_HDB).build(), 3).getRoot();
@@ -959,8 +857,7 @@ public class ResidexUiTest {
 
                 command.setText("addp 1 t/HDB i/Buying l/Clementi Ave 3 pr/800000 s/Viewing");
                 run.fire();
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
                 properties = (VBox) root.lookup("#properties");
                 assertTrue(properties.isVisible());
                 assertTrue(properties.isManaged());
@@ -972,8 +869,7 @@ public class ResidexUiTest {
 
                 command.setText("editp 1 1 l/Bishan pr/ s/Negotiating");
                 command.fireEvent(new ActionEvent());
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
                 properties = (VBox) root.lookup("#properties");
                 assertEquals(1, properties.getChildren().size());
                 assertEquals("Intention: Buyer", label(root, "intention").getText());
@@ -990,8 +886,7 @@ public class ResidexUiTest {
 
                 command.setText("delp 1 1");
                 run.fire();
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
                 properties = (VBox) root.lookup("#properties");
                 assertTrue(properties.getChildren().isEmpty());
                 assertFalse(properties.isVisible());
@@ -1279,8 +1174,7 @@ public class ResidexUiTest {
                 TextArea result = (TextArea) root.lookup("#resultDisplay");
                 command.setText("add n/SaveFail p/88119991 e/savefail@example.com");
                 run.fire();
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
 
                 assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
                 assertTrue(result.getText().contains("Could not save data"));
@@ -1306,18 +1200,12 @@ public class ResidexUiTest {
                 run.fire();
                 command.setText("add n/O'Brien p/91230002 e/o@example.com");
                 run.fire();
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
 
                 assertEquals(List.of("Ng Wei-Ling", "O'Brien"), model.getAddressBook().getPersonList().stream()
                         .map(person -> person.getName().fullName).toList());
                 assertEquals("2 of 2 clients", label(root, "clientCount").getText());
-                List<String> cardNames = root.lookupAll(".list-cell").stream()
-                        .map(ListCell.class::cast)
-                        .filter(cell -> !cell.isEmpty())
-                        .map(cell -> label((Region) cell.getGraphic(), "name").getText())
-                        .toList();
-                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), cardNames);
+                assertEquals(List.of("Ng Wei-Ling", "O'Brien"), clientCardNames(root));
                 assertTrue(result.getText().contains("O'Brien"));
             } finally {
                 window.getPrimaryStage().close();
@@ -1337,8 +1225,7 @@ public class ResidexUiTest {
                 TextArea result = (TextArea) root.lookup("#resultDisplay");
                 command.setText("add n/Carl p/123456789012345678901234567890 e/c@example.com");
                 run.fire();
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
 
                 assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
                 assertEquals(Phone.MESSAGE_CONSTRAINTS, result.getText());
@@ -1363,8 +1250,7 @@ public class ResidexUiTest {
 
                 command.setText("add n/Fay p/91230006 e/f@example.com x/foo");
                 run.fire();
-                root.applyCss();
-                root.layout();
+                refreshLayout(root);
 
                 assertEquals("add n/Fay p/91230006 e/f@example.com x/foo", command.getText());
                 assertTrue(command.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
@@ -1399,8 +1285,7 @@ public class ResidexUiTest {
 
             command.setText("edit 1 e/updated@example.com");
             command.fireEvent(new ActionEvent());
-            root.applyCss();
-            root.layout();
+            refreshLayout(root);
             assertEquals("updated@example.com", label(root, "email").getText());
 
             command.setText("delete 1");
@@ -1451,78 +1336,15 @@ public class ResidexUiTest {
                     assertEquals(height, root.getScene().getHeight(), 1);
                     ListView<?> list = (ListView<?>) root.lookup("#personListView");
                     for (int index = 0; index < model.getFilteredPersonList().size(); index++) {
-                        list.scrollTo(index);
-                        root.applyCss();
-                        root.layout();
-                        final int displayedIndex = index;
-                        ListCell<?> cell = list.lookupAll(".list-cell").stream().map(ListCell.class::cast)
-                                .filter(candidate -> !candidate.isEmpty() && candidate.getIndex() == displayedIndex)
-                                .findFirst().orElseThrow();
+                        ListCell<?> cell = scrollToClientCell(root, list, index);
                         Region card = (Region) cell.getGraphic();
-                        Label email = label(card, "email");
-                        Text renderedEmail = (Text) email.lookup(".text");
-                        assertEquals(model.getFilteredPersonList().get(index).getEmail().value,
-                                renderedEmail.getText(), "The rendered email must include every character");
-                        if (width == 700) {
-                            assertTrue(email.getHeight() > email.getFont().getSize() * 2,
-                                    "Long emails must wrap onto multiple lines at the minimum width");
-                        }
-                        assertTrue(email.getHeight() >= email.prefHeight(email.getWidth()) - 1,
-                                "The email row must expand to fit its wrapped text");
-                        assertTrue(renderedEmail.getLayoutBounds().getWidth() <= email.getWidth() + 1,
-                                "The rendered text must fit within the email label");
-                        assertTrue(email.localToScene(email.getBoundsInLocal()).getMaxX()
-                                <= card.localToScene(card.getBoundsInLocal()).getMaxX());
-                        Label remark = label(card, "remark");
-                        assertTrue(email.localToScene(email.getBoundsInLocal()).getMaxY()
-                                <= remark.localToScene(remark.getBoundsInLocal()).getMinY(),
-                                "Wrapped emails must not overlap the remark below");
-                        VBox properties = (VBox) card.lookup("#properties");
-                        double previousBottom = remark.localToScene(remark.getBoundsInLocal()).getMaxY();
-                        for (Node entry : properties.getChildren()) {
-                            for (Node row : ((VBox) entry).getChildren()) {
-                                assertTrue(previousBottom
-                                        <= row.localToScene(row.getBoundsInLocal()).getMinY(),
-                                        "Property rows must not overlap preceding content");
-                                previousBottom = row.localToScene(row.getBoundsInLocal()).getMaxY();
-                                List<Label> fields = row instanceof GridPane pair
-                                        ? pair.getChildren().stream().map(Label.class::cast).toList()
-                                        : List.of((Label) row);
-                                double previousRight = row.localToScene(row.getBoundsInLocal()).getMinX();
-                                for (Label field : fields) {
-                                    Text renderedField = (Text) field.lookup(".text");
-                                    assertEquals(field.getText(), renderedField.getText(),
-                                            "Property headings and values must be shown in full");
-                                    assertTrue(field.getHeight() >= field.prefHeight(field.getWidth()) - 1,
-                                            "Property rows must grow to fit wrapped values");
-                                    assertTrue(renderedField.getLayoutBounds().getWidth() <= field.getWidth() + 1,
-                                            "Property text must fit within its row");
-                                    assertTrue(previousRight
-                                            <= field.localToScene(field.getBoundsInLocal()).getMinX(),
-                                            "Paired fields must not overlap horizontally");
-                                    previousRight = field.localToScene(field.getBoundsInLocal()).getMaxX();
-                                    assertTrue(previousRight <= row.localToScene(row.getBoundsInLocal()).getMaxX() + 1,
-                                            "Property fields must fit within the available row width");
-                                    assertTrue(field.localToScene(field.getBoundsInLocal()).getMaxY()
-                                            <= previousBottom + 1, "Rows must fit their tallest wrapped field");
-                                    if (width == 700 && field.getText().startsWith("Location: HDB |")) {
-                                        assertTrue(field.getHeight() > field.getFont().getSize() * 2,
-                                                "Long locations must wrap at the minimum width");
-                                    }
-                                }
-                            }
-                        }
-                        assertTrue(previousBottom <= card.localToScene(card.getBoundsInLocal()).getMaxY(),
-                                "The final property field must fit inside the card");
+                        assertEmailFitsCard(card, model.getFilteredPersonList().get(index).getEmail().value, width);
+                        assertPropertiesFitCard(card, width);
                         assertTrue(cell.getHeight() >= card.getHeight() + 10,
                                 "The list cell must grow with the card and preserve the gap below it");
                     }
-                    for (Node node : list.lookupAll(".scroll-bar")) {
-                        ScrollBar bar = (ScrollBar) node;
-                        if (bar.getOrientation() == Orientation.HORIZONTAL) {
-                            assertFalse(bar.isVisible(), "Reading a complete email must not need horizontal scrolling");
-                        }
-                    }
+                    assertFalse(hasVisibleHorizontalScrollBar(list),
+                            "Reading a complete email must not need horizontal scrolling");
                     saveSnapshot(root, "client-emails-" + width);
                 }
             } finally {
@@ -1554,19 +1376,7 @@ public class ResidexUiTest {
                 VBox properties = (VBox) card.lookup("#properties");
                 assertEquals(3, properties.getChildren().size());
                 assertEquals("Bedrooms: 1", propertyTexts(properties).get(0).get(6));
-                ScrollBar vertical = list.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
-                        .filter(bar -> bar.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
-                assertTrue(vertical.isVisible());
-                vertical.setValue(vertical.getMax());
-                root.layout();
-                VBox lastProperty = (VBox) properties.getChildren().get(2);
-                Node lastField = propertyLabels(lastProperty).get(6);
-                assertTrue(lastField.localToScene(lastField.getBoundsInLocal()).getMinY()
-                        >= list.localToScene(list.getBoundsInLocal()).getMinY(),
-                        "Scrolling must reveal the last property field");
-                assertTrue(lastField.localToScene(lastField.getBoundsInLocal()).getMaxY()
-                        <= list.localToScene(list.getBoundsInLocal()).getMaxY(),
-                        "The final field must be fully visible at the bottom of a tall card");
+                assertFinalPropertyIsScrollable(root, list, properties);
 
                 runCommand(root, "editp 1 1 l/Bishan pr/ bd/");
                 card = (Region) root.lookup("#cardPane");
@@ -1615,16 +1425,7 @@ public class ResidexUiTest {
                     runCommand(root, "edit 1 e/" + emailValue);
                     runCommand(root, "find n/Target");
                     Region card = (Region) root.lookup("#cardPane");
-                    Label email = label(card, "email");
-                    assertEquals(emailValue, ((Text) email.lookup(".text")).getText());
-                    assertTrue(email.getHeight() >= email.prefHeight(email.getWidth()) - 1);
-                    if (emailValue.equals(longEmail)) {
-                        assertTrue(card.getHeight() > originalHeight,
-                                "A long email must expand the card even without a remark or properties");
-                    } else {
-                        assertEquals(originalHeight, card.getHeight(), 1,
-                                "Returning to a short email must release the extra row height");
-                    }
+                    assertEmailEditResizesCard(card, emailValue, longEmail, originalHeight);
                     runCommand(root, "list");
                     assertEquals(otherClient, model.getFilteredPersonList().get(0));
                     assertEquals(emailValue, model.getFilteredPersonList().get(1).getEmail().value);
@@ -1639,77 +1440,315 @@ public class ResidexUiTest {
     @Test
     public void layout_fullWidthCardsResizeAndScroll() throws Exception {
         runOnFxThread(() -> {
-            Model model = new ModelManager();
-            String[] names = {"Alice Pauline", "Bob Choo", "Alex Yeoh", "Bernice Yu",
-                "Charlotte Oliveiro", "David Li", "Irfan Ibrahim", "Roy Balakrishnan"};
-            String[] phones = {"94351253", "81234567", "87438807", "99272758",
-                "93210283", "91031282", "92492021", "92624417"};
-            String[] emails = {"alice", "bobc", "alexyeoh", "berniceyu",
-                "charlotte", "lidavid", "irfan", "roybal"};
-            for (int i = 0; i < names.length; i++) {
-                model.addPerson(new PersonBuilder().withName(names[i]).withPhone(phones[i])
-                        .withEmail(emails[i] + "@example.com")
-                        .withProperties(i % 2 == 0 ? CLEMENTI_HDB : TAMPINES_CONDO)
-                        .build());
-            }
+            Model model = createLayoutTestModel();
             MainWindow window = createWindow(model);
             Region root = layoutWindow(window, 1100, 1520);
-            assertEquals("RESIDEX", window.getPrimaryStage().getTitle());
-            assertEquals("8 of 8 clients", label(root, "clientCount").getText());
-            assertTrue(root.lookupAll(".menu-bar").isEmpty());
-            ListView<?> list = (ListView<?>) root.lookup("#personListView");
-            assertEquals(8, list.getItems().size());
-            assertFalse(root.lookupAll(".client-card").isEmpty());
-            Region card = (Region) root.lookup(".client-card");
-            assertEquals(1052, card.getWidth(), 1);
-            for (Node node : root.lookupAll(".list-cell")) {
-                ListCell<?> cell = (ListCell<?>) node;
-                if (!cell.isEmpty()) {
-                    Region graphic = (Region) cell.getGraphic();
-                    assertTrue(cell.getHeight() >= graphic.getHeight() + 10,
-                            "Client cards must have a 10 px gap");
-                }
-            }
-            assertEquals("Data file: ./data/addressbook.json", label(root, "saveLocationStatus").getText());
+            assertPortraitClientLayout(window, root);
             saveSnapshot(root, "portrait");
 
             root = layoutWindow(window, 700, 600);
-            card = (Region) root.lookup(".client-card");
-            assertTrue(card.getWidth() > 600);
-            for (Node node : root.lookupAll(".scroll-bar")) {
-                ScrollBar bar = (ScrollBar) node;
-                if (bar.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
-                    assertFalse(bar.isVisible());
-                }
-            }
-            list.scrollTo(7);
-            root.layout();
-            assertTrue(list.lookupAll(".list-cell").stream().map(ListCell.class::cast)
-                    .anyMatch(cell -> !cell.isEmpty() && cell.getIndex() == 7),
-                    "The last client must remain reachable after increasing card heights");
+            assertCompactClientLayout(root);
             saveSnapshot(root, "compact");
 
             Person first = model.getAddressBook().getPersonList().get(0);
             model.setPerson(first, new PersonBuilder(first)
                     .withRemark("Interested in a home near public transport. ".repeat(12)).build());
-            list.scrollTo(0);
-            root.applyCss();
-            root.layout();
-            boolean foundRemark = false;
-            for (Node node : root.lookupAll(".client-card")) {
-                Region clientCard = (Region) node;
-                Label remark = label(clientCard, "remark");
-                if (remark.isManaged()) {
-                    foundRemark = true;
-                    assertTrue(remark.getHeight() > 40, "Long remarks must wrap to multiple lines");
-                    assertTrue(remark.localToScene(remark.getBoundsInLocal()).getMaxY()
-                            <= clientCard.localToScene(clientCard.getBoundsInLocal()).getMaxY());
-                }
-            }
-            assertTrue(foundRemark);
+            assertLongRemarksFitCards(root);
             saveSnapshot(root, "remarks");
             window.getPrimaryStage().close();
         });
+    }
+
+    private static void assertEmailFitsCard(Region card, String expectedEmail, int width) {
+        Label email = label(card, "email");
+        Text renderedEmail = (Text) email.lookup(".text");
+        assertEquals(expectedEmail, renderedEmail.getText(), "The rendered email must include every character");
+        if (width == 700) {
+            assertTrue(email.getHeight() > email.getFont().getSize() * 2,
+                    "Long emails must wrap onto multiple lines at the minimum width");
+        }
+        assertTrue(email.getHeight() >= email.prefHeight(email.getWidth()) - 1,
+                "The email row must expand to fit its wrapped text");
+        assertTrue(renderedEmail.getLayoutBounds().getWidth() <= email.getWidth() + 1,
+                "The rendered text must fit within the email label");
+        assertTrue(email.localToScene(email.getBoundsInLocal()).getMaxX()
+                <= card.localToScene(card.getBoundsInLocal()).getMaxX());
+        Label remark = label(card, "remark");
+        assertTrue(email.localToScene(email.getBoundsInLocal()).getMaxY()
+                <= remark.localToScene(remark.getBoundsInLocal()).getMinY(),
+                "Wrapped emails must not overlap the remark below");
+    }
+
+    private static void assertPropertiesFitCard(Region card, int width) {
+        VBox properties = (VBox) card.lookup("#properties");
+        Label remark = label(card, "remark");
+        double previousBottom = remark.localToScene(remark.getBoundsInLocal()).getMaxY();
+        for (Node entry : properties.getChildren()) {
+            for (Node row : ((VBox) entry).getChildren()) {
+                assertTrue(previousBottom <= row.localToScene(row.getBoundsInLocal()).getMinY(),
+                        "Property rows must not overlap preceding content");
+                previousBottom = row.localToScene(row.getBoundsInLocal()).getMaxY();
+                assertPropertyFieldsFitRow(row, previousBottom, width);
+            }
+        }
+        assertTrue(previousBottom <= card.localToScene(card.getBoundsInLocal()).getMaxY(),
+                "The final property field must fit inside the card");
+    }
+
+    private static void assertPropertyFieldsFitRow(Node row, double rowBottom, int width) {
+        List<Label> fields = row instanceof GridPane pair
+                ? pair.getChildren().stream().map(Label.class::cast).toList()
+                : List.of((Label) row);
+        double previousRight = row.localToScene(row.getBoundsInLocal()).getMinX();
+        for (Label field : fields) {
+            Text renderedField = (Text) field.lookup(".text");
+            assertEquals(field.getText(), renderedField.getText(),
+                    "Property headings and values must be shown in full");
+            assertTrue(field.getHeight() >= field.prefHeight(field.getWidth()) - 1,
+                    "Property rows must grow to fit wrapped values");
+            assertTrue(renderedField.getLayoutBounds().getWidth() <= field.getWidth() + 1,
+                    "Property text must fit within its row");
+            assertTrue(previousRight <= field.localToScene(field.getBoundsInLocal()).getMinX(),
+                    "Paired fields must not overlap horizontally");
+            previousRight = field.localToScene(field.getBoundsInLocal()).getMaxX();
+            assertTrue(previousRight <= row.localToScene(row.getBoundsInLocal()).getMaxX() + 1,
+                    "Property fields must fit within the available row width");
+            assertTrue(field.localToScene(field.getBoundsInLocal()).getMaxY()
+                    <= rowBottom + 1, "Rows must fit their tallest wrapped field");
+            if (width == 700 && field.getText().startsWith("Location: HDB |")) {
+                assertTrue(field.getHeight() > field.getFont().getSize() * 2,
+                        "Long locations must wrap at the minimum width");
+            }
+        }
+    }
+
+    private static void assertSelectedClientDetails(Region card, Person selected) {
+        assertNotNull(card);
+        assertEquals("Bob Choo", label(card, "name").getText());
+        assertEquals("91234567", label(card, "phone").getText());
+        assertEquals("bob@example.com", label(card, "email").getText());
+        assertEquals("Buyer / Seller", label(card, "intention").getText());
+        assertNull(card.lookup("#budget"));
+        assertEquals(selected.getRemark().value, label(card, "remark").getText());
+        assertTrue(label(card, "remark").getHeight() > 30);
+        assertEquals(3, ((VBox) card.lookup("#properties")).getChildren().size());
+        assertEquals("HDB", label(card, "propertyType1").getText());
+        assertEquals("Buying", label(card, "propertyIntention1").getText());
+        assertEquals("Clementi Ave 3", label(card, "propertyLocation1").getText());
+        assertEquals("$800,000", label(card, "propertyPrice1").getText());
+        assertEquals("Viewing", label(card, "propertyStatus1").getText());
+        assertEquals("3", label(card, "propertyBedrooms1").getText());
+        assertEquals("Not specified", label(card, "propertyStatus2").getText());
+        assertEquals("Condominium", label(card, "propertyType2").getText());
+        assertEquals("Selling", label(card, "propertyIntention2").getText());
+        assertEquals("Tampines", label(card, "propertyLocation2").getText());
+        assertEquals("Not recorded", label(card, "propertyPrice2").getText());
+        assertEquals("Not recorded", label(card, "propertyBedrooms2").getText());
+        assertEquals("$800,000", label(card, "propertyPrice3").getText());
+        assertEquals("Not recorded", label(card, "propertyBedrooms3").getText());
+    }
+
+    private static void assertBedroomDetailsFitCard(Region card) {
+        assertNotNull(card);
+        assertEquals(3, ((VBox) card.lookup("#properties")).getChildren().size());
+        assertEquals(3L, card.lookupAll(".field-caption").stream().filter(Label.class::isInstance)
+                .map(Label.class::cast).filter(label -> label.getText().equals("Bedrooms")).count());
+        assertTrue(label(card, "propertyLocation1").getHeight() > 30,
+                "Long locations must wrap without hiding the bedroom row");
+        List<String> expected = List.of("1", "20", "Not recorded");
+        for (int index = 1; index <= expected.size(); index++) {
+            Label bedrooms = label(card, "propertyBedrooms" + index);
+            Label price = label(card, "propertyPrice" + index);
+            assertEquals(expected.get(index - 1), bedrooms.getText());
+            assertTrue(bedrooms.isVisible());
+            assertTrue(bedrooms.isManaged());
+            assertTrue(bedrooms.isWrapText());
+            assertTrue(bedrooms.getWidth() > 0);
+            assertTrue(bedrooms.getHeight() >= bedrooms.prefHeight(bedrooms.getWidth()),
+                    "The bedroom value must fit without vertical clipping");
+            assertTrue(bedrooms.localToScene(bedrooms.getBoundsInLocal()).getMinY()
+                    >= price.localToScene(price.getBoundsInLocal()).getMaxY());
+            assertTrue(bedrooms.localToScene(bedrooms.getBoundsInLocal()).getMaxY()
+                    <= card.localToScene(card.getBoundsInLocal()).getMaxY());
+        }
+    }
+
+    private static void assertPropertyEntryLayout(VBox entry) {
+        assertEquals(5, entry.getChildren().size(), "Related fields must share rows to reduce scrolling");
+        List<Label> fields = propertyLabels(entry);
+        for (Label value : fields.subList(1, fields.size())) {
+            assertTrue(value.getStyleClass().contains("property-detail"));
+            assertTrue(value.isWrapText());
+            assertEquals(0, value.getMinWidth());
+            assertEquals(Double.MAX_VALUE, value.getMaxWidth());
+            assertEquals(Region.USE_PREF_SIZE, value.getMinHeight());
+        }
+        for (int first : new int[] {1, 5}) {
+            Label left = fields.get(first);
+            Label right = fields.get(first + 1);
+            assertEquals(left.localToScene(left.getBoundsInLocal()).getMinY(),
+                    right.localToScene(right.getBoundsInLocal()).getMinY(), 1,
+                    "Paired property fields must share a row");
+            assertTrue(left.localToScene(left.getBoundsInLocal()).getMaxX()
+                    <= right.localToScene(right.getBoundsInLocal()).getMinX(),
+                    "Paired property fields must not overlap");
+        }
+    }
+
+    private static void assertFinalPropertyIsScrollable(Region root, ListView<?> list, VBox properties) {
+        ScrollBar vertical = list.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                .filter(bar -> bar.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
+        assertTrue(vertical.isVisible());
+        vertical.setValue(vertical.getMax());
+        root.layout();
+        VBox lastProperty = (VBox) properties.getChildren().get(2);
+        Node lastField = propertyLabels(lastProperty).get(6);
+        assertTrue(lastField.localToScene(lastField.getBoundsInLocal()).getMinY()
+                >= list.localToScene(list.getBoundsInLocal()).getMinY(),
+                "Scrolling must reveal the last property field");
+        assertTrue(lastField.localToScene(lastField.getBoundsInLocal()).getMaxY()
+                <= list.localToScene(list.getBoundsInLocal()).getMaxY(),
+                "The final field must be fully visible at the bottom of a tall card");
+    }
+
+    private static void assertEmailEditResizesCard(Region card, String emailValue, String longEmail,
+            double originalHeight) {
+        Label email = label(card, "email");
+        assertEquals(emailValue, ((Text) email.lookup(".text")).getText());
+        assertTrue(email.getHeight() >= email.prefHeight(email.getWidth()) - 1);
+        if (emailValue.equals(longEmail)) {
+            assertTrue(card.getHeight() > originalHeight,
+                    "A long email must expand the card even without a remark or properties");
+        } else {
+            assertEquals(originalHeight, card.getHeight(), 1,
+                    "Returning to a short email must release the extra row height");
+        }
+    }
+
+    private static Model createLayoutTestModel() {
+        Model model = new ModelManager();
+        String[] names = {"Alice Pauline", "Bob Choo", "Alex Yeoh", "Bernice Yu",
+            "Charlotte Oliveiro", "David Li", "Irfan Ibrahim", "Roy Balakrishnan"};
+        String[] phones = {"94351253", "81234567", "87438807", "99272758",
+            "93210283", "91031282", "92492021", "92624417"};
+        String[] emails = {"alice", "bobc", "alexyeoh", "berniceyu",
+            "charlotte", "lidavid", "irfan", "roybal"};
+        for (int i = 0; i < names.length; i++) {
+            model.addPerson(new PersonBuilder().withName(names[i]).withPhone(phones[i])
+                    .withEmail(emails[i] + "@example.com")
+                    .withProperties(i % 2 == 0 ? CLEMENTI_HDB : TAMPINES_CONDO)
+                    .build());
+        }
+        return model;
+    }
+
+    private static void assertPortraitClientLayout(MainWindow window, Region root) {
+        assertEquals("RESIDEX", window.getPrimaryStage().getTitle());
+        assertEquals("8 of 8 clients", label(root, "clientCount").getText());
+        assertTrue(root.lookupAll(".menu-bar").isEmpty());
+        ListView<?> list = (ListView<?>) root.lookup("#personListView");
+        assertEquals(8, list.getItems().size());
+        assertFalse(root.lookupAll(".client-card").isEmpty());
+        Region card = (Region) root.lookup(".client-card");
+        assertEquals(1052, card.getWidth(), 1);
+        for (Node node : root.lookupAll(".list-cell")) {
+            ListCell<?> cell = (ListCell<?>) node;
+            if (!cell.isEmpty()) {
+                Region graphic = (Region) cell.getGraphic();
+                assertTrue(cell.getHeight() >= graphic.getHeight() + 10,
+                        "Client cards must have a 10 px gap");
+            }
+        }
+        assertEquals("Data file: ./data/addressbook.json", label(root, "saveLocationStatus").getText());
+    }
+
+    private static void assertCompactClientLayout(Region root) {
+        ListView<?> list = (ListView<?>) root.lookup("#personListView");
+        Region card = (Region) root.lookup(".client-card");
+        assertTrue(card.getWidth() > 600);
+        assertFalse(hasVisibleHorizontalScrollBar(root));
+        list.scrollTo(7);
+        root.layout();
+        assertTrue(list.lookupAll(".list-cell").stream().map(ListCell.class::cast)
+                .anyMatch(cell -> !cell.isEmpty() && cell.getIndex() == 7),
+                "The last client must remain reachable after increasing card heights");
+    }
+
+    private static void assertLongRemarksFitCards(Region root) {
+        ListView<?> list = (ListView<?>) root.lookup("#personListView");
+        list.scrollTo(0);
+        refreshLayout(root);
+        boolean foundRemark = false;
+        for (Node node : root.lookupAll(".client-card")) {
+            Region clientCard = (Region) node;
+            Label remark = label(clientCard, "remark");
+            if (remark.isManaged()) {
+                foundRemark = true;
+                assertTrue(remark.getHeight() > 40, "Long remarks must wrap to multiple lines");
+                assertTrue(remark.localToScene(remark.getBoundsInLocal()).getMaxY()
+                        <= clientCard.localToScene(clientCard.getBoundsInLocal()).getMaxY());
+            }
+        }
+        assertTrue(foundRemark);
+    }
+
+    private static void assertDataFileLockDialog(DialogPane dialog, Path dataFile, String expectedHeader,
+            String expectedRecovery) {
+        assertEquals(expectedHeader, dialog.getHeaderText());
+        String message = dialog.getContentText();
+        assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
+        assertTrue(message.contains(expectedRecovery));
+        assertTrue(message.contains("This instance has not changed your client data or preferences."));
+        assertTrue(message.contains("It will now close."));
+    }
+
+    private static void assertDataLoadingDialog(DialogPane dialog, Path dataFile, String expectedReason) {
+        assertEquals("RESIDEX could not open your client data", dialog.getHeaderText());
+        String message = dialog.getContentText();
+        assertTrue(message.contains(dataFile.toAbsolutePath().normalize().toString()));
+        assertTrue(message.contains("Reason: " + expectedReason));
+        assertFalse(message.contains("Parser details."));
+        assertFalse(message.contains("NullPointerException"));
+        assertFalse(message.contains("JsonSerializableAddressBook"));
+        assertFalse(message.contains("com.fasterxml.jackson"));
+        assertFalse(message.contains("JsonMappingException"));
+        assertFalse(message.contains("JsonParseException"));
+        assertFalse(message.contains("[Source:"));
+        assertTrue(message.contains("has not been changed"));
+        assertTrue(message.contains("RESIDEX will close"));
+        assertTrue(message.contains("repair it or replace it with a valid backup"));
+        assertTrue(message.contains("move the file aside"));
+    }
+
+    private static void assertLastBedroomIsScrollable(Region root, Region card) {
+        ListView<?> list = (ListView<?>) root.lookup("#personListView");
+        ScrollBar vertical = list.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                .filter(bar -> bar.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
+        assertTrue(vertical.isVisible(), "Long detail cards must be scrollable");
+        vertical.setValue(vertical.getMax());
+        root.layout();
+        Label lastBedrooms = label(card, "propertyBedrooms3");
+        assertTrue(lastBedrooms.localToScene(lastBedrooms.getBoundsInLocal()).getMinY()
+                >= list.localToScene(list.getBoundsInLocal()).getMinY());
+        assertTrue(lastBedrooms.localToScene(lastBedrooms.getBoundsInLocal()).getMaxY()
+                <= list.localToScene(list.getBoundsInLocal()).getMaxY(),
+                "Scrolling to the bottom must reveal the final property's bedroom count");
+    }
+
+    private static ListCell<?> scrollToClientCell(Region root, ListView<?> list, int index) {
+        list.scrollTo(index);
+        refreshLayout(root);
+        return list.lookupAll(".list-cell").stream().map(ListCell.class::cast)
+                .filter(candidate -> !candidate.isEmpty() && candidate.getIndex() == index)
+                .findFirst().orElseThrow();
+    }
+
+    private static List<String> clientCardNames(Region root) {
+        return root.lookupAll(".list-cell").stream()
+                .map(ListCell.class::cast)
+                .filter(cell -> !cell.isEmpty())
+                .map(cell -> label((Region) cell.getGraphic(), "name").getText())
+                .toList();
     }
 
     private MainWindow createWindow(Model model) {
@@ -1722,13 +1761,22 @@ public class ResidexUiTest {
         return window;
     }
 
+    private static void refreshLayout(Region root) {
+        root.applyCss();
+        root.layout();
+    }
+
+    private static boolean hasVisibleHorizontalScrollBar(Region root) {
+        return root.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                .anyMatch(bar -> bar.getOrientation() == Orientation.HORIZONTAL && bar.isVisible());
+    }
+
     private static void runCommand(Region root, String commandText) {
         TextField command = (TextField) root.lookup("#commandTextField");
         Button run = (Button) root.lookup("#runButton");
         command.setText(commandText);
         run.fire();
-        root.applyCss();
-        root.layout();
+        refreshLayout(root);
     }
 
     private static Region layoutWindow(MainWindow window, double width, double height) {
@@ -1743,8 +1791,7 @@ public class ResidexUiTest {
         scene.getStylesheets().addAll(previousScene.getStylesheets());
         stage.setScene(scene);
         root.resize(width, height);
-        root.applyCss();
-        root.layout();
+        refreshLayout(root);
         return root;
     }
 
@@ -1752,8 +1799,7 @@ public class ResidexUiTest {
         Scene scene = new Scene(card, 1052, 118);
         scene.getStylesheets().add(ResidexUiTest.class.getResource("/view/Residex.css").toExternalForm());
         card.resize(1052, 118);
-        card.applyCss();
-        card.layout();
+        refreshLayout(card);
     }
 
     private static Label label(Region root, String id) {
