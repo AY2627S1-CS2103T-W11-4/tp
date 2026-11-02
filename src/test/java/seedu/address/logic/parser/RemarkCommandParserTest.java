@@ -52,6 +52,8 @@ public class RemarkCommandParserTest {
         assertParseFailure(parser, "a " + PREFIX_REMARK + VALID_REMARK, MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER);
         assertParseFailure(parser, "0 " + PREFIX_REMARK + VALID_REMARK, MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER);
         assertParseFailure(parser, "01 " + PREFIX_REMARK + VALID_REMARK, MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER);
+        assertParseFailure(parser, "1 2 " + PREFIX_REMARK + VALID_REMARK, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1\t2 " + PREFIX_REMARK + VALID_REMARK, MESSAGE_INVALID_FORMAT);
     }
 
     @Test

@@ -43,6 +43,10 @@ public class AddressBookParserTest {
         assertEquals(new ViewCommand(INDEX_FIRST_PERSON), parser.parseCommand("  ViEw  1  "));
         assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE), ()
             -> parser.parseCommand("view"));
+        assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE), ()
+            -> parser.parseCommand("view 1 2"));
+        assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE), ()
+            -> parser.parseCommand("view 1 n/Amy"));
     }
 
     @Test

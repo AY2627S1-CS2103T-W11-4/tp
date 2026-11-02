@@ -22,7 +22,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             Index index = ParserUtil.parseIndex(args);
             return new DeleteCommand(index);
         } catch (ParseException pe) {
-            throw new ParseException(args.isBlank()
+            throw new ParseException(!args.strip().matches("\\S+")
                     ? String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE)
                     : MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER, pe);
         }
