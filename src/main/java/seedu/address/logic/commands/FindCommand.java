@@ -54,9 +54,11 @@ public class FindCommand extends Command {
             "Intention must be buyer, seller or both (case-insensitive).";
     public static final String MESSAGE_INVALID_STATUS = PropertyStatus.MESSAGE_CONSTRAINTS;
     public static final String MESSAGE_INVALID_TYPE = PropertyType.MESSAGE_CONSTRAINTS;
-    public static final String MESSAGE_INVALID_BEDROOMS = PropertyBedrooms.MESSAGE_CONSTRAINTS;
+    public static final String MESSAGE_INVALID_BEDROOMS = PropertyBedrooms.MESSAGE_CONSTRAINTS
+            + ". Use " + UNKNOWN_VALUE + " to search for properties without recorded bedrooms.";
     public static final String MESSAGE_INVALID_PRICE_RANGE = "Price range must look like 500000-800000, 500000- "
-            + "or -800000, using whole-dollar amounts without commas, and the minimum must not exceed the maximum.";
+            + "or -800000, using whole-dollar amounts without commas, and the minimum must not exceed the maximum."
+            + " Use " + UNKNOWN_VALUE + " to search for properties without a recorded price.";
     public static final String MESSAGE_FORMAT_HINT = "Format: " + COMMAND_WORD + " FIELD/" + KEYWORD_PARAMETERS + "\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_NAME + "alex";
     public static final String MESSAGE_MISSING_ARGUMENTS =

@@ -26,6 +26,11 @@
     checking test and coverage results, and drafting or revising the User Guide, Developer Guide, commit messages and
     pull request descriptions. This included client-index error guidance, the remark usage example, command
     case-insensitivity notes, glossary corrections and this acknowledgement.
+  * @Brendan-Lim used ChatGPT for planning test strategies, reviewing bug findings, refining documentation and preparing
+    pull requests. OpenAI Codex was used for repository analysis, automated QA audits, reproducing bugs, and drafting and
+    revising code, tests and documentation, including the v1.6 User Guide, Developer Guide and setup instructions.
+    Validation included automated tests and documentation builds run by Codex, and checking AI-assisted changes against
+    the implementation. The author remains responsible for the final contributions.
 
 --------------------------------------------------------------------------------------------------------------------
 
