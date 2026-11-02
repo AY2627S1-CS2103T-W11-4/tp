@@ -19,7 +19,7 @@ import seedu.address.storage.StorageManager;
 
 /**
  * Covers the original #175 steps: {@code edit 1 e/buyer@xn--bcher-kva.de} must
- * be accepted as an ASCII internationalised domain.
+ * be accepted as an ASCII internationalized domain.
  */
 public class PunycodeEmailIntegrationTest {
     @TempDir
