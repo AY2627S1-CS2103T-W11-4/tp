@@ -101,7 +101,8 @@ public class EditPropertyCommand extends Command {
     }
 
     /**
-     * Requested edits. Null required fields are omitted; an explicitly set null price clears the optional price.
+     * Stores requested property edits. Null required fields are omitted.
+     * Explicitly setting a null price or bedroom count clears that optional field.
      */
     public static class EditPropertyDescriptor {
         private PropertyType type;
@@ -113,11 +114,14 @@ public class EditPropertyCommand extends Command {
         private boolean priceEdited;
         private boolean bedroomsEdited;
 
+        /**
+         * Creates a descriptor with no requested edits.
+         */
         public EditPropertyDescriptor() {
         }
 
         /**
-         * Copies immutable field values and the explicit price-edit flag from {@code source}.
+         * Copies immutable field values and the explicit price and bedroom edit flags from {@code source}.
          */
         public EditPropertyDescriptor(EditPropertyDescriptor source) {
             requireNonNull(source);
@@ -163,6 +167,9 @@ public class EditPropertyCommand extends Command {
             bedroomsEdited = true;
         }
 
+        /**
+         * Returns true if any field is supplied, including an explicit request to clear the price or bedroom count.
+         */
         public boolean isAnyFieldEdited() {
             return type != null || intention != null || location != null || priceEdited || status != null
                     || bedroomsEdited;
