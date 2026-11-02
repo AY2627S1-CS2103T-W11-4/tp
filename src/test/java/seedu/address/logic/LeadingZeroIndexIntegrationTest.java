@@ -1,7 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.file.Files;
@@ -12,8 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import seedu.address.logic.commands.DeleteCommand;
-import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -46,8 +44,9 @@ public class LeadingZeroIndexIntegrationTest {
     public void execute_deleteLeadingZeroIndex_rejectsAndLeavesClientInListAndFile() throws Exception {
         logic.execute("add n/First Client p/88110001 e/first@example.com");
         String saved = Files.readString(dataFile);
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE);
+        String expectedMessage = MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER;
 
+        assertThrows(ParseException.class, expectedMessage, () -> logic.execute("delete 0"));
         assertThrows(ParseException.class, expectedMessage, () -> logic.execute("delete 01"));
         assertThrows(ParseException.class, expectedMessage, () -> logic.execute("delete １"));
 
@@ -59,7 +58,7 @@ public class LeadingZeroIndexIntegrationTest {
     @Test
     public void execute_viewLeadingZeroIndex_rejectsAndLeavesListUnchanged() throws Exception {
         logic.execute("add n/First Client p/88110001 e/first@example.com");
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE);
+        String expectedMessage = MESSAGE_CLIENT_INDEX_POSITIVE_INTEGER;
 
         assertThrows(ParseException.class, expectedMessage, () -> logic.execute("view 01"));
 
