@@ -31,7 +31,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 <img src="images/rayyngg.png" width="200px">
 
-[[homepage](https://rayyngg.github.io)] [[github](https://github.com/rayyngg)] [[portfolio](https://rayyngg.github.io/tp/)]
+[[homepage](https://rayyngg.github.io)] [[github](https://github.com/rayyngg)]
 
 * Role: Developer
 
