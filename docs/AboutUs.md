@@ -18,7 +18,6 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/Sea1vester)]
 
 * Role: Developer
-* Responsibilities: Documentation
 
 ### Lim Kai Hui Brendan
 
@@ -27,7 +26,6 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](http://github.com/brendan-lim)]
 
 * Role: Team Lead
-* Responsibilities: UI
 
 ### Ray
 
@@ -36,7 +34,6 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[homepage](https://rayyngg.github.io)] [[github](https://github.com/rayyngg)] [[portfolio](https://rayyngg.github.io/tp/)]
 
 * Role: Developer
-* Responsibilities: Data
 
 ### Sean Tan
 
@@ -45,7 +42,6 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/sntan1214)]
 
 * Role: Developer
-* Responsibilities: Dev Ops + Threading
 
 ### Nathan Yeo
 
@@ -54,4 +50,3 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/legalunicorn)]
 
 * Role: Developer
-* Responsibilities: UI

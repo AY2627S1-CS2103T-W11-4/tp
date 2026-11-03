@@ -62,7 +62,7 @@ public class AddressBookParser {
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
-        // Lower level log messages are used sparingly to minimize noise in the code.
+[CS2103T-W11-4][RESIDEX].jar        // Lower level log messages are used sparingly to minimize noise in the code.
         logger.fine("Command word: " + commandWord + "; Arguments: " + arguments);
 
         return switch (commandWord) {
